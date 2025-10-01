@@ -6,7 +6,7 @@ set -e
 # 설정
 APP_NAME="bibleai"
 APP_DIR="/home/ec2-user/bibleai"
-REPO_URL="https://github.com/{사용자명}/{저장소명}.git"  # 실제 값으로 변경 필요
+REPO_URL="https://github.com/SeanKimMel/bibleai.git"
 CONTAINER_NAME="bibleai"
 IMAGE_NAME="bibleai:latest"
 PORT="8080"
