@@ -102,3 +102,13 @@ migrations/*_secret.sql
 backup/
 backups/
 *.backup.*
+bak/
+
+# 테스트 결과 파일
+*_test_results.txt
+*_errors.txt
+*_output.txt
+
+# 루트 디렉토리의 commentary SQL 파일들 (migrations/ 폴더에서 관리)
+/*_commentary*.sql
+/prayer_data_extended.sql
