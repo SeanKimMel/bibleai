@@ -112,3 +112,17 @@ bak/
 # 루트 디렉토리의 commentary SQL 파일들 (migrations/ 폴더에서 관리)
 /*_commentary*.sql
 /prayer_data_extended.sql
+/*_epistles*.sql
+/john_gospel*.sql
+/minor_prophets*.sql
+/general_epistles.sql
+
+# DB 초기화 스크립트 (로컬 개발용, 배포 불필요)
+/init.sql
+
+# 테스트 스크립트들 (로컬 개발용)
+/test_*.sh
+/*_test.sh
+/simple_bible_test.sh
+/systematic_bible_test.sh
+/final_bible_test.sh
