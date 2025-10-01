@@ -39,13 +39,13 @@ func NewConnection() (*DB, error) {
 
 	// Connection Pool 설정 (성능 최적화)
 	// 동시 사용자 수에 맞춰 조정 가능
-	db.SetMaxOpenConns(25)                      // 최대 동시 연결 수 (DB 서버 리소스 고려)
-	db.SetMaxIdleConns(10)                      // 유휴 연결 풀 크기 (재사용 위해 유지)
-	db.SetConnMaxLifetime(5 * time.Minute)      // 연결 최대 수명 5분 (장시간 유지 방지)
+	db.SetMaxOpenConns(20)                      // 최대 동시 연결 수 (max)
+	db.SetMaxIdleConns(10)                      // 최소 유휴 연결 수 (min)
+	db.SetConnMaxLifetime(5 * time.Minute)      // 연결 최대 수명 5분
 	db.SetConnMaxIdleTime(3 * time.Minute)      // 유휴 연결 최대 시간 3분
 
 	log.Println("데이터베이스에 성공적으로 연결되었습니다.")
-	log.Printf("Connection Pool 설정: MaxOpen=%d, MaxIdle=%d, MaxLifetime=5m", 25, 10)
+	log.Printf("Connection Pool 설정: Min=%d, Max=%d, MaxLifetime=5m, IdleTimeout=3m", 10, 20)
 	return &DB{db}, nil
 }
 
