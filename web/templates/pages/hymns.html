@@ -1,0 +1,441 @@
+{{define "hymns.html"}}
+{{template "base.html" .}}
+{{end}}
+{{define "hymns-content"}}
+<!-- 찬송가 페이지 -->
+<div class="card mb-8">
+    <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+            </svg>
+        </div>
+        <h2 class="text-3xl font-bold text-primary mb-3">찬송가</h2>
+        <p class="text-lg text-secondary leading-relaxed mb-4">새찬송가를 검색하고 찾아보세요</p>
+
+        <!-- 전체 저작권 안내 -->
+        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <div class="flex items-center">
+                <svg class="w-5 h-5 text-blue-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-sm text-blue-800">
+                    <span class="font-medium">📚 교육용 서비스:</span>
+                    <span class="ml-1">찬송가 가사는 참고 목적으로 일부만 제공됩니다. 완전한 가사와 악보는 공식 찬송가집을 이용해주세요.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 검색 폼 -->
+    <form id="hymnSearchForm" class="mb-6">
+        <div class="flex space-x-3">
+            <input type="text"
+                   id="hymnSearchInput"
+                   placeholder="찬송가 제목이나 번호를 입력하세요"
+                   class="flex-1 px-4 py-3 text-lg border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none">
+            <button type="submit"
+                    class="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 text-lg font-medium transition-colors">
+                검색
+            </button>
+        </div>
+    </form>
+
+    <!-- 빠른 검색 주제 -->
+    <div class="mb-6">
+        <p class="text-sm text-secondary mb-3">주제별 찾기:</p>
+        <div class="flex flex-wrap gap-2">
+            <button onclick="searchByTheme('찬양')" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">찬양</button>
+            <button onclick="searchByTheme('감사')" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">감사</button>
+            <button onclick="searchByTheme('예배')" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">예배</button>
+            <button onclick="searchByTheme('성탄')" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">성탄</button>
+            <button onclick="searchByTheme('부활')" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">부활</button>
+        </div>
+    </div>
+</div>
+
+
+<!-- 로딩 스피너 -->
+<div id="hymnLoading" class="hidden card text-center py-12">
+    <div class="flex flex-col items-center space-y-4">
+        <div class="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
+        <p class="text-xl text-secondary font-medium">🎵 찬송가를 찾고 있습니다...</p>
+    </div>
+</div>
+
+<!-- 검색 결과 -->
+<div id="hymnSearchResults" class="hidden">
+    <div class="card">
+        <h3 id="hymnResultsTitle" class="text-2xl font-bold text-primary mb-4"></h3>
+        <div id="hymnResultsList" class="space-y-4">
+            <!-- 검색 결과가 여기에 표시됩니다 -->
+        </div>
+    </div>
+</div>
+
+<!-- 찬송가 상세 모달 -->
+<div id="hymnDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9998] hidden">
+    <div class="bg-white rounded-3xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <!-- 모달 헤더 -->
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                    </svg>
+                </div>
+                <h3 id="hymnDetailTitle" class="text-2xl font-bold text-primary"></h3>
+            </div>
+            <button onclick="closeHymnDetail()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- 로딩 상태 -->
+        <div id="hymnDetailLoading" class="text-center py-12">
+            <div class="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-gray-600">찬송가 정보를 불러오는 중...</p>
+        </div>
+
+        <!-- 찬송가 상세 내용 -->
+        <div id="hymnDetailContent" class="hidden">
+            <!-- 찬송가 정보 -->
+            <div class="bg-purple-50 rounded-2xl p-6 mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-sm text-purple-600 font-medium">주제</p>
+                        <p id="hymnTheme" class="text-lg text-gray-800"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-purple-600 font-medium">작곡가</p>
+                        <p id="hymnComposer" class="text-lg text-gray-800"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-purple-600 font-medium">작사가</p>
+                        <p id="hymnAuthor" class="text-lg text-gray-800"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-purple-600 font-medium">성경 참조</p>
+                        <p id="hymnBibleRef" class="text-lg text-gray-800"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 외부 링크 버튼 -->
+            <div id="hymnExternalLinkSection" class="text-center mb-6" style="display: none;">
+                <a id="hymnExternalLink" href="#" target="_blank" rel="noopener noreferrer"
+                   class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                    </svg>
+                    완전한 찬송가 보기 (hymnkorea.org)
+                </a>
+            </div>
+
+            <!-- 찬송가 가사 -->
+            <div class="bg-gray-50 rounded-2xl p-6">
+                <h4 class="text-xl font-bold text-gray-800 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    가사
+                </h4>
+                <div id="hymnLyrics" class="text-lg text-gray-800 leading-relaxed whitespace-pre-line"></div>
+
+                <!-- 저작권 안내 -->
+                <div class="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-xl">
+                    <div class="flex items-start">
+                        <svg class="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div class="text-sm text-orange-800">
+                            <p class="font-medium mb-1">📖 저작권 안내</p>
+                            <p class="mb-2">본 가사는 <strong>교육 및 참고 목적</strong>으로 일부 내용만 표시됩니다.</p>
+                            <p class="text-xs text-orange-600">완전한 가사는 <strong>한국찬송가공회</strong> 공식 자료를 참조하시기 바랍니다.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 액션 버튼들 -->
+            <div class="flex justify-center space-x-4 mt-6">
+                <button onclick="copyHymnLyrics()" class="flex items-center px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                    </svg>
+                    가사 복사
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('찬송가 페이지 로드됨');
+
+    const searchForm = document.getElementById('hymnSearchForm');
+    const searchInput = document.getElementById('hymnSearchInput');
+
+    // 검색 폼 이벤트
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const query = searchInput.value.trim();
+        if (query) {
+            performHymnSearch(query);
+        }
+    });
+
+});
+
+// 찬송가 검색
+async function performHymnSearch(query) {
+    console.log('찬송가 검색:', query);
+
+    showHymnLoading();
+    hideHymnResults();
+
+    try {
+        const response = await fetch(`/api/hymns/search?q=${encodeURIComponent(query)}`);
+        const data = await response.json();
+
+        hideHymnLoading();
+
+        if (data.success && data.hymns && data.hymns.length > 0) {
+            displayHymnResults(query, data.hymns);
+        } else {
+            displayNoHymnResults(query);
+        }
+
+    } catch (error) {
+        console.error('찬송가 검색 오류:', error);
+        hideHymnLoading();
+        BibleAI.showNotification('검색 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+// 주제별 검색
+async function searchByTheme(theme) {
+    console.log('주제별 검색:', theme);
+
+    showHymnLoading();
+    hideHymnResults();
+
+    try {
+        const response = await fetch(`/api/hymns/theme/${encodeURIComponent(theme)}`);
+        const data = await response.json();
+
+        hideHymnLoading();
+
+        if (data.success && data.hymns && data.hymns.length > 0) {
+            displayHymnResults(`"${theme}" 주제`, data.hymns);
+        } else {
+            displayNoHymnResults(`"${theme}" 주제`);
+        }
+
+    } catch (error) {
+        console.error('주제별 검색 오류:', error);
+        hideHymnLoading();
+        BibleAI.showNotification('검색 중 오류가 발생했습니다.', 'error');
+    }
+}
+
+
+// 찬송가 검색 결과 표시
+function displayHymnResults(query, hymns) {
+    const resultsTitle = document.getElementById('hymnResultsTitle');
+    const resultsList = document.getElementById('hymnResultsList');
+
+    resultsTitle.textContent = `${query} 검색 결과 (${hymns.length}개)`;
+
+    resultsList.innerHTML = hymns.map(hymn => {
+        const displayNumber = hymn.new_hymn_number || hymn.number;
+        const paddedNumber = String(displayNumber).padStart(3, '0');
+        return `
+        <div class="content-card cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1" onclick="viewHymnDetail(${displayNumber}, '신찬송가 ${paddedNumber}장 ${hymn.title.replace(/'/g, "\\'")}')">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    <h4 class="text-lg font-bold text-primary mb-1">신찬송가 ${paddedNumber}장 ${hymn.title}</h4>
+                    <p class="text-sm text-purple-600">주제: ${hymn.theme}</p>
+                </div>
+                <div class="text-2xl">🎵</div>
+            </div>
+            ${hymn.lyrics ? `<p class="text-sm text-secondary">${BibleAI.truncate(hymn.lyrics, 150)}</p>` : ''}
+            <div class="mt-4 flex items-center text-purple-500 font-medium">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+                전체 가사 보기
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    showHymnResults();
+}
+
+// 검색 결과 없음 표시
+function displayNoHymnResults(query) {
+    const resultsTitle = document.getElementById('hymnResultsTitle');
+    const resultsList = document.getElementById('hymnResultsList');
+
+    resultsTitle.textContent = `${query} 검색 결과`;
+    resultsList.innerHTML = `
+        <div class="text-center py-8">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+            </div>
+            <p class="text-xl text-secondary font-medium mb-2">찾는 찬송가가 없습니다</p>
+            <p class="text-base text-gray-500">다른 제목이나 번호로 검색해보세요</p>
+        </div>
+    `;
+
+    showHymnResults();
+}
+
+// UI 상태 관리
+function showHymnLoading() {
+    document.getElementById('hymnLoading').classList.remove('hidden');
+}
+
+function hideHymnLoading() {
+    document.getElementById('hymnLoading').classList.add('hidden');
+}
+
+function showHymnResults() {
+    document.getElementById('hymnSearchResults').classList.remove('hidden');
+}
+
+function hideHymnResults() {
+    document.getElementById('hymnSearchResults').classList.add('hidden');
+}
+
+// 전역 변수 (현재 표시 중인 찬송가 정보)
+let currentHymnData = null;
+
+// 찬송가 상세 보기
+async function viewHymnDetail(hymnNumber, hymnTitle) {
+    console.log('찬송가 상세 보기:', hymnNumber, hymnTitle);
+
+    // 모달 표시
+    document.getElementById('hymnDetailModal').classList.remove('hidden');
+    document.getElementById('hymnDetailTitle').textContent = hymnTitle;
+    document.getElementById('hymnDetailLoading').classList.remove('hidden');
+    document.getElementById('hymnDetailContent').classList.add('hidden');
+
+    try {
+        const response = await fetch(`/api/hymns/${hymnNumber}`);
+        const data = await response.json();
+
+        if (data.success && data.hymn) {
+            currentHymnData = data.hymn;
+            displayHymnDetail(data.hymn);
+        } else {
+            throw new Error('찬송가 정보를 찾을 수 없습니다.');
+        }
+
+    } catch (error) {
+        console.error('찬송가 상세 로드 오류:', error);
+        displayHymnDetailError(error.message);
+    }
+}
+
+// 찬송가 상세 정보 표시
+function displayHymnDetail(hymn) {
+    // 로딩 숨기고 콘텐츠 표시
+    document.getElementById('hymnDetailLoading').classList.add('hidden');
+    document.getElementById('hymnDetailContent').classList.remove('hidden');
+
+    // 찬송가 정보 설정
+    document.getElementById('hymnTheme').textContent = hymn.theme || '미지정';
+    document.getElementById('hymnComposer').textContent = hymn.composer || '미지정';
+    document.getElementById('hymnAuthor').textContent = hymn.author || '미지정';
+    document.getElementById('hymnBibleRef').textContent = hymn.bible_reference || '미지정';
+
+    // 외부 링크 설정
+    const externalLinkSection = document.getElementById('hymnExternalLinkSection');
+    const externalLinkButton = document.getElementById('hymnExternalLink');
+
+    if (hymn.external_link && hymn.external_link.trim() !== '') {
+        externalLinkButton.href = hymn.external_link;
+        externalLinkSection.style.display = 'block';
+    } else {
+        externalLinkSection.style.display = 'none';
+    }
+
+    // 가사 설정 (줄바꿈 처리)
+    const lyricsElement = document.getElementById('hymnLyrics');
+    lyricsElement.textContent = hymn.lyrics || '가사 정보가 없습니다.';
+}
+
+// 찬송가 상세 오류 표시
+function displayHymnDetailError(errorMessage) {
+    document.getElementById('hymnDetailLoading').classList.add('hidden');
+    document.getElementById('hymnDetailContent').innerHTML = `
+        <div class="text-center py-12">
+            <div class="w-20 h-20 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-700 mb-3">찬송가를 찾을 수 없습니다</h3>
+            <p class="text-gray-500 mb-4">${errorMessage}</p>
+            <p class="text-sm text-gray-400 mb-6">현재 데이터베이스에는 29개의 찬송가가 있습니다</p>
+            <button onclick="closeHymnDetail(); performHymnSearch('')"
+                    class="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition-colors">
+                전체 찬송가 보기
+            </button>
+        </div>
+    `;
+    document.getElementById('hymnDetailContent').classList.remove('hidden');
+}
+
+// 찬송가 상세 모달 닫기
+function closeHymnDetail() {
+    document.getElementById('hymnDetailModal').classList.add('hidden');
+    currentHymnData = null;
+}
+
+// 가사 복사
+function copyHymnLyrics() {
+    if (!currentHymnData || !currentHymnData.lyrics) {
+        BibleAI.showNotification('복사할 가사가 없습니다.', 'error');
+        return;
+    }
+
+    const displayNumber = currentHymnData.new_hymn_number || currentHymnData.number;
+    const paddedNumber = String(displayNumber).padStart(3, '0');
+    const textToCopy = `신찬송가 ${paddedNumber}장 ${currentHymnData.title}\n\n${currentHymnData.lyrics}`;
+
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        BibleAI.showNotification('찬송가 가사가 복사되었습니다! 📋', 'success');
+    }).catch(err => {
+        console.error('복사 실패:', err);
+        BibleAI.showNotification('복사에 실패했습니다.', 'error');
+    });
+}
+
+// 모달 외부 클릭시 닫기
+document.addEventListener('click', function(e) {
+    const modal = document.getElementById('hymnDetailModal');
+    if (e.target === modal) {
+        closeHymnDetail();
+    }
+});
+
+// ESC 키로 모달 닫기
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('hymnDetailModal');
+        if (!modal.classList.contains('hidden')) {
+            closeHymnDetail();
+        }
+    }
+});
+</script>
+{{end}}

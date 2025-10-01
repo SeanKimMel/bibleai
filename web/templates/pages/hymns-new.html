@@ -1,0 +1,592 @@
+{{template "base.html" .}}
+{{define "content"}}
+<!-- 개선된 찬송가 헤더 -->
+<div class="card mb-8">
+    <div class="text-center mb-6">
+        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+            </svg>
+        </div>
+        <h2 class="text-3xl font-bold text-primary mb-3">찬송가</h2>
+        <p class="text-lg text-secondary leading-relaxed">찬송가를 검색하고 가사를 확인하세요</p>
+    </div>
+
+    <!-- 개선된 검색 -->
+    <div class="relative">
+        <input type="text"
+               id="hymnSearch"
+               class="w-full px-6 py-5 pl-16 border-2 border-gray-300 rounded-xl text-lg focus:ring-4 focus:ring-purple-200 focus:border-purple-500 focus:outline-none"
+               placeholder="찬송가 번호나 제목으로 검색..."
+               aria-describedby="search-hint">
+        <div class="absolute inset-y-0 left-0 pl-5 flex items-center">
+            <svg class="w-7 h-7 text-disabled" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+        </div>
+    </div>
+    <p id="search-hint" class="text-base text-secondary mt-3">찬송가 번호나 제목, 주제로 검색할 수 있습니다</p>
+</div>
+
+<!-- 개선된 카테고리 -->
+<div class="card mb-8">
+    <h3 class="text-2xl font-bold text-primary mb-6">
+        <span class="mr-3">🎵</span>
+        주제별 찾기
+    </h3>
+    <p class="text-lg text-secondary mb-6 leading-relaxed">원하는 주제를 선택하여 관련 찬송가를 찾아보세요</p>
+
+    <div class="grid grid-cols-2 gap-4">
+        <button class="category-btn" data-theme="찬양" data-icon="🎶"
+                aria-label="찬양 주제 찬송가 보기" tabindex="0">
+            <span class="text-xl mr-3">🎶</span>
+            <span class="text-lg font-medium">찬양</span>
+        </button>
+        <button class="category-btn" data-theme="경배" data-icon="🙌"
+                aria-label="경배 주제 찬송가 보기" tabindex="0">
+            <span class="text-xl mr-3">🙌</span>
+            <span class="text-lg font-medium">경배</span>
+        </button>
+        <button class="category-btn" data-theme="감사" data-icon="🙏"
+                aria-label="감사 주제 찬송가 보기" tabindex="0">
+            <span class="text-xl mr-3">🙏</span>
+            <span class="text-lg font-medium">감사</span>
+        </button>
+        <button class="category-btn" data-theme="기도" data-icon="🕊️"
+                aria-label="기도 주제 찬송가 보기" tabindex="0">
+            <span class="text-xl mr-3">🕊️</span>
+            <span class="text-lg font-medium">기도</span>
+        </button>
+        <button class="category-btn" data-theme="성탄" data-icon="⭐"
+                aria-label="성탄 주제 찬송가 보기" tabindex="0">
+            <span class="text-xl mr-3">⭐</span>
+            <span class="text-lg font-medium">성탄</span>
+        </button>
+        <button class="category-btn" data-theme="부활" data-icon="✨"
+                aria-label="부활 주제 찬송가 보기" tabindex="0">
+            <span class="text-xl mr-3">✨</span>
+            <span class="text-lg font-medium">부활</span>
+        </button>
+        <button class="category-btn" data-theme="헌신" data-icon="❤️"
+                aria-label="헌신 주제 찬송가 보기" tabindex="0">
+            <span class="text-xl mr-3">❤️</span>
+            <span class="text-lg font-medium">헌신</span>
+        </button>
+        <button class="category-btn" data-theme="선교" data-icon="🌍"
+                aria-label="선교 주제 찬송가 보기" tabindex="0">
+            <span class="text-xl mr-3">🌍</span>
+            <span class="text-lg font-medium">선교</span>
+        </button>
+    </div>
+</div>
+
+<!-- 개선된 인기 찬송가 -->
+<div class="card mb-8" id="popularHymnsSection">
+    <h3 class="text-2xl font-bold text-primary mb-6">
+        <span class="mr-3">⭐</span>
+        많이 부르는 찬송가
+    </h3>
+    <p class="text-lg text-secondary mb-6 leading-relaxed">사랑받는 찬송가들을 확인하고 가사를 보세요</p>
+
+    <div class="space-y-4" id="popularHymns">
+        <!-- 인기 찬송가들이 API로부터 동적으로 로드됩니다 -->
+        <div class="text-center py-8">
+            <div class="animate-spin w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full mx-auto mb-4"></div>
+            <p class="text-lg text-secondary">찬송가를 불러오는 중...</p>
+        </div>
+    </div>
+</div>
+
+<!-- 개선된 검색 결과 -->
+<div id="searchResults" class="hidden card mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <h3 class="text-2xl font-bold text-primary">🔍 검색 결과</h3>
+        <button onclick="clearSearch()" class="text-lg text-purple-600 hover:text-purple-700 font-medium focus-ring rounded-lg px-4 py-2">
+            🔄 다시 검색
+        </button>
+    </div>
+    <div class="mb-4">
+        <span id="resultCount" class="text-lg text-secondary"></span>
+    </div>
+    <div id="resultsList" class="space-y-4">
+        <!-- 검색 결과가 여기에 동적으로 추가됩니다 -->
+    </div>
+</div>
+
+<!-- 개선된 찬송가 상세 모달 -->
+<div id="hymnModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-xl">
+            <div class="sticky top-0 bg-white border-b-2 border-gray-200 p-6 flex items-center justify-between rounded-t-2xl">
+                <div>
+                    <h3 id="modalTitle" class="text-2xl font-bold text-primary mb-1"></h3>
+                    <p id="modalNumber" class="text-lg text-purple-600 font-medium"></p>
+                </div>
+                <button onclick="closeModal()" class="p-2 text-disabled hover:text-secondary focus-ring rounded-xl"
+                        aria-label="찬송가 닫기">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6">
+                <div id="modalLyrics" class="text-primary text-lg leading-loose whitespace-pre-line">
+                    <!-- 가사가 여기에 들어갑니다 -->
+                </div>
+
+                <div class="mt-8 pt-6 border-t-2 border-gray-200 space-y-4">
+                    <button onclick="copyHymn()" class="btn-secondary w-full text-lg py-4 focus-ring"
+                            aria-label="찬송가 가사 복사하기">
+                        <svg class="w-5 h-5 inline-block mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                        </svg>
+                        📋 가사 복사하기
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* 나이든 사용자를 위한 개선된 카테고리 버튼 */
+.category-btn {
+    @apply flex items-center justify-center px-6 py-5 bg-gray-100 text-primary border-2 border-gray-300 rounded-xl;
+    @apply hover:bg-purple-100 hover:text-purple-700 hover:border-purple-400;
+    @apply active:bg-purple-200 focus:ring-4 focus:ring-purple-200 focus:outline-none;
+    @apply transition-all duration-200 font-medium;
+    min-height: 70px; /* 더 큰 터치 영역 */
+}
+
+.category-btn.selected {
+    @apply bg-purple-600 text-white border-purple-600 hover:bg-purple-700 hover:border-purple-700;
+}
+
+/* 접근성 향상 */
+.focus-ring {
+    @apply focus:ring-4 focus:ring-purple-400 focus:ring-opacity-50 focus:outline-none;
+}
+
+/* 찬송가 카드 개선 */
+.hymn-card {
+    @apply bg-white rounded-xl shadow-md p-6 border-2 border-gray-200;
+    @apply hover:shadow-lg hover:border-gray-300 transition-all duration-200;
+    @apply cursor-pointer focus:ring-4 focus:ring-purple-200 focus:outline-none;
+}
+
+/* 키보드 접근성 개선 */
+.hymn-item:hover {
+    transform: translateY(-2px);
+}
+
+/* 사용자 친화적 알림 스타일 */
+.friendly-notification {
+    @apply fixed top-4 left-1/2 transform -translate-x-1/2 px-6 py-4 rounded-xl shadow-lg z-50;
+    @apply bg-purple-100 text-purple-800 border-2 border-purple-300 text-lg font-medium;
+    transition: all 0.3s ease;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('hymnSearch');
+    const searchResults = document.getElementById('searchResults');
+    const popularHymns = document.getElementById('popularHymns');
+    const categoryBtns = document.querySelectorAll('.category-btn');
+    const modal = document.getElementById('hymnModal');
+
+    // 찬송가 데이터 캐시
+    let hymnDataCache = {};
+    let searchTimeout;
+
+    // 페이지 로드 시 랜덤 찬송가 로드
+    loadRandomHymns();
+
+    // 검색 기능 (디바운싱 적용)
+    searchInput.addEventListener('input', function() {
+        const keyword = this.value.trim();
+
+        // 이전 타이머 클리어
+        clearTimeout(searchTimeout);
+
+        if (keyword.length > 0) {
+            // 500ms 후에 검색 실행
+            searchTimeout = setTimeout(() => {
+                performSearch(keyword);
+            }, 500);
+        } else {
+            hideSearchResults();
+        }
+    });
+
+    // 카테고리 버튼
+    categoryBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const theme = this.dataset.theme;
+            searchByTheme(theme);
+        });
+
+        // 키보드 접근성
+        btn.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+
+    // 랜덤 찬송가 로드
+    async function loadRandomHymns() {
+        try {
+            const response = await fetch('/api/hymns/random?limit=4');
+            const data = await response.json();
+
+            if (data.success && data.hymns) {
+                displayPopularHymns(data.hymns);
+            }
+        } catch (error) {
+            console.error('랜덤 찬송가 로드 실패:', error);
+            showLoadingError();
+        }
+    }
+
+    // 로딩 에러 표시
+    function showLoadingError() {
+        popularHymns.innerHTML = `
+            <div class="text-center py-8">
+                <div class="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <span class="text-2xl">⚠️</span>
+                </div>
+                <p class="text-xl text-primary mb-2">찬송가를 불러올 수 없습니다</p>
+                <p class="text-lg text-secondary">잠시 후 다시 시도해주세요</p>
+            </div>
+        `;
+    }
+
+    // 검색 수행
+    async function performSearch(keyword) {
+        try {
+            showSearchLoading();
+
+            // 숫자인지 확인 (찬송가 번호)
+            const isNumber = /^\d+$/.test(keyword);
+            const searchParams = new URLSearchParams();
+
+            if (isNumber) {
+                searchParams.append('number', keyword);
+            } else {
+                searchParams.append('q', keyword);
+            }
+
+            const response = await fetch(`/api/hymns/search?${searchParams.toString()}`);
+            const data = await response.json();
+
+            hideSearchLoading();
+
+            if (data.success) {
+                displaySearchResults(data.hymns || []);
+                // 검색 결과를 캐시에 저장
+                data.hymns.forEach(hymn => {
+                    hymnDataCache[hymn.number] = hymn;
+                });
+            } else {
+                showSearchError('검색 중 오류가 발생했습니다.');
+            }
+        } catch (error) {
+            hideSearchLoading();
+            console.error('검색 오류:', error);
+            showSearchError('검색 중 오류가 발생했습니다.');
+        }
+    }
+
+    // 주제별 검색
+    async function searchByTheme(theme) {
+        try {
+            showSearchLoading();
+
+            const response = await fetch(`/api/hymns/theme/${encodeURIComponent(theme)}`);
+            const data = await response.json();
+
+            hideSearchLoading();
+
+            if (data.success) {
+                displaySearchResults(data.hymns || []);
+                // 검색 결과를 캐시에 저장
+                data.hymns.forEach(hymn => {
+                    hymnDataCache[hymn.number] = hymn;
+                });
+            } else {
+                showSearchError(`"${theme}" 주제의 찬송가를 찾을 수 없습니다.`);
+            }
+        } catch (error) {
+            hideSearchLoading();
+            console.error('주제별 검색 오류:', error);
+            showSearchError('검색 중 오류가 발생했습니다.');
+        }
+    }
+
+    // 로딩 표시
+    function showSearchLoading() {
+        document.getElementById('popularHymnsSection').style.opacity = '0.5';
+    }
+
+    function hideSearchLoading() {
+        document.getElementById('popularHymnsSection').style.opacity = '1';
+    }
+
+    // 검색 오류 표시
+    function showSearchError(message) {
+        const resultsDiv = document.getElementById('searchResults');
+        resultsDiv.classList.remove('hidden');
+        document.getElementById('popularHymnsSection').classList.add('hidden');
+
+        document.getElementById('resultCount').textContent = '오류 발생';
+        document.getElementById('resultsList').innerHTML = `
+            <div class="text-center py-12">
+                <div class="w-16 h-16 bg-red-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                    <span class="text-2xl">⚠️</span>
+                </div>
+                <p class="text-xl text-primary mb-2">${message}</p>
+                <p class="text-lg text-secondary">잠시 후 다시 시도해주세요</p>
+            </div>
+        `;
+    }
+
+    // 인기 찬송가 표시
+    function displayPopularHymns(hymns) {
+        if (hymns.length === 0) {
+            showLoadingError();
+            return;
+        }
+
+        const themeColors = {
+            '찬양': 'purple',
+            '경배': 'blue',
+            '구원': 'green',
+            '사랑': 'pink',
+            '성령': 'amber',
+            '은혜': 'emerald',
+            '평안': 'indigo'
+        };
+
+        popularHymns.innerHTML = hymns.map(hymn => {
+            const colorClass = themeColors[hymn.theme] || 'gray';
+
+            return `
+                <div class="hymn-item cursor-pointer focus-ring rounded-xl" data-number="${hymn.number}" tabindex="0"
+                     aria-label="${hymn.number}장 ${hymn.title} 찬송가 보기" onkeydown="handleKeyPress(event, 'showHymnFromAPI', '${hymn.number}')">
+                    <div class="bg-gradient-to-r from-${colorClass}-50 to-${colorClass}-100 p-6 rounded-xl border-2 border-${colorClass}-200 hover:border-${colorClass}-400 transition-all duration-200">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <span class="inline-block bg-${colorClass}-100 text-${colorClass}-800 px-3 py-2 rounded-full text-base font-bold">${hymn.number}장</span>
+                                    <span class="inline-block bg-${colorClass}-200 text-${colorClass}-800 px-3 py-2 rounded-full text-base font-medium">${hymn.theme}</span>
+                                </div>
+                                <h4 class="text-xl font-bold text-primary mb-2">${hymn.title}</h4>
+                                <p class="text-base text-secondary leading-relaxed">${hymn.lyrics ? hymn.lyrics.substring(0, 50) + '...' : '찬송가 가사'}</p>
+                            </div>
+                            <svg class="w-7 h-7 text-disabled ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // 새로 생성된 아이템에 클릭 이벤트 추가
+        popularHymns.querySelectorAll('.hymn-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const number = this.dataset.number;
+                showHymnFromAPI(number);
+            });
+        });
+    }
+
+    function displaySearchResults(hymns) {
+        document.getElementById('popularHymnsSection').classList.add('hidden');
+        searchResults.classList.remove('hidden');
+
+        if (hymns.length === 0) {
+            document.getElementById('resultCount').textContent = '검색 결과가 없습니다';
+            document.getElementById('resultsList').innerHTML = `
+                <div class="text-center py-12">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <span class="text-2xl">🔍</span>
+                    </div>
+                    <p class="text-xl text-primary mb-2">찾으시는 찬송가가 없습니다</p>
+                    <p class="text-lg text-secondary">다른 키워드로 검색해보세요</p>
+                </div>
+            `;
+            return;
+        }
+
+        document.getElementById('resultCount').textContent = `총 ${hymns.length}개의 찬송가를 찾았습니다`;
+
+        const resultsList = document.getElementById('resultsList');
+        const themeColors = {
+            '찬양': 'purple',
+            '경배': 'blue',
+            '감사': 'green',
+            '기도': 'indigo',
+            '은혜': 'emerald',
+            '성령': 'amber'
+        };
+
+        resultsList.innerHTML = hymns.map((hymn) => {
+            const colorClass = themeColors[hymn.theme] || 'gray';
+
+            return `
+                <div class="hymn-item cursor-pointer focus-ring rounded-xl" data-number="${hymn.number}"
+                     tabindex="0" aria-label="${hymn.number}장 ${hymn.title} 찬송가 보기"
+                     onkeydown="handleKeyPress(event, 'showHymn', '${hymn.number}')">
+                    <div class="bg-gradient-to-r from-${colorClass}-50 to-${colorClass}-100 p-6 rounded-xl border-2 border-${colorClass}-200 hover:border-${colorClass}-400 transition-all duration-200">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center space-x-3 mb-2">
+                                    <span class="inline-block bg-${colorClass}-100 text-${colorClass}-800 px-3 py-2 rounded-full text-base font-bold">${hymn.number}장</span>
+                                    <span class="inline-block bg-${colorClass}-200 text-${colorClass}-800 px-3 py-2 rounded-full text-base font-medium">${hymn.theme}</span>
+                                </div>
+                                <h4 class="text-xl font-bold text-primary">${hymn.title}</h4>
+                            </div>
+                            <svg class="w-7 h-7 text-disabled ml-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // 새로 생성된 아이템에도 클릭 이벤트 추가
+        resultsList.querySelectorAll('.hymn-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const number = this.dataset.number;
+                showHymnFromAPI(number);
+            });
+        });
+    }
+
+    function hideSearchResults() {
+        searchResults.classList.add('hidden');
+        document.getElementById('popularHymnsSection').classList.remove('hidden');
+    }
+
+    // 특정 찬송가 로드
+    async function loadHymn(number) {
+        // 캐시에 있으면 캐시에서 반환
+        if (hymnDataCache[number]) {
+            return hymnDataCache[number];
+        }
+
+        try {
+            const response = await fetch(`/api/hymns/${number}`);
+            const data = await response.json();
+
+            if (data.success && data.hymn) {
+                hymnDataCache[number] = data.hymn;
+                return data.hymn;
+            }
+        } catch (error) {
+            console.error('찬송가 로드 오류:', error);
+        }
+
+        return null;
+    }
+
+    function showHymnModalWithData(hymn) {
+        document.getElementById('modalTitle').textContent = hymn.title;
+        document.getElementById('modalNumber').textContent = `${hymn.number}장 • ${hymn.theme}`;
+        document.getElementById('modalLyrics').textContent = hymn.lyrics || '가사 정보가 없습니다.';
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+
+        // 포커스 트랩
+        document.querySelector('#hymnModal button').focus();
+    }
+
+    // 전역 함수들
+    window.showHymnFromAPI = async function(number) {
+        const hymn = await loadHymn(number);
+        if (hymn) {
+            showHymnModalWithData(hymn);
+        } else {
+            showFriendlyAlert('찬송가를 불러올 수 없습니다.', 'error');
+        }
+    };
+
+    window.clearSearch = function() {
+        searchInput.value = '';
+        hideSearchResults();
+    };
+
+    window.copyHymn = function() {
+        const title = document.getElementById('modalTitle').textContent;
+        const number = document.getElementById('modalNumber').textContent;
+        const lyrics = document.getElementById('modalLyrics').textContent;
+        const textToCopy = `${title} (${number})\n\n${lyrics}`;
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            showFriendlyAlert('✅ 찬송가 가사가 복사되었습니다!', 'success');
+        }).catch(() => {
+            showFriendlyAlert('❌ 복사에 실패했습니다. 다시 시도해주세요.', 'error');
+        });
+    };
+
+    // 키보드 접근성 지원
+    window.handleKeyPress = function(event, functionName, parameter) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            window[functionName](parameter);
+        }
+    };
+
+    // ESC 키로 모달 닫기
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+        }
+    });
+
+    // 모달 배경 클릭으로 닫기
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // 사용자 친화적 알림 함수
+    function showFriendlyAlert(message, type) {
+        // 기존 알림 제거
+        const existingAlert = document.querySelector('.friendly-notification');
+        if (existingAlert) {
+            existingAlert.remove();
+        }
+
+        // 새 알림 생성
+        const alert = document.createElement('div');
+        alert.className = `friendly-notification ${
+            type === 'success' ? 'bg-green-100 text-green-800 border-green-300' :
+            type === 'error' ? 'bg-red-100 text-red-800 border-red-300' :
+            'bg-purple-100 text-purple-800 border-purple-300'
+        }`;
+        alert.textContent = message;
+
+        document.body.appendChild(alert);
+
+        // 3초 후 자동 제거
+        setTimeout(() => {
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateX(-50%) translateY(-100%)';
+            setTimeout(() => alert.remove(), 300);
+        }, 3000);
+    }
+});
+
+function closeModal() {
+    document.getElementById('hymnModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+</script>
+{{end}}

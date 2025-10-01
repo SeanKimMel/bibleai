@@ -1,0 +1,962 @@
+{{define "bible-analysis.html"}}
+{{template "base.html" .}}
+{{end}}
+{{define "bible-analysis-content"}}
+<!-- 키워드 탭 -->
+<div id="keywordSelection" class="space-y-6">
+    <div class="card">
+        <div class="text-center mb-8">
+            <h2 class="text-3xl font-bold text-primary mb-3">🔍 오늘의 키워드</h2>
+            <p class="text-lg text-secondary">키워드를 선택하여 관련 기도문, 성경구절, 찬송가를 찾아보세요</p>
+        </div>
+
+        <!-- 로딩 상태 -->
+        <div id="keywordsLoading" class="text-center py-12">
+            <div class="flex flex-col items-center space-y-4">
+                <div class="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+                <p class="text-xl text-secondary font-medium">키워드를 불러오고 있습니다...</p>
+            </div>
+        </div>
+
+        <!-- 키워드 그리드 -->
+        <div id="keywordsContainer" class="keywords-grid hidden">
+            <!-- 키워드 버튼들이 동적으로 삽입됩니다 -->
+        </div>
+    </div>
+</div>
+
+<!-- 로딩 -->
+<div id="keywordLoading" class="hidden card text-center py-12">
+    <div class="flex flex-col items-center space-y-4">
+        <div class="w-16 h-16 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin"></div>
+        <p class="text-xl text-secondary font-medium">🔍 관련 콘텐츠를 찾고 있습니다...</p>
+    </div>
+</div>
+
+<!-- 키워드 결과 -->
+<div id="keywordContent" class="hidden">
+    <div class="card mb-6">
+        <div class="flex items-center justify-between mb-6">
+            <h3 id="keywordTitle" class="text-2xl font-bold text-primary"></h3>
+            <button onclick="resetKeyword()" class="text-lg text-orange-600 hover:text-orange-700 font-medium focus-ring rounded-lg px-4 py-2">
+                🔄 다른 키워드 선택
+            </button>
+        </div>
+
+        <!-- 탭 버튼 -->
+        <div class="flex space-x-2 mb-6">
+            <button id="prayersTab" onclick="showContentTab('prayers')" class="px-4 py-2 rounded-lg font-medium transition-all duration-200 bg-green-100 text-green-800">
+                🙏 기도문 <span id="prayersCount" class="ml-1 text-sm opacity-75"></span>
+            </button>
+            <button id="versesTab" onclick="showContentTab('verses')" class="px-4 py-2 rounded-lg font-medium transition-all duration-200 bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-800">
+                📖 성경구절 <span id="versesCount" class="ml-1 text-sm opacity-75"></span>
+            </button>
+            <button id="hymnsTab" onclick="showContentTab('hymns')" class="px-4 py-2 rounded-lg font-medium transition-all duration-200 bg-gray-100 text-gray-700 hover:bg-purple-100 hover:text-purple-800">
+                🎵 찬송가 <span id="hymnsCount" class="ml-1 text-sm opacity-75"></span>
+            </button>
+        </div>
+
+        <!-- 콘텐츠 영역 -->
+        <div id="contentArea">
+            <div id="prayersContent" class="content-tab">
+                <div id="prayersList" class="space-y-4"></div>
+            </div>
+
+            <div id="versesContent" class="content-tab hidden">
+                <div id="versesList" class="space-y-4"></div>
+            </div>
+
+            <div id="hymnsContent" class="content-tab hidden">
+                <div id="hymnsList" class="space-y-4"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 성경구절 상세보기 모달 -->
+<div id="verseDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9998] hidden">
+    <div class="bg-white rounded-3xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 id="verseDetailTitle" class="text-2xl font-bold text-primary"></h3>
+                    <p id="verseDetailVersion" class="text-sm text-gray-500"></p>
+                </div>
+            </div>
+            <button onclick="closeVerseDetail()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="space-y-6">
+            <div id="verseDetailContent" class="text-lg leading-relaxed text-gray-700 bg-blue-50 p-6 rounded-xl"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 기도문 상세보기 모달 -->
+<div id="prayerDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9998] hidden">
+    <div class="bg-white rounded-3xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                </div>
+                <h3 id="prayerDetailTitle" class="text-2xl font-bold text-primary"></h3>
+            </div>
+            <button onclick="closePrayerDetail()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="space-y-6">
+            <div id="prayerDetailTags" class="flex flex-wrap gap-2"></div>
+            <div id="prayerDetailContent" class="text-lg leading-relaxed text-gray-700 bg-green-50 p-6 rounded-xl whitespace-pre-line"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 찬송가 상세보기 모달 -->
+<div id="hymnDetailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9998] hidden">
+    <div class="bg-white rounded-3xl p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                    </svg>
+                </div>
+                <h3 id="hymnDetailTitle" class="text-2xl font-bold text-primary"></h3>
+            </div>
+            <button onclick="closeHymnDetail()" class="p-2 hover:bg-gray-100 rounded-xl transition-colors">
+                <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div id="hymnDetailLoading" class="text-center py-12">
+            <div class="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-lg text-gray-600">찬송가를 불러오는 중...</p>
+        </div>
+        <div id="hymnDetailContent" class="space-y-6 hidden"></div>
+    </div>
+</div>
+
+<style>
+    /* 나이든 사용자용 키워드 태그 */
+    .keyword-tag {
+        @apply inline-block bg-orange-100 text-orange-800 px-4 py-2 rounded-xl text-lg font-medium;
+        @apply hover:bg-orange-200 transition-colors duration-200;
+        @apply focus:ring-4 focus:ring-orange-200 focus:outline-none;
+        @apply border-2 border-orange-300 cursor-pointer;
+        min-height: 48px;
+    }
+
+    /* 키워드 버튼 스타일 (인라인으로 이동) */
+
+    /* 콘텐츠 카드 스타일 */
+    .content-card {
+        @apply bg-white border border-gray-200 rounded-xl p-4 mb-4;
+        @apply hover:shadow-md transition-shadow duration-200;
+    }
+
+    /* 접근성 향상 */
+    .focus-ring {
+        @apply focus:ring-4 focus:ring-blue-400 focus:ring-opacity-50 focus:outline-none;
+    }
+
+    /* SPA 탭 컨텐츠 표시/숨김 (Tailwind 대체) */
+    .tab-content {
+        display: block;
+    }
+    .tab-content.hidden {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    .tab-content.active {
+        display: block !important;
+        visibility: visible !important;
+    }
+
+    /* 키워드 그리드 최적화 (10개 키워드용) */
+    .keywords-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.25rem;
+        margin-top: 1.5rem;
+    }
+
+    /* 탭 버튼 활성화 스타일 */
+    .content-tab.hidden {
+        display: none !important;
+    }
+</style>
+
+<script>
+    // 전역 BibleAI 객체
+    window.BibleAI = {
+        api: {
+            async get(url) {
+                try {
+                    const response = await fetch(url);
+                    return await response.json();
+                } catch (error) {
+                    console.error('API GET 오류:', error);
+                    throw error;
+                }
+            },
+            async post(url, data) {
+                try {
+                    const response = await fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    return await response.json();
+                } catch (error) {
+                    console.error('API POST 오류:', error);
+                    throw error;
+                }
+            }
+        },
+        storage: {
+            get: (key) => localStorage.getItem(key),
+            set: (key, value) => localStorage.setItem(key, value)
+        },
+        showNotification(message, type = 'info') {
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        },
+        formatDate: (date) => new Intl.DateTimeFormat('ko-KR').format(new Date(date)),
+        truncate: (str, length = 100) => str.length > length ? str.substring(0, length) + '...' : str
+    };
+
+    // 키워드 데이터 (API에서 로드)
+    let KEYWORDS = [];
+
+    // 현재 선택된 키워드
+    let currentKeyword = null;
+    let currentTab = 'prayers';
+
+    // 하드코딩 제거 - 이제 API를 통해 기도문을 가져옵니다
+
+    // 페이지 로드 시 키워드 로딩
+    document.addEventListener('DOMContentLoaded', function() {
+        loadKeywords();
+    });
+
+    // 키워드 로딩
+    async function loadKeywords() {
+        const container = document.getElementById('keywordsContainer');
+        const loading = document.getElementById('keywordsLoading');
+
+        // 로딩 상태 표시
+        loading.classList.remove('hidden');
+        container.classList.add('hidden');
+
+        try {
+            // API에서 추천 키워드 가져오기
+            const response = await fetch('/api/keywords/featured');
+            const data = await response.json();
+
+            if (data.success && data.keywords) {
+                KEYWORDS = data.keywords.map(keyword => ({
+                    id: keyword.name.toLowerCase(),
+                    name: keyword.name,
+                    icon: keyword.icon,
+                    description: keyword.description,
+                    prayer_count: keyword.prayer_count,
+                    bible_count: keyword.bible_count,
+                    hymn_count: keyword.hymn_count
+                }));
+
+                // 키워드 버튼 생성 (아이콘 제거, 외곽선 추가)
+                const keywordButtons = KEYWORDS.map(keyword => `
+                    <button onclick="selectKeyword('${keyword.name}')"
+                            class="w-full bg-white border-2 border-gray-200 rounded-xl p-4 text-left hover:border-orange-300 hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                            aria-label="${keyword.name} - ${keyword.description}">
+                        <div class="flex items-center justify-between">
+                            <div class="flex-1">
+                                <div class="font-bold text-xl text-gray-800 mb-1">${keyword.name}</div>
+                                <div class="text-sm text-gray-600 mb-2">${keyword.description}</div>
+                                <div class="flex flex-wrap gap-2 text-xs">
+                                    <span class="bg-green-100 text-green-700 px-2 py-1 rounded-md">기도 ${keyword.prayer_count}</span>
+                                    <span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-md">성경 ${keyword.bible_count}</span>
+                                    <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-md">찬송 ${keyword.hymn_count}</span>
+                                </div>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 ml-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </button>
+                `).join('');
+
+                container.innerHTML = keywordButtons;
+            } else {
+                throw new Error('키워드 데이터를 불러올 수 없습니다');
+            }
+        } catch (error) {
+            console.error('키워드 로딩 실패:', error);
+            container.innerHTML = `
+                <div class="text-center text-red-600 p-4">
+                    <p>키워드를 불러오는 중 오류가 발생했습니다.</p>
+                    <button onclick="loadKeywords()" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        다시 시도
+                    </button>
+                </div>
+            `;
+        } finally {
+            loading.classList.add('hidden');
+            container.classList.remove('hidden');
+        }
+    }
+
+    // 키워드 선택
+    async function selectKeyword(keyword) {
+        currentKeyword = keyword;
+
+        // UI 업데이트
+        document.getElementById('keywordSelection').classList.add('hidden');
+        document.getElementById('keywordLoading').classList.remove('hidden');
+        document.getElementById('keywordContent').classList.add('hidden');
+
+        try {
+            // 병렬로 모든 콘텐츠 로드
+            const [prayers, verses, hymns] = await Promise.all([
+                loadPrayersByKeyword(keyword),
+                loadVersesByKeyword(keyword),
+                loadHymnsByKeyword(keyword)
+            ]);
+
+            // 결과 표시
+            displayKeywordResults(keyword, prayers, verses, hymns);
+
+        } catch (error) {
+            console.error('키워드 콘텐츠 로딩 실패:', error);
+            BibleAI.showNotification('콘텐츠를 불러오는데 실패했습니다.', 'error');
+            resetKeyword();
+        }
+    }
+
+    // 기도문 로딩 (API 호출)
+    async function loadPrayersByKeyword(keyword) {
+        try {
+            // 키워드 이름으로 직접 검색
+            const response = await BibleAI.api.get(`/api/prayers/search?q=${encodeURIComponent(keyword)}`);
+            return response.prayers || [];
+        } catch (error) {
+            console.error('기도문 로딩 실패:', error);
+            return [];
+        }
+    }
+
+    // 성경구절 로딩 (API 호출)
+    async function loadVersesByKeyword(keyword) {
+        try {
+            // 성경 탭과 동일한 장 기준 API 사용
+            const response = await BibleAI.api.get(`/api/bible/search/chapters?q=${encodeURIComponent(keyword)}`);
+            return response.results || [];
+        } catch (error) {
+            console.error('성경구절 로딩 실패:', error);
+            return [];
+        }
+    }
+
+    // 찬송가 로딩 (API 호출)
+    async function loadHymnsByKeyword(keyword) {
+        try {
+            const response = await BibleAI.api.get(`/api/hymns/search?q=${encodeURIComponent(keyword)}`);
+            return response.hymns || [];
+        } catch (error) {
+            console.error('찬송가 로딩 실패:', error);
+            return [];
+        }
+    }
+
+    // 키워드 결과 표시
+    function displayKeywordResults(keyword, prayers, verses, hymns) {
+        document.getElementById('keywordLoading').classList.add('hidden');
+
+        // 제목 설정
+        document.getElementById('keywordTitle').textContent = `🔍 "${keyword}" 관련 콘텐츠`;
+
+        // 카운트 설정
+        document.getElementById('prayersCount').textContent = `(${prayers.length})`;
+        document.getElementById('versesCount').textContent = `(${verses.length})`;
+        document.getElementById('hymnsCount').textContent = `(${hymns.length})`;
+
+        // 콘텐츠 표시
+        displayPrayers(prayers);
+        displayVerses(verses);
+        displayHymns(hymns);
+
+        // 키워드 콘텐츠 영역 표시
+        document.getElementById('keywordContent').classList.remove('hidden');
+
+        // 기본적으로 기도문 탭 활성화
+        showContentTab('prayers');
+    }
+
+    // 기도문 표시
+    function displayPrayers(prayers) {
+        const container = document.getElementById('prayersList');
+        if (prayers.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-8">해당 키워드의 기도문이 없습니다.</p>';
+            return;
+        }
+
+        container.innerHTML = prayers.map((prayer, index) => `
+            <div class="content-card cursor-pointer hover:shadow-lg transition-shadow" onclick="showPrayerDetailById(${index})">
+                <h4 class="font-bold text-lg text-green-800 mb-2">${prayer.title}</h4>
+                <p class="text-gray-700 leading-relaxed">${BibleAI.truncate(prayer.content, 150)}</p>
+                <div class="mt-3 text-right">
+                    <span class="text-sm text-green-600">클릭하여 상세보기 →</span>
+                </div>
+            </div>
+        `).join('');
+
+        // 전역 변수에 기도문 데이터 저장
+        window.currentPrayersData = prayers;
+    }
+
+    // 성경구절 표시 (장 기준, 성경 탭과 동일)
+    function displayVerses(chapters) {
+        const container = document.getElementById('versesList');
+        if (chapters.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-8">해당 키워드의 성경 장이 없습니다.</p>';
+            return;
+        }
+
+        container.innerHTML = chapters.map(chapter => `
+            <div class="group relative overflow-hidden bg-gradient-to-br from-blue-50/50 to-white hover:from-blue-100/60 hover:to-blue-50/80 rounded-2xl p-6 border border-blue-100/60 transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/30 hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]" onclick="viewChapterDetails('${chapter.book}', ${chapter.chapter}, '${chapter.book_name}')">
+                <div class="relative z-10">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="flex-1">
+                            <h4 class="text-xl font-bold text-gray-800 mb-2">${chapter.book_name} ${chapter.chapter}장</h4>
+                            <div class="flex items-center space-x-4 mb-3">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    주제: ${chapter.theme}
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                    연관도: ${chapter.relevance_score}/10
+                                </span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                                    ${chapter.keyword_count}회 등장
+                                </span>
+                            </div>
+                        </div>
+                        <div class="flex items-center text-blue-500 group-hover:text-blue-600 transition-colors ml-4">
+                            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                            <span class="text-sm font-medium">장 읽기</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // 성경 장 상세보기 (성경 탭과 동일한 기능)
+    window.viewChapterDetails = async function(bookId, chapterNum, bookName) {
+        console.log('챕터 상세보기:', bookId, chapterNum);
+
+        try {
+            // 해당 챕터의 내용과 주제 정보를 가져옴
+            const [chapterResponse, themesResponse] = await Promise.all([
+                fetch(`/api/bible/chapters/${bookId}/${chapterNum}`),
+                fetch(`/api/bible/chapters/${bookId}/${chapterNum}/themes`)
+            ]);
+
+            if (!chapterResponse.ok || !themesResponse.ok) {
+                throw new Error('챕터 정보를 가져올 수 없습니다');
+            }
+
+            const chapterData = await chapterResponse.json();
+            const themesData = await themesResponse.json();
+
+            // 키워드 탭 내에서 모달 표시
+            showChapterModal(chapterData, themesData);
+
+        } catch (error) {
+            console.error('장 상세보기 실패:', error);
+            BibleAI.showNotification('성경 장을 불러오는데 실패했습니다.', 'error');
+        }
+    };
+
+    // 현재 모달에 표시된 장 정보 저장
+    let currentModalChapter = null;
+
+    // 성경 장 모달 표시 (성경 탭과 동일)
+    function showChapterModal(chapterData, themesData) {
+        const modal = document.getElementById('chapterModal');
+        const modalTitle = modal.querySelector('#modalChapterTitle');
+        const modalThemes = modal.querySelector('#modalThemes');
+        const modalContent = modal.querySelector('#modalContent');
+
+        // 현재 장 정보 저장
+        currentModalChapter = {
+            book_id: chapterData.book,
+            book_name: chapterData.book_name,
+            chapter: chapterData.chapter,
+            prev_chapter: chapterData.prev_chapter,
+            next_chapter: chapterData.next_chapter
+        };
+
+        modalTitle.textContent = `${chapterData.book_name} ${chapterData.chapter}장`;
+
+        // 네비게이션 버튼 상태 업데이트
+        updateNavigationButtons();
+
+        // 주제 태그 표시 (성경 탭과 동일한 방식)
+        if (themesData && themesData.themes && themesData.themes.length > 0) {
+            modalThemes.innerHTML = themesData.themes.map(theme => `
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 mr-2 mb-2">
+                    ${theme.theme} (${theme.keyword_count}회)
+                </span>
+            `).join('');
+        } else if (chapterData.commentary && chapterData.commentary.themes) {
+            // themes API가 없을 때 commentary.themes 사용
+            try {
+                const themes = JSON.parse(chapterData.commentary.themes);
+                modalThemes.innerHTML = themes.map(theme => `
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 mr-2 mb-2">
+                        ${theme}
+                    </span>
+                `).join('');
+            } catch (e) {
+                modalThemes.innerHTML = '';
+            }
+        } else {
+            modalThemes.innerHTML = '';
+        }
+
+        // 해석 정보 표시 (commentary 객체가 있는 경우)
+        const modalCommentary = modal.querySelector('#modalCommentary');
+        if (chapterData.commentary && (chapterData.commentary.title || chapterData.commentary.summary)) {
+            const commentary = chapterData.commentary;
+            let commentaryHtml = `
+                <div class="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-6 border-l-4 border-amber-400">
+                    <div class="flex items-center mb-4">
+                        <div class="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center mr-3">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+                            </svg>
+                        </div>
+                        <h4 class="text-xl font-bold text-amber-800">📖 장 해석</h4>
+                    </div>
+            `;
+
+            if (commentary.title) {
+                commentaryHtml += `
+                    <div class="mb-4">
+                        <h5 class="text-lg font-semibold text-amber-800 mb-2">🎯 핵심 주제</h5>
+                        <p class="text-amber-700 font-medium text-lg">${commentary.title.replace(/'/g, '&#39;')}</p>
+                    </div>
+                `;
+            }
+
+            if (commentary.summary) {
+                commentaryHtml += `
+                    <div class="mb-4">
+                        <h5 class="text-lg font-semibold text-amber-800 mb-2">📝 내용 요약</h5>
+                        <p class="text-amber-700 leading-relaxed">${commentary.summary.replace(/'/g, '&#39;')}</p>
+                    </div>
+                `;
+            }
+
+            if (commentary.themes) {
+                try {
+                    const themes = JSON.parse(commentary.themes);
+                    if (themes && themes.length > 0) {
+                        commentaryHtml += `
+                            <div class="mb-4">
+                                <h5 class="text-lg font-semibold text-amber-800 mb-2">🏷️ 주요 주제</h5>
+                                <div class="flex flex-wrap gap-2">
+                                    ${themes.map(theme => `
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-200 text-amber-800">
+                                            ${theme}
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                } catch (e) {
+                    // JSON 파싱 실패시 무시
+                }
+            }
+
+            if (commentary.context) {
+                commentaryHtml += `
+                    <div class="mb-4">
+                        <h5 class="text-lg font-semibold text-amber-800 mb-2">🏛️ 역사적 배경</h5>
+                        <p class="text-amber-700 leading-relaxed">${commentary.context.replace(/'/g, '&#39;')}</p>
+                    </div>
+                `;
+            }
+
+            if (commentary.application) {
+                commentaryHtml += `
+                    <div>
+                        <h5 class="text-lg font-semibold text-amber-800 mb-2">💡 현대적 적용</h5>
+                        <p class="text-amber-700 leading-relaxed">${commentary.application.replace(/'/g, '&#39;')}</p>
+                    </div>
+                `;
+            }
+
+            commentaryHtml += '</div>';
+            modalCommentary.innerHTML = commentaryHtml;
+            modalCommentary.classList.remove('hidden');
+        } else {
+            modalCommentary.classList.add('hidden');
+        }
+
+        // 구절들 표시 (성경 탭과 동일한 방식)
+        modalContent.innerHTML = chapterData.verses.map(verse => `
+            <p class="mb-4 text-lg leading-relaxed">
+                <span class="inline-block w-8 text-blue-600 font-medium text-sm">${verse.verse}</span>
+                <span class="text-gray-800">${verse.content}</span>
+                <button onclick="copyVerse('${verse.content.replace(/'/g, "\\'")}', '${chapterData.book_name} ${chapterData.chapter}:${verse.verse}')" class="ml-2 text-blue-500 hover:text-blue-700 text-sm">📋</button>
+            </p>
+        `).join('');
+
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    // 성경 장 모달 닫기
+    window.closeChapterModal = function() {
+        const modal = document.getElementById('chapterModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+            currentModalChapter = null;
+        }
+    };
+
+    // 네비게이션 버튼 상태 업데이트
+    function updateNavigationButtons() {
+        const prevBtn = document.getElementById('prevChapterBtn');
+        const nextBtn = document.getElementById('nextChapterBtn');
+
+        if (!currentModalChapter) {
+            prevBtn.disabled = true;
+            nextBtn.disabled = true;
+            return;
+        }
+
+        // 이전 장 버튼 (prev_chapter가 null이면 비활성화)
+        prevBtn.disabled = (currentModalChapter.prev_chapter === null);
+
+        // 다음 장 버튼 (next_chapter가 null이면 비활성화)
+        nextBtn.disabled = (currentModalChapter.next_chapter === null);
+    }
+
+    // 장 네비게이션 함수
+    window.navigateChapter = async function(direction) {
+        if (!currentModalChapter) return;
+
+        // API에서 제공하는 prev_chapter/next_chapter 정보 사용
+        const newChapter = direction === 'prev'
+            ? currentModalChapter.prev_chapter
+            : currentModalChapter.next_chapter;
+
+        if (newChapter === null) return;
+
+        try {
+            // 새로운 장 데이터 가져오기
+            const chapterResponse = await fetch(`/api/bible/chapters/${currentModalChapter.book_id}/${newChapter}`);
+            if (!chapterResponse.ok) {
+                throw new Error('장 데이터 요청 실패');
+            }
+            const chapterData = await chapterResponse.json();
+
+            // 모달 업데이트 (chapterData에 이미 commentary 포함)
+            showChapterModal(chapterData, chapterData);
+        } catch (error) {
+            console.error('장 네비게이션 실패:', error);
+            BibleAI.showNotification('장을 불러오는데 실패했습니다.', 'error');
+        }
+    };
+
+    // 구절 복사 기능
+    window.copyVerse = function(content, reference) {
+        const textToCopy = `"${content}" - ${reference}`;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            BibleAI.showNotification('✅ 구절이 복사되었습니다!', 'success');
+        }).catch(() => {
+            BibleAI.showNotification('❌ 복사에 실패했습니다.', 'error');
+        });
+    };
+
+    // ESC 키와 배경 클릭으로 모달 닫기 이벤트 설정
+    document.addEventListener('DOMContentLoaded', function() {
+        // ESC 키로 모달 닫기
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const chapterModal = document.getElementById('chapterModal');
+                if (chapterModal && !chapterModal.classList.contains('hidden')) {
+                    closeChapterModal();
+                }
+            }
+        });
+
+        // 배경 클릭으로 모달 닫기
+        const chapterModal = document.getElementById('chapterModal');
+        if (chapterModal) {
+            chapterModal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeChapterModal();
+                }
+            });
+        }
+    });
+
+    // 찬송가 표시
+    function displayHymns(hymns) {
+        const container = document.getElementById('hymnsList');
+        if (hymns.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-8">해당 키워드의 찬송가가 없습니다.</p>';
+            return;
+        }
+
+        container.innerHTML = hymns.map(hymn => {
+            const displayNumber = hymn.new_hymn_number || hymn.number;
+            const paddedNumber = String(displayNumber).padStart(3, '0');
+            return `
+            <div class="content-card cursor-pointer hover:shadow-lg transition-shadow" onclick="showHymnDetail(${displayNumber}, '신찬송가 ${paddedNumber}장 ${hymn.title.replace(/'/g, "\\'")}')">
+                <div class="flex justify-between items-start mb-2">
+                    <h4 class="font-bold text-lg text-purple-800">신찬송가 ${paddedNumber}장 - ${hymn.title}</h4>
+                </div>
+                <p class="text-gray-600 text-sm mb-2">주제: ${hymn.theme || '일반'}</p>
+                <p class="text-gray-700 leading-relaxed">${BibleAI.truncate(hymn.lyrics, 150)}</p>
+                <div class="mt-3 text-right">
+                    <span class="text-sm text-purple-600">클릭하여 상세보기 →</span>
+                </div>
+            </div>
+            `;
+        }).join('');
+    }
+
+    // 성경구절 상세보기 모달
+    function showVerseDetail(book, chapter, verse, content, bookName) {
+        document.getElementById('verseDetailModal').classList.remove('hidden');
+        document.getElementById('verseDetailTitle').textContent = `${bookName} ${chapter}:${verse}`;
+        document.getElementById('verseDetailContent').textContent = content;
+        document.getElementById('verseDetailVersion').textContent = '개역개정';
+    }
+
+    function closeVerseDetail() {
+        document.getElementById('verseDetailModal').classList.add('hidden');
+    }
+
+    // 기도문 상세보기 모달 (인덱스 기반)
+    function showPrayerDetailById(index) {
+        if (!window.currentPrayersData || !window.currentPrayersData[index]) {
+            console.error('기도문 데이터를 찾을 수 없습니다.');
+            return;
+        }
+
+        const prayer = window.currentPrayersData[index];
+        document.getElementById('prayerDetailModal').classList.remove('hidden');
+        document.getElementById('prayerDetailTitle').textContent = prayer.title;
+        document.getElementById('prayerDetailContent').textContent = prayer.content;
+        document.getElementById('prayerDetailTags').innerHTML = (prayer.tags || []).map(tag => `
+            <span class="inline-block bg-green-100 text-green-800 px-3 py-2 rounded-full text-sm font-medium">${tag.name}</span>
+        `).join('');
+    }
+
+    // 기존 호환성을 위한 함수 (필요 시)
+    function showPrayerDetail(id, title, content, tags) {
+        document.getElementById('prayerDetailModal').classList.remove('hidden');
+        document.getElementById('prayerDetailTitle').textContent = title;
+        document.getElementById('prayerDetailContent').textContent = content;
+        document.getElementById('prayerDetailTags').innerHTML = (tags || []).map(tag => `
+            <span class="inline-block bg-green-100 text-green-800 px-3 py-2 rounded-full text-sm font-medium">${tag.name}</span>
+        `).join('');
+    }
+
+    function closePrayerDetail() {
+        document.getElementById('prayerDetailModal').classList.add('hidden');
+    }
+
+    // 찬송가 상세보기 모달
+    async function showHymnDetail(number, title) {
+        document.getElementById('hymnDetailModal').classList.remove('hidden');
+        document.getElementById('hymnDetailTitle').textContent = `${number}장 - ${title}`;
+        document.getElementById('hymnDetailLoading').classList.remove('hidden');
+        document.getElementById('hymnDetailContent').classList.add('hidden');
+
+        try {
+            const response = await BibleAI.api.get(`/api/hymns/${number}`);
+            if (response.success && response.hymn) {
+                displayHymnDetailContent(response.hymn);
+            } else {
+                displayHymnDetailError('찬송가를 찾을 수 없습니다.');
+            }
+        } catch (error) {
+            console.error('찬송가 로딩 실패:', error);
+            displayHymnDetailError('찬송가를 불러오는데 실패했습니다.');
+        }
+    }
+
+    function displayHymnDetailContent(hymn) {
+        document.getElementById('hymnDetailLoading').classList.add('hidden');
+        document.getElementById('hymnDetailContent').innerHTML = `
+            <div class="space-y-6">
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div><span class="font-medium">주제:</span> ${hymn.theme || '일반'}</div>
+                    <div><span class="font-medium">작곡가:</span> ${hymn.composer || '미상'}</div>
+                    <div><span class="font-medium">작사자:</span> ${hymn.author || '미상'}</div>
+                    <div><span class="font-medium">성경참조:</span> ${hymn.bible_reference || '없음'}</div>
+                </div>
+                <div>
+                    <h5 class="font-bold text-lg mb-3">가사</h5>
+                    <div class="text-gray-700 leading-loose whitespace-pre-line bg-gray-50 p-4 rounded-lg">
+                        ${hymn.lyrics}
+                    </div>
+                    <!-- 저작권 안내 -->
+                    <div class="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-xl">
+                        <div class="flex items-start">
+                            <svg class="w-5 h-5 text-orange-500 mt-0.5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div class="text-sm text-orange-800">
+                                <p class="font-medium mb-1">📖 저작권 안내</p>
+                                <p class="mb-2">본 가사는 <strong>교육 및 참고 목적</strong>으로 일부 내용만 표시됩니다.</p>
+                                <p class="text-xs text-orange-600">완전한 가사는 <strong>한국찬송가공회</strong> 공식 자료를 참조하시기 바랍니다.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.getElementById('hymnDetailContent').classList.remove('hidden');
+    }
+
+    function displayHymnDetailError(message) {
+        document.getElementById('hymnDetailLoading').classList.add('hidden');
+        document.getElementById('hymnDetailContent').innerHTML = `
+            <div class="text-center py-12">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-700 mb-3">찬송가를 찾을 수 없습니다</h3>
+                <p class="text-gray-500">${message}</p>
+            </div>
+        `;
+        document.getElementById('hymnDetailContent').classList.remove('hidden');
+    }
+
+    function closeHymnDetail() {
+        document.getElementById('hymnDetailModal').classList.add('hidden');
+    }
+
+    // 모달 외부 클릭과 ESC 키 이벤트
+    document.addEventListener('click', function(e) {
+        if (e.target.id === 'verseDetailModal') closeVerseDetail();
+        if (e.target.id === 'prayerDetailModal') closePrayerDetail();
+        if (e.target.id === 'hymnDetailModal') closeHymnDetail();
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeVerseDetail();
+            closePrayerDetail();
+            closeHymnDetail();
+        }
+    });
+
+    // 탭 전환
+    function showContentTab(tabName) {
+        currentTab = tabName;
+
+        // 모든 탭 버튼 비활성화
+        document.querySelectorAll('[id$="Tab"]').forEach(tab => {
+            tab.className = 'px-4 py-2 rounded-lg font-medium transition-all duration-200 bg-gray-100 text-gray-700 hover:bg-gray-200';
+        });
+
+        // 모든 콘텐츠 숨기기
+        document.querySelectorAll('.content-tab').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        // 선택된 탭 활성화
+        const activeTab = document.getElementById(`${tabName}Tab`);
+        const activeContent = document.getElementById(`${tabName}Content`);
+
+        if (tabName === 'prayers') {
+            activeTab.className = 'px-4 py-2 rounded-lg font-medium transition-all duration-200 bg-green-100 text-green-800';
+        } else if (tabName === 'verses') {
+            activeTab.className = 'px-4 py-2 rounded-lg font-medium transition-all duration-200 bg-blue-100 text-blue-800';
+        } else if (tabName === 'hymns') {
+            activeTab.className = 'px-4 py-2 rounded-lg font-medium transition-all duration-200 bg-purple-100 text-purple-800';
+        }
+
+        activeContent.classList.remove('hidden');
+    }
+
+    // 키워드 리셋
+    function resetKeyword() {
+        currentKeyword = null;
+        document.getElementById('keywordSelection').classList.remove('hidden');
+        document.getElementById('keywordLoading').classList.add('hidden');
+        document.getElementById('keywordContent').classList.add('hidden');
+    }
+</script>
+
+<!-- 성경 장 상세 모달 (성경 탭과 동일) -->
+<div id="chapterModal" class="fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+        <div class="sticky top-0 bg-white border-b-2 border-gray-200 p-6 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <button id="prevChapterBtn" onclick="navigateChapter('prev')" class="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="이전 장">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                <h3 id="modalChapterTitle" class="text-2xl font-bold text-gray-800"></h3>
+                <button id="nextChapterBtn" onclick="navigateChapter('next')" class="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="다음 장">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </button>
+            </div>
+            <button onclick="closeChapterModal()" class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6 overflow-y-auto max-h-[80vh]">
+            <div class="mb-6">
+                <h4 class="text-lg font-semibold text-gray-700 mb-3">주요 주제</h4>
+                <div id="modalThemes" class="flex flex-wrap gap-2">
+                    <!-- 주제 태그들이 여기에 들어갑니다 -->
+                </div>
+            </div>
+            <div id="modalCommentary" class="mb-6 hidden">
+                <!-- 해석 정보가 여기에 들어갑니다 -->
+            </div>
+            <div class="mb-6">
+                <h4 class="text-lg font-semibold text-gray-700 mb-4">📖 본문</h4>
+                <div id="modalContent" class="space-y-4">
+                    <!-- 성경 구절들이 여기에 들어갑니다 -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{end}}

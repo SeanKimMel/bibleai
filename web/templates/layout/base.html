@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - 주님말씀AI</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 모바일 최적화 -->
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <!-- 나이든 사용자를 위한 개선된 스타일 -->
+    <style>
+        /* 기본 폰트 및 가독성 개선 */
+        body { 
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
+            font-size: 18px; /* 기본 텍스트 크기 증대 */
+            line-height: 1.75; /* 줄간격 증가 */
+        }
+        
+        /* 나이든 사용자용 버튼 스타일 */
+        .btn-primary {
+            @apply bg-blue-600 text-white px-8 py-4 rounded-xl shadow-md hover:bg-blue-700 active:bg-blue-800;
+            @apply transition-all duration-200 font-medium text-lg;
+            @apply focus:ring-4 focus:ring-blue-200 focus:outline-none;
+            min-height: 48px;
+        }
+        .btn-secondary {
+            @apply bg-gray-100 text-gray-800 px-8 py-4 rounded-xl shadow-md hover:bg-gray-200 active:bg-gray-300;
+            @apply transition-all duration-200 font-medium text-lg border-2 border-gray-300;
+            @apply focus:ring-4 focus:ring-gray-200 focus:outline-none;
+            min-height: 48px;
+        }
+        
+        /* 개선된 카드 스타일 */
+        .card {
+            @apply bg-white rounded-2xl shadow-md p-6 border-2 border-gray-200;
+            @apply hover:shadow-lg transition-shadow duration-300;
+        }
+        .card-interactive {
+            @apply card cursor-pointer hover:border-gray-300 hover:-translate-y-1;
+            @apply active:translate-y-0 focus:ring-4 focus:ring-blue-200 focus:outline-none;
+        }
+        
+        /* 나이든 사용자용 키워드 태그 */
+        .keyword-tag {
+            @apply flex items-center space-x-4 px-6 py-4 bg-white border-2 border-gray-300 rounded-xl;
+            @apply hover:border-blue-400 hover:bg-blue-50 active:bg-blue-100;
+            @apply transition-all duration-200 cursor-pointer text-lg font-medium;
+            @apply focus:ring-4 focus:ring-blue-200 focus:outline-none;
+            min-height: 64px; /* 더 큰 터치 영역 */
+        }
+        .keyword-tag.selected {
+            @apply bg-blue-600 text-white border-blue-600 hover:bg-blue-700;
+        }
+        .keyword-tag:hover {
+            @apply shadow-md;
+        }
+        
+        /* 개선된 아이콘 크기 */
+        .keyword-icon {
+            @apply w-12 h-12 rounded-full flex items-center justify-center text-xl font-medium;
+        }
+        
+        /* 고대비 텍스트 */
+        .text-primary { color: #1f2937; } /* 더 진한 회색 */
+        .text-secondary { color: #374151; } /* 중간 회색 */
+        .text-disabled { color: #6b7280; } /* 연한 회색 */
+        
+        /* 키워드 버튼 스타일 (텍스트 전용) */
+        .keyword-btn {
+            @apply bg-white border-2 border-gray-300 rounded-xl px-4 py-3 cursor-pointer;
+            @apply hover:border-orange-400 hover:bg-orange-50 active:bg-orange-100;
+            @apply transition-all duration-200 focus:ring-4 focus:ring-orange-200 focus:outline-none;
+            @apply text-sm font-medium text-gray-700 hover:text-orange-700;
+            @apply flex items-center justify-between;
+            min-height: 48px;
+        }
+        .keyword-btn:hover {
+            @apply shadow-md;
+        }
+        .keyword-btn.selected {
+            @apply bg-orange-100 border-orange-400 text-orange-800;
+        }
+
+        /* 콘텐츠 카드 스타일 */
+        .content-card {
+            @apply bg-white border border-gray-200 rounded-xl p-4 mb-4;
+            @apply hover:shadow-md transition-shadow duration-200;
+        }
+
+        /* 접근성 향상 */
+        .focus-ring {
+            @apply focus:ring-4 focus:ring-blue-400 focus:ring-opacity-50 focus:outline-none;
+        }
+
+        /* SPA 탭 컨텐츠 표시/숨김 (Tailwind 대체) */
+        .tab-content {
+            display: block;
+        }
+        .tab-content.hidden {
+            display: none !important;
+            visibility: hidden !important;
+        }
+        .tab-content.active {
+            display: block !important;
+            visibility: visible !important;
+        }
+        
+        /* 스크롤바 스타일링 (WebKit) */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 6px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen text-primary">
+    <!-- 개선된 헤더 -->
+    <header class="bg-white shadow-sm border-b-2 border-gray-200">
+        <div class="max-w-2xl mx-auto px-6 py-5"> <!-- 더 넓은 컨테이너와 패딩 -->
+            <div class="flex items-center justify-between">
+                <a href="/" class="flex items-center space-x-3 focus-ring rounded-lg p-2 -m-2">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+                        <span class="text-white font-bold text-lg">🙏</span>
+                    </div>
+                    <h1 class="text-2xl font-bold text-primary">주님말씀AI</h1>
+                </a>
+                
+                {{if .ShowBackButton}}
+                <button onclick="history.back()" 
+                        class="p-3 text-secondary hover:text-primary focus-ring rounded-xl"
+                        aria-label="이전 페이지로 돌아가기">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                {{end}}
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main id="main-content" class="max-w-2xl mx-auto px-6 py-8 pb-28"> <!-- 하단 네비게이션을 위한 충분한 여백 -->
+        {{if eq .PageType "home"}}
+            {{template "home-content" .}}
+        {{else if eq .PageType "bible-search"}}
+            {{template "bible-search-content" .}}
+        {{else if eq .PageType "bible-analysis"}}
+            {{template "bible-analysis-content" .}}
+        {{else if eq .PageType "hymns"}}
+            {{template "hymns-content" .}}
+        {{else if eq .PageType "prayers"}}
+            {{template "prayers-content" .}}
+        {{end}}
+    </main>
+
+    <!-- 모던 네비게이션 - 버전 3.0 (최고 z-index 우선도) -->
+    {{if .ShowNavigation}}
+    <nav class="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-white/95 backdrop-blur-sm border-t border-gray-200/80 shadow-2xl z-[9999]" role="navigation" aria-label="메인 메뉴">
+        <div class="max-w-2xl mx-auto px-4">
+            <div class="flex justify-around py-2">
+                <a href="/" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-white rounded-2xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="키워드">
+                    <span class="relative z-10">키워드</span>
+                </a>
+                <a href="/bible/search" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-white rounded-2xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="성경 검색">
+                    <span class="relative z-10">성경</span>
+                </a>
+                <a href="/prayers" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-white rounded-2xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="기도문">
+                    <span class="relative z-10">기도문</span>
+                </a>
+                <a href="/hymns" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-white rounded-2xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="찬송가">
+                    <span class="relative z-10">찬송가</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- 하단 네비게이션 공간 확보 -->
+    <div class="h-20"></div>
+    {{end}}
+
+    <!-- JavaScript -->
+    <script src="/static/js/main.js?v={{if .CacheVersion}}{{.CacheVersion}}{{else}}1{{end}}"></script>
+
+    <!-- 네비게이션 활성 탭 표시 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navBtns = document.querySelectorAll('.nav-btn');
+
+            navBtns.forEach(btn => {
+                const href = btn.getAttribute('href');
+                const isActive = (currentPath === href) ||
+                                (currentPath === '/' && href === '/') ||
+                                (currentPath.startsWith('/bible/search') && href === '/bible/search') ||
+                                (currentPath.startsWith('/prayers') && href === '/prayers') ||
+                                (currentPath.startsWith('/hymns') && href === '/hymns');
+
+                if (isActive) {
+                    // 활성 상태의 클래스 적용
+                    if (href === '/') {
+                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-orange-700 bg-gradient-to-br from-orange-100 to-orange-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-orange-200/60 -translate-y-0.5 focus:ring-2 focus:ring-orange-300 focus:outline-none active:scale-95 border border-orange-300";
+                    } else if (href === '/bible/search') {
+                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-blue-700 bg-gradient-to-br from-blue-100 to-blue-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-blue-200/60 -translate-y-0.5 focus:ring-2 focus:ring-blue-300 focus:outline-none active:scale-95 border border-blue-300";
+                    } else if (href === '/prayers') {
+                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-green-700 bg-gradient-to-br from-green-100 to-green-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-green-200/60 -translate-y-0.5 focus:ring-2 focus:ring-green-300 focus:outline-none active:scale-95 border border-green-300";
+                    } else if (href === '/hymns') {
+                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-purple-700 bg-gradient-to-br from-purple-100 to-purple-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-purple-200/60 -translate-y-0.5 focus:ring-2 focus:ring-purple-300 focus:outline-none active:scale-95 border border-purple-300";
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

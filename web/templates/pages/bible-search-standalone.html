@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{.Title}} - 주님말씀AI</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 모바일 최적화 -->
+    <meta name="theme-color" content="#3B82F6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <!-- 커스텀 스타일 -->
+    <style>
+        body { 
+            font-family: 'Malgun Gothic', '맑은 고딕', sans-serif; 
+        }
+        .btn-primary {
+            @apply bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-blue-700 transition-colors duration-200 font-medium;
+        }
+        .btn-secondary {
+            @apply bg-gray-200 text-gray-800 px-6 py-3 rounded-lg shadow-md hover:bg-gray-300 transition-colors duration-200 font-medium;
+        }
+        .card {
+            @apply bg-white rounded-xl shadow-lg p-6 border border-gray-100;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- 헤더 -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-md mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <a href="/" class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                        <span class="text-white font-bold text-sm">🙏</span>
+                    </div>
+                    <h1 class="text-xl font-bold text-gray-900">주님말씀AI</h1>
+                </a>
+                
+                {{if .ShowBackButton}}
+                <button onclick="history.back()" class="p-2 text-gray-600 hover:text-gray-900">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </button>
+                {{end}}
+            </div>
+        </div>
+    </header>
+
+    <!-- 메인 컨텐츠 -->
+    <main class="max-w-md mx-auto px-4 py-6">
+        <!-- 탭 선택 -->
+        <div class="mb-6">
+            <div class="flex space-x-1 bg-gray-100/60 p-1.5 rounded-xl backdrop-blur-sm border border-gray-200/50">
+                <button class="tab-btn active" data-tab="search" id="searchTabBtn">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-1.5 bg-white/80 rounded-lg shadow-sm">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </div>
+                        <span class="font-medium">성경 검색</span>
+                    </div>
+                </button>
+                <button class="tab-btn" data-tab="read" id="readTabBtn">
+                    <div class="flex items-center space-x-2">
+                        <div class="p-1.5 bg-gray-200/50 rounded-lg">
+                            <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                        </div>
+                        <span class="font-medium">성경 읽기</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- 검색 탭 컨텐츠 -->
+        <div id="searchTabContent" class="tab-content">
+            <!-- 검색 섹션 -->
+<div class="card mb-6">
+    <div class="text-center mb-6">
+        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+        </div>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">성경 검색</h2>
+        <p class="text-gray-600">찾고 싶은 말씀을 검색해보세요</p>
+    </div>
+
+    <form class="space-y-4" id="searchForm">
+        <!-- 검색어 입력 -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">검색어</label>
+            <div class="relative">
+                <input type="text" 
+                       name="keyword" 
+                       id="keyword"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                       placeholder="예: 사랑, 희망, 평안..."
+                       required>
+                <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- 성경 선택 -->
+        <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">성경 선택 (선택사항)</label>
+            <select name="book" 
+                    id="book"
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <option value="">전체 성경</option>
+                <optgroup label="구약성경" id="oldTestament">
+                    <!-- 동적으로 로드 -->
+                </optgroup>
+                <optgroup label="신약성경" id="newTestament">
+                    <!-- 동적으로 로드 -->
+                </optgroup>
+            </select>
+        </div>
+
+        <!-- 검색 버튼 -->
+        <button type="submit" class="w-full btn-primary">
+            <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0z"/>
+            </svg>
+            검색하기
+        </button>
+    </form>
+</div>
+
+<!-- 빠른 검색 -->
+<div class="card mb-6">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">빠른 검색</h3>
+    <div class="grid grid-cols-2 gap-3">
+        <button class="quick-search-btn" data-keyword="사랑">사랑</button>
+        <button class="quick-search-btn" data-keyword="평안">평안</button>
+        <button class="quick-search-btn" data-keyword="믿음">믿음</button>
+        <button class="quick-search-btn" data-keyword="소망">소망</button>
+        <button class="quick-search-btn" data-keyword="구원">구원</button>
+        <button class="quick-search-btn" data-keyword="감사">감사</button>
+    </div>
+</div>
+
+<!-- 검색 결과 -->
+<div id="searchResults" class="hidden">
+    <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-gray-900">검색 결과</h3>
+        <span id="resultCount" class="text-sm text-gray-600"></span>
+    </div>
+    <div id="resultsList" class="space-y-4">
+        <!-- 검색 결과가 여기에 동적으로 추가됩니다 -->
+    </div>
+</div>
+
+<!-- 로딩 -->
+<div id="loading" class="hidden text-center py-8">
+    <div class="inline-flex items-center space-x-2 text-blue-600">
+        <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span>검색 중...</span>
+    </div>
+</div>
+
+<!-- 인기 구절 -->
+<div class="card">
+    <h3 class="text-lg font-semibold text-gray-900 mb-4">인기 구절</h3>
+    <div class="space-y-4">
+        <div class="border-l-4 border-blue-400 pl-4">
+            <blockquote class="text-gray-800 mb-1">
+                "하나님이 세상을 이처럼 사랑하사 독생자를 주셨으니 이는 그를 믿는 자마다 멸망하지 않고 영생을 얻게 하려 하심이라"
+            </blockquote>
+            <cite class="text-sm text-blue-600">요한복음 3:16</cite>
+        </div>
+        
+        <div class="border-l-4 border-green-400 pl-4">
+            <blockquote class="text-gray-800 mb-1">
+                "여호와는 나의 목자시니 내게 부족함이 없으리로다"
+            </blockquote>
+            <cite class="text-sm text-green-600">시편 23:1</cite>
+        </div>
+        
+        <div class="border-l-4 border-purple-400 pl-4">
+            <blockquote class="text-gray-800 mb-1">
+                "내게 능력 주시는 자 안에서 내가 모든 것을 할 수 있느니라"
+            </blockquote>
+            <cite class="text-sm text-purple-600">빌립보서 4:13</cite>
+        </div>
+    </div>
+</div>
+        </div>
+
+        <!-- 읽기 탭 컨텐츠 -->
+        <div id="readTabContent" class="tab-content hidden">
+            <!-- 성경 선택 -->
+            <div class="card mb-6">
+                <div class="text-center mb-6">
+                    <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-900 mb-2">성경 읽기</h2>
+                    <p class="text-gray-600">성경책과 장을 선택하여 읽어보세요</p>
+                </div>
+
+                <!-- 성경책 선택 -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">성경책 선택</label>
+                    <select id="readBook" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <option value="">성경책을 선택하세요</option>
+                        <optgroup label="구약성경" id="readOldTestament">
+                            <!-- 동적으로 로드 -->
+                        </optgroup>
+                        <optgroup label="신약성경" id="readNewTestament">
+                            <!-- 동적으로 로드 -->
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- 장 선택 -->
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">장 선택</label>
+                    <select id="readChapter" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" disabled>
+                        <option value="">먼저 성경책을 선택하세요</option>
+                    </select>
+                </div>
+
+                <!-- 읽기 버튼 -->
+                <button id="startReading" class="w-full bg-green-600 text-white px-6 py-3 rounded-lg shadow-md hover:bg-green-700 transition-colors duration-200 font-medium" disabled>
+                    <svg class="w-5 h-5 inline-block mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                    </svg>
+                    성경 읽기 시작
+                </button>
+            </div>
+
+            <!-- 성경 내용 표시 -->
+            <div id="bibleReader" class="hidden">
+                <!-- 헤더 -->
+                <div class="card mb-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 id="readerTitle" class="text-lg font-bold text-gray-900"></h3>
+                            <p id="readerInfo" class="text-sm text-gray-600"></p>
+                        </div>
+                        <button id="closeBibleReader" class="p-2 text-gray-400 hover:text-gray-600">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 성경 구절들 -->
+                <div class="card mb-4">
+                    <div id="bibleVerses" class="space-y-4">
+                        <!-- 동적으로 로드 -->
+                    </div>
+                </div>
+
+                <!-- 네비게이션 -->
+                <div class="flex justify-between items-center mb-4">
+                    <button id="prevChapter" class="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors" disabled>
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        </svg>
+                        이전 장
+                    </button>
+                    
+                    <span id="chapterInfo" class="text-sm text-gray-600"></span>
+                    
+                    <button id="nextChapter" class="flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors" disabled>
+                        다음 장
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+<style>
+.quick-search-btn {
+    @apply px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-blue-100 hover:text-blue-700 transition-colors duration-200;
+}
+
+.verse-result {
+    @apply border-l-4 border-blue-400 pl-4 py-3 bg-white rounded-r-lg shadow-sm;
+}
+
+.tab-btn {
+    @apply flex-1 flex items-center justify-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-300;
+    @apply text-gray-600 hover:text-gray-800 hover:bg-white/40;
+    @apply border border-transparent shadow-sm;
+    position: relative;
+    transform: translateY(0);
+}
+
+.tab-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tab-btn.active {
+    @apply bg-white text-blue-700 border-blue-200/50;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05);
+    transform: translateY(-1px);
+}
+
+.tab-btn.active .p-1\.5 {
+    @apply bg-blue-50/80 shadow-md;
+}
+
+.tab-btn.active .p-1\.5 svg {
+    @apply text-blue-600;
+}
+
+/* 읽기 탭 활성화시 녹색 테마 */
+.tab-btn.active.read-tab {
+    @apply bg-white text-green-700 border-green-200/50;
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.1), 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* 호버 효과 개선 */
+.tab-btn:not(.active):hover {
+    @apply bg-gray-50/80;
+}
+
+.tab-content {
+    @apply block;
+}
+
+.tab-content.hidden {
+    @apply hidden;
+}
+
+.bible-verse {
+    @apply p-3 border-l-4 border-green-400 bg-green-50 rounded-r-lg mb-3;
+}
+
+.bible-verse-number {
+    @apply inline-block bg-green-600 text-white text-xs px-2 py-1 rounded-full mr-3 font-bold;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 검색 탭 요소들
+    const searchForm = document.getElementById('searchForm');
+    const searchResults = document.getElementById('searchResults');
+    const resultsList = document.getElementById('resultsList');
+    const resultCount = document.getElementById('resultCount');
+    const loading = document.getElementById('loading');
+    const quickSearchBtns = document.querySelectorAll('.quick-search-btn');
+    
+    // 읽기 탭 요소들
+    const readBook = document.getElementById('readBook');
+    const readChapter = document.getElementById('readChapter');
+    const startReading = document.getElementById('startReading');
+    const bibleReader = document.getElementById('bibleReader');
+    const readerTitle = document.getElementById('readerTitle');
+    const readerInfo = document.getElementById('readerInfo');
+    const bibleVerses = document.getElementById('bibleVerses');
+    const chapterInfo = document.getElementById('chapterInfo');
+    const prevChapter = document.getElementById('prevChapter');
+    const nextChapter = document.getElementById('nextChapter');
+    const closeBibleReader = document.getElementById('closeBibleReader');
+    
+    // 탭 요소들
+    const searchTabBtn = document.getElementById('searchTabBtn');
+    const readTabBtn = document.getElementById('readTabBtn');
+    const searchTabContent = document.getElementById('searchTabContent');
+    const readTabContent = document.getElementById('readTabContent');
+    
+    // 성경책 이름 매핑 (book_id <-> 한국어 이름)
+    let bookNameToId = {};
+    let bookIdToName = {};
+    let currentBook = '';
+    let currentChapter = 1;
+    let currentBookChapters = [];
+    
+    // 페이지 로드 시 성경책 목록 가져오기
+    loadBibleBooks();
+
+    // 탭 전환 기능
+    searchTabBtn.addEventListener('click', function() {
+        switchTab('search');
+    });
+
+    readTabBtn.addEventListener('click', function() {
+        switchTab('read');
+    });
+
+    function switchTab(tab) {
+        if (tab === 'search') {
+            // 검색 탭 활성화
+            searchTabBtn.classList.add('active');
+            readTabBtn.classList.remove('active');
+            searchTabContent.classList.remove('hidden');
+            readTabContent.classList.add('hidden');
+            
+            // 아이콘 스타일 업데이트
+            const searchIcon = searchTabBtn.querySelector('.p-1\\.5');
+            const searchSvg = searchTabBtn.querySelector('svg');
+            const readIcon = readTabBtn.querySelector('.p-1\\.5');
+            const readSvg = readTabBtn.querySelector('svg');
+            
+            searchIcon.className = 'p-1.5 bg-blue-50/80 rounded-lg shadow-md';
+            searchSvg.className = 'w-4 h-4 text-blue-600';
+            readIcon.className = 'p-1.5 bg-gray-200/50 rounded-lg';
+            readSvg.className = 'w-4 h-4 text-gray-500';
+        } else {
+            // 읽기 탭 활성화
+            readTabBtn.classList.add('active', 'read-tab');
+            searchTabBtn.classList.remove('active');
+            readTabContent.classList.remove('hidden');
+            searchTabContent.classList.add('hidden');
+            
+            // 아이콘 스타일 업데이트
+            const searchIcon = searchTabBtn.querySelector('.p-1\\.5');
+            const searchSvg = searchTabBtn.querySelector('svg');
+            const readIcon = readTabBtn.querySelector('.p-1\\.5');
+            const readSvg = readTabBtn.querySelector('svg');
+            
+            readIcon.className = 'p-1.5 bg-green-50/80 rounded-lg shadow-md';
+            readSvg.className = 'w-4 h-4 text-green-600';
+            searchIcon.className = 'p-1.5 bg-gray-200/50 rounded-lg';
+            searchSvg.className = 'w-4 h-4 text-gray-500';
+        }
+    }
+
+    // 읽기 탭 이벤트 리스너들
+    readBook.addEventListener('change', function() {
+        const selectedBook = this.value;
+        if (selectedBook) {
+            currentBook = selectedBook;
+            loadChaptersForBook(selectedBook);
+        } else {
+            readChapter.innerHTML = '<option value="">먼저 성경책을 선택하세요</option>';
+            readChapter.disabled = true;
+            startReading.disabled = true;
+        }
+    });
+
+    readChapter.addEventListener('change', function() {
+        const selectedChapter = this.value;
+        if (selectedChapter) {
+            currentChapter = parseInt(selectedChapter);
+            startReading.disabled = false;
+        } else {
+            startReading.disabled = true;
+        }
+    });
+
+    startReading.addEventListener('click', function() {
+        loadBibleChapter(currentBook, currentChapter);
+    });
+
+    closeBibleReader.addEventListener('click', function() {
+        bibleReader.classList.add('hidden');
+    });
+
+    prevChapter.addEventListener('click', function() {
+        if (currentChapter > 1) {
+            currentChapter--;
+            loadBibleChapter(currentBook, currentChapter);
+        }
+    });
+
+    nextChapter.addEventListener('click', function() {
+        const maxChapter = Math.max(...currentBookChapters);
+        if (currentChapter < maxChapter) {
+            currentChapter++;
+            loadBibleChapter(currentBook, currentChapter);
+        }
+    });
+
+    // 빠른 검색 버튼
+    quickSearchBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const keyword = this.dataset.keyword;
+            document.getElementById('keyword').value = keyword;
+            performSearch(keyword, '');
+        });
+    });
+
+    // 폼 제출
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const keyword = document.getElementById('keyword').value.trim();
+        const book = document.getElementById('book').value;
+        
+        if (!keyword) {
+            alert('검색어를 입력해주세요.');
+            return;
+        }
+        
+        performSearch(keyword, book);
+    });
+
+    async function performSearch(keyword, book) {
+        loading.classList.remove('hidden');
+        searchResults.classList.add('hidden');
+        
+        try {
+            // 실제 성경 검색 API 호출
+            let apiUrl = `/api/bible/search?q=${encodeURIComponent(keyword)}`;
+            if (book) {
+                // book이 한국어 이름이면 book_id로 변환
+                const bookId = bookNameToId[book] || book;
+                apiUrl += `&book=${bookId}`;
+            }
+            
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            
+            if (response.ok) {
+                displayResults(data.results || [], keyword, data.total || 0);
+            } else {
+                throw new Error(data.error || '검색 중 오류가 발생했습니다.');
+            }
+        } catch (error) {
+            loading.classList.add('hidden');
+            alert('검색 중 오류가 발생했습니다: ' + error.message);
+            console.error('Search error:', error);
+        }
+    }
+
+    function displayResults(results, keyword, total) {
+        loading.classList.add('hidden');
+        
+        if (results.length === 0) {
+            searchResults.classList.remove('hidden');
+            resultCount.textContent = '검색 결과가 없습니다';
+            resultsList.innerHTML = '<p class="text-gray-600 text-center py-8">검색 결과가 없습니다.</p>';
+            return;
+        }
+
+        resultCount.textContent = `총 ${total}개의 결과 (최대 100개 표시)`;
+        
+        resultsList.innerHTML = results.map(result => {
+            // 검색어 하이라이팅
+            const highlightedContent = result.content.replace(
+                new RegExp(`(${keyword})`, 'gi'), 
+                '<mark class="bg-yellow-200">$1</mark>'
+            );
+            
+            // 한국어 이름 우선 사용, 없으면 매핑 테이블 사용
+            const bookName = result.book_name || bookIdToName[result.book] || result.book;
+            
+            return `
+                <div class="verse-result">
+                    <blockquote class="text-gray-800 mb-2 leading-relaxed">
+                        "${highlightedContent}"
+                    </blockquote>
+                    <div class="flex items-center justify-between">
+                        <cite class="text-sm text-blue-600 font-medium">
+                            ${bookName} ${result.chapter}:${result.verse}
+                        </cite>
+                        <button onclick="copyVerse('${result.content}', '${bookName} ${result.chapter}:${result.verse}')" 
+                                class="text-xs text-gray-500 hover:text-gray-700 px-2 py-1 rounded hover:bg-gray-100">
+                            복사
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+        searchResults.classList.remove('hidden');
+    }
+    
+    // 성경책 목록 로드 함수
+    async function loadBibleBooks() {
+        try {
+            const response = await fetch('/api/bible/books');
+            if (response.ok) {
+                const data = await response.json();
+                setupBibleBooksFromAPI(data);
+            } else {
+                throw new Error('Failed to load bible books');
+            }
+        } catch (error) {
+            console.error('Failed to load bible books:', error);
+            setupBibleBooks(); // 실패해도 기본 데이터 사용
+        }
+    }
+    
+    function setupBibleBooks() {
+        // 성경 66권 데이터 (순서대로)
+        const bibleBooks = {
+            // 구약 39권
+            old: [
+                {id: 'gn', name: '창세기'}, {id: 'ex', name: '출애굽기'}, {id: 'lv', name: '레위기'}, 
+                {id: 'nu', name: '민수기'}, {id: 'dt', name: '신명기'}, {id: 'jos', name: '여호수아'}, 
+                {id: 'jdg', name: '사사기'}, {id: 'rt', name: '룻기'}, {id: '1sm', name: '사무엘상'}, 
+                {id: '2sm', name: '사무엘하'}, {id: '1kgs', name: '열왕기상'}, {id: '2kgs', name: '열왕기하'}, 
+                {id: '1chr', name: '역대상'}, {id: '2chr', name: '역대하'}, {id: 'ezr', name: '에스라'}, 
+                {id: 'neh', name: '느헤미야'}, {id: 'est', name: '에스더'}, {id: 'job', name: '욥기'}, 
+                {id: 'psa', name: '시편'}, {id: 'pro', name: '잠언'}, {id: 'ecc', name: '전도서'}, 
+                {id: 'sng', name: '아가'}, {id: 'isa', name: '이사야'}, {id: 'jer', name: '예레미야'}, 
+                {id: 'lam', name: '예레미야애가'}, {id: 'ezk', name: '에스겔'}, {id: 'dan', name: '다니엘'}, 
+                {id: 'hos', name: '호세아'}, {id: 'jol', name: '요엘'}, {id: 'amo', name: '아모스'}, 
+                {id: 'oba', name: '오바댜'}, {id: 'jon', name: '요나'}, {id: 'mic', name: '미가'}, 
+                {id: 'nam', name: '나훔'}, {id: 'hab', name: '하박국'}, {id: 'zep', name: '스바냐'}, 
+                {id: 'hag', name: '학개'}, {id: 'zec', name: '스가랴'}, {id: 'mal', name: '말라기'}
+            ],
+            // 신약 27권  
+            new: [
+                {id: 'mt', name: '마태복음'}, {id: 'mk', name: '마가복음'}, {id: 'lk', name: '누가복음'}, 
+                {id: 'joh', name: '요한복음'}, {id: 'act', name: '사도행전'}, {id: 'rom', name: '로마서'}, 
+                {id: '1cor', name: '고린도전서'}, {id: '2cor', name: '고린도후서'}, {id: 'gal', name: '갈라디아서'}, 
+                {id: 'eph', name: '에베소서'}, {id: 'php', name: '빌립보서'}, {id: 'col', name: '골로새서'}, 
+                {id: '1th', name: '데살로니가전서'}, {id: '2th', name: '데살로니가후서'}, {id: '1tm', name: '디모데전서'}, 
+                {id: '2tm', name: '디모데후서'}, {id: 'tit', name: '디도서'}, {id: 'phm', name: '빌레몬서'}, 
+                {id: 'heb', name: '히브리서'}, {id: 'jas', name: '야고보서'}, {id: '1pe', name: '베드로전서'}, 
+                {id: '2pe', name: '베드로후서'}, {id: '1jo', name: '요한일서'}, {id: '2jo', name: '요한이서'}, 
+                {id: '3jo', name: '요한삼서'}, {id: 'jud', name: '유다서'}, {id: 'rev', name: '요한계시록'}
+            ]
+        };
+        
+        // 매핑 테이블 생성
+        [...bibleBooks.old, ...bibleBooks.new].forEach(book => {
+            bookNameToId[book.name] = book.id;
+            bookIdToName[book.id] = book.name;
+        });
+        
+        // select 옵션 생성
+        const oldTestament = document.getElementById('oldTestament');
+        const newTestament = document.getElementById('newTestament');
+        
+        oldTestament.innerHTML = bibleBooks.old.map(book => 
+            `<option value="${book.id}">${book.name}</option>`
+        ).join('');
+        
+        newTestament.innerHTML = bibleBooks.new.map(book => 
+            `<option value="${book.id}">${book.name}</option>`
+        ).join('');
+    }
+    
+    // API 데이터로 성경책 목록 설정
+    function setupBibleBooksFromAPI(data) {
+        // 매핑 테이블 생성
+        [...data.old_testament, ...data.new_testament].forEach(book => {
+            bookNameToId[book.name] = book.id;
+            bookIdToName[book.id] = book.name;
+        });
+        
+        // select 옵션 생성
+        const oldTestament = document.getElementById('oldTestament');
+        const newTestament = document.getElementById('newTestament');
+        
+        oldTestament.innerHTML = data.old_testament.map(book => 
+            `<option value="${book.id}">${book.name}</option>`
+        ).join('');
+        
+        newTestament.innerHTML = data.new_testament.map(book => 
+            `<option value="${book.id}">${book.name}</option>`
+        ).join('');
+        
+        // 읽기 탭용 성경책 목록도 설정
+        const readOldTestament = document.getElementById('readOldTestament');
+        const readNewTestament = document.getElementById('readNewTestament');
+        
+        readOldTestament.innerHTML = data.old_testament.map(book => 
+            `<option value="${book.id}">${book.name}</option>`
+        ).join('');
+        
+        readNewTestament.innerHTML = data.new_testament.map(book => 
+            `<option value="${book.id}">${book.name}</option>`
+        ).join('');
+    }
+    
+    // 특정 성경책의 장 목록 로드
+    async function loadChaptersForBook(bookId) {
+        try {
+            // 실제 API에서 장 목록을 가져옴
+            const response = await fetch(`/api/bible/books/${bookId}/chapters`);
+            const data = await response.json();
+            
+            if (response.ok) {
+                currentBookChapters = data.chapters;
+                
+                readChapter.innerHTML = '<option value="">장을 선택하세요</option>' +
+                    currentBookChapters.map(ch => `<option value="${ch}">${ch}장</option>`).join('');
+                readChapter.disabled = false;
+                startReading.disabled = true; // 장을 다시 선택해야 함
+            } else {
+                throw new Error(data.error || 'Failed to load chapters');
+            }
+        } catch (error) {
+            console.error('Failed to load chapters:', error);
+            readChapter.innerHTML = '<option value="">장 정보를 불러올 수 없습니다</option>';
+            readChapter.disabled = true;
+            startReading.disabled = true;
+        }
+    }
+    
+    // 성경 장 내용 로드
+    async function loadBibleChapter(bookId, chapter) {
+        try {
+            const response = await fetch(`/api/bible/chapters/${bookId}/${chapter}`);
+            const data = await response.json();
+            
+            if (response.ok) {
+                displayBibleChapter(data);
+            } else {
+                throw new Error(data.error || '장을 불러올 수 없습니다.');
+            }
+        } catch (error) {
+            console.error('Failed to load chapter:', error);
+            alert('성경 장을 불러오는데 실패했습니다: ' + error.message);
+        }
+    }
+    
+    // 성경 장 내용 표시
+    function displayBibleChapter(chapterData) {
+        const bookName = bookIdToName[chapterData.book] || chapterData.book_name || chapterData.book;
+        
+        // 헤더 정보 설정
+        readerTitle.textContent = `${bookName} ${chapterData.chapter}장`;
+        readerInfo.textContent = `총 ${chapterData.total_verses}개 구절`;
+        chapterInfo.textContent = `${bookName} ${chapterData.chapter}장`;
+        
+        // 구절들 표시
+        bibleVerses.innerHTML = chapterData.verses.map(verse => `
+            <div class="bible-verse">
+                <span class="bible-verse-number">${verse.verse}</span>
+                <span class="text-gray-800 leading-relaxed">${verse.content}</span>
+            </div>
+        `).join('');
+        
+        // 네비게이션 버튼 상태 설정
+        prevChapter.disabled = !chapterData.prev_chapter;
+        nextChapter.disabled = !chapterData.next_chapter;
+        
+        if (chapterData.prev_chapter) {
+            prevChapter.onclick = () => loadBibleChapter(chapterData.book, chapterData.prev_chapter);
+        }
+        
+        if (chapterData.next_chapter) {
+            nextChapter.onclick = () => loadBibleChapter(chapterData.book, chapterData.next_chapter);
+        }
+        
+        // 리더 표시
+        bibleReader.classList.remove('hidden');
+        
+        // 페이지 상단으로 스크롤
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
+    // 구절 복사 함수
+    window.copyVerse = function(content, reference) {
+        const textToCopy = `"${content}" - ${reference}`;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            // 간단한 피드백 표시
+            alert('구절이 복사되었습니다!');
+        }).catch(err => {
+            console.error('복사 실패:', err);
+            alert('복사에 실패했습니다.');
+        });
+    };
+});
+</script>
+    </main>
+
+    <!-- 하단 네비게이션 (필요시) -->
+    {{if .ShowNavigation}}
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t">
+        <div class="max-w-md mx-auto px-4">
+            <div class="flex justify-around py-2">
+                <a href="/" class="flex flex-col items-center py-2 text-gray-600 hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+                    </svg>
+                    <span class="text-xs mt-1">홈</span>
+                </a>
+                <a href="/bible/search" class="flex flex-col items-center py-2 text-gray-600 hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <span class="text-xs mt-1">성경검색</span>
+                </a>
+                <a href="/hymns" class="flex flex-col items-center py-2 text-gray-600 hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                    </svg>
+                    <span class="text-xs mt-1">찬송가</span>
+                </a>
+                <a href="/prayers" class="flex flex-col items-center py-2 text-gray-600 hover:text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                    <span class="text-xs mt-1">기도문</span>
+                </a>
+            </div>
+        </div>
+    </nav>
+    {{end}}
+
+    <!-- JavaScript -->
+    <script src="/static/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+{{define "z-home.html"}}
+{{template "base.html" .}}
+{{end}}
+{{define "home-content"}}
+<!-- 웰컴 헤더 -->
+<div class="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-50/50 rounded-3xl mb-8 p-8 border border-blue-100/80 shadow-lg shadow-blue-100/50">
+    <div class="relative z-10 text-center">
+        <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-300/30">
+            <span class="text-3xl">🙏</span>
+        </div>
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3">주님말씀AI</h1>
+        <p class="text-lg text-gray-600 leading-relaxed max-w-md mx-auto">성경, 찬송가, 기도문을 한 곳에서<br class="hidden sm:block"> 스마트하게 찾아보세요</p>
+    </div>
+    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-200/20 rounded-full -translate-y-16 translate-x-16"></div>
+    <div class="absolute bottom-0 left-0 w-24 h-24 bg-blue-300/20 rounded-full translate-y-12 -translate-x-12"></div>
+</div>
+
+<!-- 메인 기능 그리드 -->
+<div class="grid grid-cols-1 gap-6 mb-8">
+    <!-- 성경 검색 -->
+    <a href="/bible/search" class="group relative overflow-hidden bg-gradient-to-br from-blue-50 to-blue-100/80 hover:from-blue-100 hover:to-blue-200/90 rounded-3xl p-6 border border-blue-200/60 transition-all duration-500 hover:shadow-xl hover:shadow-blue-200/40 hover:-translate-y-1 active:scale-[0.98]">
+        <div class="flex items-center space-x-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-300/40 group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-2xl font-bold text-blue-900 mb-2 group-hover:text-blue-800 transition-colors">성경 검색</h3>
+                <p class="text-blue-700/80 text-lg leading-relaxed">키워드로 성경구절을 빠르게 찾아보세요</p>
+            </div>
+            <svg class="w-6 h-6 text-blue-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </div>
+        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-200/20 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-500"></div>
+    </a>
+
+    <!-- 기도문 -->
+    <a href="/prayers" class="group relative overflow-hidden bg-gradient-to-br from-green-50 to-green-100/80 hover:from-green-100 hover:to-green-200/90 rounded-3xl p-6 border border-green-200/60 transition-all duration-500 hover:shadow-xl hover:shadow-green-200/40 hover:-translate-y-1 active:scale-[0.98]">
+        <div class="flex items-center space-x-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg shadow-green-300/40 group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-2xl font-bold text-green-900 mb-2 group-hover:text-green-800 transition-colors">기도문</h3>
+                <p class="text-green-700/80 text-lg leading-relaxed">상황에 맞는 기도문을 태그로 찾아보세요</p>
+            </div>
+            <svg class="w-6 h-6 text-green-400 group-hover:text-green-600 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </div>
+        <div class="absolute top-0 right-0 w-32 h-32 bg-green-200/20 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-500"></div>
+    </a>
+
+    <!-- 찬송가 -->
+    <a href="/hymns" class="group relative overflow-hidden bg-gradient-to-br from-purple-50 to-purple-100/80 hover:from-purple-100 hover:to-purple-200/90 rounded-3xl p-6 border border-purple-200/60 transition-all duration-500 hover:shadow-xl hover:shadow-purple-200/40 hover:-translate-y-1 active:scale-[0.98]">
+        <div class="flex items-center space-x-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-300/40 group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-2xl font-bold text-purple-900 mb-2 group-hover:text-purple-800 transition-colors">찬송가</h3>
+                <p class="text-purple-700/80 text-lg leading-relaxed">새찬송가를 검색하고 감상해보세요</p>
+            </div>
+            <svg class="w-6 h-6 text-purple-400 group-hover:text-purple-600 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </div>
+        <div class="absolute top-0 right-0 w-32 h-32 bg-purple-200/20 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-500"></div>
+    </a>
+
+    <!-- 키워드 분석 -->
+    <a href="/bible/analysis" class="group relative overflow-hidden bg-gradient-to-br from-orange-50 to-orange-100/80 hover:from-orange-100 hover:to-orange-200/90 rounded-3xl p-6 border border-orange-200/60 transition-all duration-500 hover:shadow-xl hover:shadow-orange-200/40 hover:-translate-y-1 active:scale-[0.98]">
+        <div class="flex items-center space-x-6">
+            <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-300/40 group-hover:scale-110 transition-transform duration-300">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="text-2xl font-bold text-orange-900 mb-2 group-hover:text-orange-800 transition-colors">오늘의 키워드</h3>
+                <p class="text-orange-700/80 text-lg leading-relaxed">키워드로 관련 콘텐츠를 통합 검색해보세요</p>
+            </div>
+            <svg class="w-6 h-6 text-orange-400 group-hover:text-orange-600 group-hover:translate-x-1 transition-all duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+        </div>
+        <div class="absolute top-0 right-0 w-32 h-32 bg-orange-200/20 rounded-full -translate-y-16 translate-x-16 group-hover:scale-125 transition-transform duration-500"></div>
+    </a>
+</div>
+
+<!-- 오늘의 말씀 -->
+<div class="relative overflow-hidden bg-gradient-to-br from-indigo-50 via-white to-indigo-50/50 rounded-3xl p-8 border border-indigo-100/80 shadow-lg shadow-indigo-100/50">
+    <div class="relative z-10">
+        <div class="flex items-center mb-6">
+            <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-indigo-300/30">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-800 bg-clip-text text-transparent">오늘의 말씀</h3>
+        </div>
+        <div class="bg-white/80 backdrop-blur-sm border border-indigo-200/60 rounded-2xl p-6 shadow-lg shadow-indigo-100/30">
+            <blockquote class="text-xl text-gray-800 leading-relaxed mb-4 font-medium italic">
+                "수고하고 무거운 짐 진 자들아 다 내게로 오라<br class="hidden sm:block"> 내가 너희를 쉬게 하리라"
+            </blockquote>
+            <cite class="text-indigo-600 font-semibold text-lg">— 마태복음 11:28</cite>
+        </div>
+    </div>
+    <div class="absolute bottom-0 right-0 w-40 h-40 bg-indigo-200/20 rounded-full translate-y-20 translate-x-20"></div>
+    <div class="absolute top-0 left-0 w-24 h-24 bg-indigo-300/20 rounded-full -translate-y-12 -translate-x-12"></div>
+</div>
+    </main>
+
+    <!-- 모던 네비게이션 - 버전 3.0 -->
+    {{if .ShowNavigation}}
+    <nav class="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-white/95 backdrop-blur-sm border-t border-gray-200/80 shadow-2xl" role="navigation" aria-label="메인 메뉴">
+        <div class="max-w-2xl mx-auto px-4">
+            <div class="flex justify-around py-2">
+                <a href="/" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-blue-600 bg-gradient-to-br from-blue-50 to-blue-100/80 rounded-2xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:shadow-blue-200/50 hover:-translate-y-0.5 hover:from-blue-100 hover:to-blue-200/80 focus:ring-2 focus:ring-blue-300 focus:outline-none active:scale-95" aria-label="홈페이지">
+                    <span class="relative z-10">홈</span>
+                    <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </a>
+                <a href="/bible/search" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-gradient-to-br from-gray-50 to-gray-100/60 rounded-2xl font-semibold text-sm transition-all duration-300 hover:text-blue-700 hover:shadow-lg hover:shadow-blue-200/40 hover:-translate-y-0.5 hover:from-blue-50 hover:to-blue-100/80 focus:ring-2 focus:ring-blue-200 focus:outline-none active:scale-95" aria-label="성경 검색">
+                    <span class="relative z-10">성경</span>
+                    <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400/10 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </a>
+                <a href="/prayers" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-gradient-to-br from-gray-50 to-gray-100/60 rounded-2xl font-semibold text-sm transition-all duration-300 hover:text-green-700 hover:shadow-lg hover:shadow-green-200/40 hover:-translate-y-0.5 hover:from-green-50 hover:to-green-100/80 focus:ring-2 focus:ring-green-200 focus:outline-none active:scale-95" aria-label="기도문">
+                    <span class="relative z-10">기도문</span>
+                    <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-green-400/10 to-green-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </a>
+                <a href="/hymns" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-gradient-to-br from-gray-50 to-gray-100/60 rounded-2xl font-semibold text-sm transition-all duration-300 hover:text-purple-700 hover:shadow-lg hover:shadow-purple-200/40 hover:-translate-y-0.5 hover:from-purple-50 hover:to-purple-100/80 focus:ring-2 focus:ring-purple-200 focus:outline-none active:scale-95" aria-label="찬송가">
+                    <span class="relative z-10">찬송가</span>
+                    <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-400/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </a>
+                <a href="/bible/analysis" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-gradient-to-br from-gray-50 to-gray-100/60 rounded-2xl font-semibold text-sm transition-all duration-300 hover:text-orange-700 hover:shadow-lg hover:shadow-orange-200/40 hover:-translate-y-0.5 hover:from-orange-50 hover:to-orange-100/80 focus:ring-2 focus:ring-orange-200 focus:outline-none active:scale-95" aria-label="오늘의 키워드">
+                    <span class="relative z-10">키워드</span>
+                    <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-orange-400/10 to-orange-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 하단 네비게이션 공간 확보 -->
+    <div class="h-20"></div>
+    {{end}}
+
+    <!-- JavaScript -->
+    <script src="/static/js/main.js"></script>
+
+    <!-- 네비게이션 활성 탭 표시 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const navBtns = document.querySelectorAll('.nav-btn');
+
+            navBtns.forEach(btn => {
+                const href = btn.getAttribute('href');
+                const isActive = (currentPath === href) ||
+                                (currentPath === '/' && href === '/') ||
+                                (currentPath.startsWith('/bible/search') && href === '/bible/search') ||
+                                (currentPath.startsWith('/prayers') && href === '/prayers') ||
+                                (currentPath.startsWith('/hymns') && href === '/hymns') ||
+                                (currentPath.startsWith('/bible/analysis') && href === '/bible/analysis');
+
+                if (isActive) {
+                    // 활성 상태의 클래스 적용
+                    if (href === '/') {
+                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-blue-700 bg-gradient-to-br from-blue-100 to-blue-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-blue-200/60 -translate-y-0.5 focus:ring-2 focus:ring-blue-300 focus:outline-none active:scale-95";
+                    } else if (href === '/bible/search') {
+                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-blue-700 bg-gradient-to-br from-blue-100 to-blue-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-blue-200/60 -translate-y-0.5 focus:ring-2 focus:ring-blue-300 focus:outline-none active:scale-95";
+                    } else if (href === '/prayers') {
+                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-green-700 bg-gradient-to-br from-green-100 to-green-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-green-200/60 -translate-y-0.5 focus:ring-2 focus:ring-green-300 focus:outline-none active:scale-95";
+                    } else if (href === '/hymns') {
+                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-purple-700 bg-gradient-to-br from-purple-100 to-purple-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-purple-200/60 -translate-y-0.5 focus:ring-2 focus:ring-purple-300 focus:outline-none active:scale-95";
+                    } else if (href === '/bible/analysis') {
+                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-orange-700 bg-gradient-to-br from-orange-100 to-orange-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-orange-200/60 -translate-y-0.5 focus:ring-2 focus:ring-orange-300 focus:outline-none active:scale-95";
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+{{end}}

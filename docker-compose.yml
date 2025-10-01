@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  bibleai:
+    build: .
+    container_name: bibleai_app
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: host.docker.internal  # 로컬 PostgreSQL에 접근
+      DB_PORT: 5432
+      DB_USER: bibleai
+      DB_PASSWORD: bibleai
+      DB_NAME: bibleai
+      DB_SSLMODE: disable
+    depends_on: []
