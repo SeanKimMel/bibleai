@@ -221,7 +221,7 @@ sudo yum install -y git
 
 # 5. PostgreSQL 설정
 sudo -u postgres psql -c "CREATE DATABASE bibleai;"
-sudo -u postgres psql -c "CREATE USER bibleai WITH ENCRYPTED PASSWORD 'your_secure_password';"
+sudo -u postgres psql -c "CREATE USER bibleai WITH ENCRYPTED PASSWORD '<실제_보안_비밀번호>';"
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE bibleai TO bibleai;"
 
 echo "✅ 초기 설정 완료!"
@@ -301,7 +301,7 @@ nano .env
 LOCAL_DB_HOST=localhost
 LOCAL_DB_PORT=5432
 LOCAL_DB_USER=bibleai
-LOCAL_DB_PASSWORD=실제_안전한_비밀번호
+LOCAL_DB_PASSWORD=<실제_보안_비밀번호>
 LOCAL_DB_SSLMODE=disable
 ```
 

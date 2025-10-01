@@ -85,7 +85,7 @@ go run cmd/server/main.go
 DB_HOST=localhost       # 기본값
 DB_PORT=5432           # 기본값
 DB_USER=bibleai        # 기본값
-DB_PASSWORD=bibleai123 # 기본값
+DB_PASSWORD=<실제_비밀번호> # .env 파일에 설정
 DB_NAME=bibleai        # 기본값
 DB_SSLMODE=disable     # 기본값
 ```

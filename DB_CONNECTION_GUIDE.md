@@ -209,11 +209,11 @@ GRANT SELECT ON TABLES TO bibleai_app;
 ```bash
 # 프로덕션 (읽기 전용)
 LOCAL_DB_USER=bibleai_app
-LOCAL_DB_PASSWORD=secure_app_password
+LOCAL_DB_PASSWORD=<실제_보안_비밀번호>
 
 # 개발 (전체 권한)
 LOCAL_DB_USER=bibleai
-LOCAL_DB_PASSWORD=bibleai123
+LOCAL_DB_PASSWORD=<실제_개발_비밀번호>
 ```
 
 ---

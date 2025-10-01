@@ -98,7 +98,7 @@ go install github.com/cosmtrek/air@latest
 export DB_HOST=localhost
 export DB_PORT=5432
 export DB_USER=bibleai
-export DB_PASSWORD=bibleai123
+export DB_PASSWORD=<실제_비밀번호>
 export DB_NAME=bibleai
 export DB_SSLMODE=disable
 ```

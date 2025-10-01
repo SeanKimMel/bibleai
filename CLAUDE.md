@@ -516,15 +516,15 @@ window.BibleAI = {
 DB_HOST=localhost                    # 로컬 PostgreSQL 호스트
 DB_PORT=5432                        # PostgreSQL 포트
 DB_USER=bibleai                     # 애플리케이션 전용 사용자
-DB_PASSWORD=bibleai123              # 애플리케이션 사용자 암호
+DB_PASSWORD=<실제_비밀번호>         # 애플리케이션 사용자 암호
 DB_NAME=bibleai                     # 데이터베이스 명
 DB_SSLMODE=disable                  # 로컬 환경에서는 SSL 비활성화
 ```
 
 ### 데이터베이스 구조 (로컬 PostgreSQL)
 - **슈퍼유저**: postgres (로컬 설치시 기본)
-- **애플리케이션 DB**: bibleai  
-- **애플리케이션 사용자**: bibleai (암호: bibleai123)
+- **애플리케이션 DB**: bibleai
+- **애플리케이션 사용자**: bibleai (암호: 환경변수로 관리)
 - **권한**: bibleai 사용자는 bibleai DB에 대한 모든 권한
 - **초기화**: init.sql + init-db.sh로 자동 설정
 

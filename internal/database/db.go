@@ -42,10 +42,10 @@ func NewConnection() (*DB, error) {
 	db.SetMaxOpenConns(20)                      // 최대 동시 연결 수 (max)
 	db.SetMaxIdleConns(10)                      // 최소 유휴 연결 수 (min)
 	db.SetConnMaxLifetime(5 * time.Minute)      // 연결 최대 수명 5분
-	db.SetConnMaxIdleTime(3 * time.Minute)      // 유휴 연결 최대 시간 3분
+	db.SetConnMaxIdleTime(0)                    // 유휴 연결 무제한 유지 (0 = 자동 종료 안함)
 
 	log.Println("데이터베이스에 성공적으로 연결되었습니다.")
-	log.Printf("Connection Pool 설정: Min=%d, Max=%d, MaxLifetime=5m, IdleTimeout=3m", 10, 20)
+	log.Printf("Connection Pool 설정: Min=%d, Max=%d, MaxLifetime=5m, IdleTimeout=무제한", 10, 20)
 
 	// 미리 Min 개수만큼 연결 생성 (Eager Loading, 자바 HikariCP 방식)
 	// 갑작스런 부하에 대응하기 위해 초기 연결 생성

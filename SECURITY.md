@@ -48,7 +48,7 @@ LOCAL_DB_SSLMODE=disable
 
 ```bash
 # ~/.pgpass 파일 생성 (Linux/Mac)
-echo "localhost:5432:bibleai:bibleai:bibleai123" > ~/.pgpass
+echo "localhost:5432:bibleai:bibleai:<실제_비밀번호>" > ~/.pgpass
 chmod 600 ~/.pgpass
 ```
 

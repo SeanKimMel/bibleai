@@ -172,8 +172,8 @@ db.SetMaxOpenConns(25)
 db.SetMaxIdleConns(25)
 db.SetConnMaxLifetime(5 * time.Minute)
 
-// 연결 문자열 예시
-connStr := "host=localhost port=5432 user=bibleai password=bibleai123 dbname=bibleai sslmode=disable"
+// 연결 문자열 예시 (실제 비밀번호는 환경변수로 관리)
+connStr := "host=localhost port=5432 user=bibleai password=<실제_비밀번호> dbname=bibleai sslmode=disable"
 ```
 
 ## 🎨 Frontend 기술 스택
@@ -303,7 +303,7 @@ GET    /api/hymns/:number # 특정 찬송가 조회
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=bibleai
-DB_PASSWORD=bibleai123
+DB_PASSWORD=<실제_비밀번호>
 DB_NAME=bibleai
 DB_SSLMODE=disable
 
@@ -344,7 +344,7 @@ services:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: bibleai
-      POSTGRES_PASSWORD: bibleai123
+      POSTGRES_PASSWORD: <실제_비밀번호>
       POSTGRES_DB: bibleai
     ports:
       - "5432:5432"
