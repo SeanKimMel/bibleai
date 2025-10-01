@@ -46,6 +46,31 @@ func NewConnection() (*DB, error) {
 
 	log.Println("데이터베이스에 성공적으로 연결되었습니다.")
 	log.Printf("Connection Pool 설정: Min=%d, Max=%d, MaxLifetime=5m, IdleTimeout=3m", 10, 20)
+
+	// 미리 Min 개수만큼 연결 생성 (Eager Loading, 자바 HikariCP 방식)
+	// 갑작스런 부하에 대응하기 위해 초기 연결 생성
+	log.Printf("초기 연결 풀 생성 중 (%d개)...", 10)
+
+	// 더미 쿼리를 동시에 실행하여 연결 생성
+	done := make(chan bool, 10)
+	for i := 0; i < 10; i++ {
+		go func(idx int) {
+			var result int
+			err := db.QueryRow("SELECT 1").Scan(&result)
+			if err != nil {
+				log.Printf("경고: 초기 연결 #%d 생성 실패: %v", idx+1, err)
+			}
+			done <- true
+		}(i)
+	}
+
+	// 모든 goroutine 완료 대기
+	for i := 0; i < 10; i++ {
+		<-done
+	}
+
+	log.Printf("✅ 초기 연결 풀 생성 완료 (%d개 대기 중)", 10)
+
 	return &DB{db}, nil
 }
 
