@@ -1,10 +1,12 @@
 package database
 
 import (
+	"bibleai/internal/secrets"
 	"database/sql"
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"time"
 
 	_ "github.com/lib/pq"
@@ -15,18 +17,28 @@ type DB struct {
 }
 
 func NewConnection() (*DB, error) {
-	// 환경변수에서 DB 설정 읽기
-	host := getEnv("DB_HOST", "localhost")
-	port := getEnv("DB_PORT", "5432")
-	user := getEnv("DB_USER", "bibleai")
-	password := getEnv("DB_PASSWORD", "bibleai")
-	dbname := getEnv("DB_NAME", "bibleai")
-	sslmode := getEnv("DB_SSLMODE", "disable")
+	var connStr string
 
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		host, port, user, password, dbname, sslmode)
-	
-	log.Printf("연결 문자열: %s", connStr)
+	// AWS Parameter Store 사용 여부 확인
+	useAWSParams := getEnv("USE_AWS_PARAMS", "false")
+
+	if useAWSParams == "true" {
+		// AWS Parameter Store에서 DB 설정 로드
+		log.Println("🔐 AWS Parameter Store 모드 활성화")
+		dbConfig, err := secrets.GetDBConfig()
+		if err != nil {
+			log.Printf("⚠️  AWS Parameter Store 로드 실패, 환경 변수로 폴백: %v", err)
+			connStr = buildConnStrFromEnv()
+		} else {
+			connStr = dbConfig.GetConnectionString()
+		}
+	} else {
+		// 로컬 개발: 환경 변수 사용
+		log.Println("🔧 로컬 개발 모드: 환경 변수 사용")
+		connStr = buildConnStrFromEnv()
+	}
+
+	log.Printf("연결 문자열: %s", maskPassword(connStr))
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("데이터베이스 연결 실패: %v", err)
@@ -79,6 +91,25 @@ func getEnv(key, defaultValue string) string {
 		return value
 	}
 	return defaultValue
+}
+
+// buildConnStrFromEnv는 환경 변수에서 연결 문자열 생성
+func buildConnStrFromEnv() string {
+	host := getEnv("DB_HOST", "localhost")
+	port := getEnv("DB_PORT", "5432")
+	user := getEnv("DB_USER", "bibleai")
+	password := getEnv("DB_PASSWORD", "bibleai")
+	dbname := getEnv("DB_NAME", "bibleai")
+	sslmode := getEnv("DB_SSLMODE", "disable")
+
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, dbname, sslmode)
+}
+
+// maskPassword는 로그에 비밀번호를 마스킹
+func maskPassword(connStr string) string {
+	re := regexp.MustCompile(`password=[^\s]+`)
+	return re.ReplaceAllString(connStr, "password=***")
 }
 
 func (db *DB) Close() error {
