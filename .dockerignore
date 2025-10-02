@@ -1,0 +1,71 @@
+# 개발 전용 디렉토리 (프로덕션에 불필요)
+development-only/
+docs/
+migrations/commentary/
+
+# Git 관련
+.git/
+.gitignore
+.gitattributes
+
+# 문서 파일
+*.md
+!README.md
+
+# 환경 파일
+.env
+.env.*
+*.env
+
+# 로그 파일
+*.log
+logs/
+server.log
+nohup.out
+
+# 임시 파일
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+*~
+
+# IDE 설정
+.vscode/
+.idea/
+*.iml
+
+# 테스트 파일
+*_test.go
+*.test
+coverage.txt
+
+# 빌드 산출물 (소스에서 다시 빌드)
+bibleai
+server
+dist/
+build/
+bin/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# 백업 파일
+*.bak
+*.backup
+backup/
+backups/
+
+# Air (hot reload)
+.air.toml
+.air.toml.tmp
+
+# 개발용 HTML
+test_*.html
+*_test_*.html
+playground/
+scratch/
