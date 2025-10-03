@@ -83,7 +83,10 @@ func buildConnStrFromEnv() string {
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnv("DB_PORT", "5432")
 	user := getEnv("DB_USER", "bibleai")
-	password := getEnv("DB_PASSWORD", "bibleai")
+	password := os.Getenv("DB_PASSWORD")
+	if password == "" {
+		log.Fatal("DB_PASSWORD 환경 변수가 설정되지 않았습니다. .env 파일을 확인하세요.")
+	}
 	dbname := getEnv("DB_NAME", "bibleai")
 	sslmode := getEnv("DB_SSLMODE", "disable")
 
