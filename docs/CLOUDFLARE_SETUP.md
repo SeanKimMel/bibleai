@@ -1,15 +1,27 @@
-# Cloudflare 설정 가이드
+# Cloudflare Proxy 설정 가이드 (Flexible Mode)
 
 ## 🎯 개요
 
+**현재 구성**: Cloudflare Proxy + Flexible Mode + EC2 직접 8080 포트
+
 Cloudflare를 사용하면 **무료**로 다음을 얻을 수 있습니다:
-- ✅ SSL 인증서 (자동 발급, 갱신)
+- ✅ SSL/TLS 인증서 (자동 발급, 갱신)
 - ✅ CDN (전 세계 빠른 속도)
 - ✅ DDoS 방어
 - ✅ 방화벽 규칙
 - ✅ 캐싱
 
-**Let's Encrypt 설정 불필요!**
+**장점**:
+- Nginx SSL 설정 불필요
+- Let's Encrypt 설정 불필요
+- 자체 서명 인증서 불필요
+- **가장 간단한 HTTPS 설정**
+
+**아키텍처**:
+```
+사용자 → Cloudflare (HTTPS) → EC2:8080 (HTTP)
+        (SSL 종료)              (애플리케이션)
+```
 
 ---
 
@@ -24,7 +36,7 @@ Cloudflare를 사용하면 **무료**로 다음을 얻을 수 있습니다:
 ### 1.2 도메인 추가
 
 1. **Add a Site** 클릭
-2. 도메인 입력 (예: `bibleai.example.com` → `example.com` 입력)
+2. 도메인 입력 (예: `haruinfo.net`)
 3. **Free Plan** 선택
 4. Cloudflare가 DNS 레코드 스캔
 
@@ -65,29 +77,33 @@ ns2.cloudflare.com
 
 **Cloudflare 대시보드 → DNS → Records**
 
-| Type | Name | Content | Proxy | TTL |
-|------|------|---------|-------|-----|
-| A | @ | EC2_PUBLIC_IP | ✅ Proxied | Auto |
-| A | www | EC2_PUBLIC_IP | ✅ Proxied | Auto |
-
-**예시**:
+**예시** (haruinfo.net 기준):
 ```
 Type: A
-Name: @  (또는 루트 도메인)
-Content: 54.180.123.456  (EC2 Public IP)
-Proxy status: Proxied (주황색 구름 ☁️)
+Name: @  (루트 도메인용)
+Content: 13.209.47.72  (EC2 Public IP)
+Proxy status: Proxied (주황색 구름 ☁️) ⭐
+TTL: Auto
+```
+
+**서브도메인 추가 (선택사항)**:
+```
+Type: A
+Name: www
+Content: 13.209.47.72
+Proxy status: Proxied ☁️
 TTL: Auto
 ```
 
 **중요**:
-- ✅ **Proxied (주황색 구름)**: Cloudflare를 통해 트래픽 라우팅 (SSL, CDN 활성화)
+- ✅ **Proxied (주황색 구름)**: Cloudflare를 통해 트래픽 라우팅 (SSL, CDN 활성화) ⭐
 - ❌ **DNS Only (회색 구름)**: 직접 연결 (SSL, CDN 미사용)
 
 ### 2.2 확인
 
 ```bash
 # DNS 전파 확인
-nslookup your-domain.com
+nslookup haruinfo.net
 
 # Cloudflare IP로 반환되면 정상
 # 예: 104.21.x.x 또는 172.67.x.x
@@ -95,145 +111,110 @@ nslookup your-domain.com
 
 ---
 
-## 📋 3단계: SSL/TLS 설정
+## 📋 3단계: SSL/TLS 설정 (Flexible Mode)
 
 ### 3.1 SSL/TLS 암호화 모드 선택
 
 **Cloudflare 대시보드 → SSL/TLS → Overview**
 
-#### 옵션 비교
+#### 모드 선택: Flexible ⭐
 
-| 모드 | 사용자↔CF | CF↔Origin | EC2 설정 | 추천 |
-|------|-----------|-----------|----------|------|
-| **Flexible** | ✅ HTTPS | ❌ HTTP | Nginx HTTP만 | ⚠️ 비권장 |
-| **Full** | ✅ HTTPS | ✅ HTTPS | 자체 서명 인증서 OK | ✅ 권장 |
-| **Full (Strict)** | ✅ HTTPS | ✅ HTTPS | 유효한 인증서 필요 | 🔒 최고 |
-
-#### 권장: Full 모드
-
-**이유**:
-- EC2에서 자체 서명 인증서만 있어도 OK
-- Cloudflare가 사용자에게 유효한 인증서 제공
-- 간단한 설정
+**Flexible Mode**:
+- 사용자 → Cloudflare: **HTTPS** (암호화됨)
+- Cloudflare → EC2: **HTTP** (평문)
+- EC2에서 SSL 설정 불필요
+- **가장 간단하고 빠른 설정**
 
 **설정**:
 1. SSL/TLS → Overview
-2. **Full** 선택
+2. **Flexible** 선택
+
+#### 다른 모드 (참고용)
+
+| 모드 | 사용자↔CF | CF↔Origin | EC2 설정 필요 | 복잡도 |
+|------|-----------|-----------|--------------|--------|
+| **Flexible** | HTTPS | HTTP | ❌ 불필요 | ⭐ 간단 |
+| Full | HTTPS | HTTPS | 자체 서명 인증서 | ⭐⭐ 중간 |
+| Full (Strict) | HTTPS | HTTPS | 유효한 인증서 | ⭐⭐⭐ 복잡 |
 
 ---
 
-## 📋 4단계: EC2 Nginx 설정
-
-### 4.1 자체 서명 SSL 인증서 생성 (Full 모드용)
-
-```bash
-# EC2 SSH 접속
-ssh ec2-user@your-ec2-ip
-
-# 자체 서명 인증서 생성
-sudo mkdir -p /etc/nginx/ssl
-sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout /etc/nginx/ssl/selfsigned.key \
-  -out /etc/nginx/ssl/selfsigned.crt \
-  -subj "/C=KR/ST=Seoul/L=Seoul/O=BibleAI/CN=your-domain.com"
-```
-
-### 4.2 Nginx 설정 (Cloudflare Full 모드용)
-
-```bash
-sudo tee /etc/nginx/conf.d/bibleai.conf > /dev/null <<'EOF'
-# HTTP (80) - Cloudflare에서 온 요청
-server {
-    listen 80;
-    server_name your-domain.com www.your-domain.com;
-
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # Cloudflare Real IP 복원
-        real_ip_header CF-Connecting-IP;
-    }
-}
-
-# HTTPS (443) - Cloudflare에서 온 요청 (Full 모드)
-server {
-    listen 443 ssl http2;
-    server_name your-domain.com www.your-domain.com;
-
-    # 자체 서명 SSL 인증서 (Cloudflare Full 모드용)
-    ssl_certificate /etc/nginx/ssl/selfsigned.crt;
-    ssl_certificate_key /etc/nginx/ssl/selfsigned.key;
-
-    # SSL 설정
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers HIGH:!aNULL:!MD5;
-
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto https;
-
-        # Cloudflare Real IP 복원
-        real_ip_header CF-Connecting-IP;
-    }
-
-    # 정적 파일 캐싱
-    location /static/ {
-        alias /opt/bibleai/web/static/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-}
-EOF
-```
-
-**중요**: `your-domain.com`을 실제 도메인으로 변경!
-
-```bash
-# Nginx 설정 테스트
-sudo nginx -t
-
-# Nginx 재시작
-sudo systemctl restart nginx
-```
-
----
-
-## 📋 5단계: EC2 Security Group 설정
+## 📋 4단계: EC2 Security Group 설정
 
 ### AWS Console에서 설정
 
 **EC2 → Security Groups → 인스턴스의 SG 선택 → Inbound Rules**
 
-| Type | Protocol | Port Range | Source | Description |
-|------|----------|------------|--------|-------------|
-| HTTP | TCP | 80 | 0.0.0.0/0 | HTTP from Cloudflare |
-| HTTPS | TCP | 443 | 0.0.0.0/0 | HTTPS from Cloudflare |
+#### 옵션 1: 전체 개방 (간단)
+
+| Type | Protocol | Port | Source | Description |
+|------|----------|------|--------|-------------|
+| Custom TCP | TCP | 8080 | 0.0.0.0/0 | BibleAI HTTP |
 | SSH | TCP | 22 | My IP | SSH access |
 
-**또는 AWS CLI**:
+#### 옵션 2: Cloudflare IP만 허용 (보안 강화)
+
+| Type | Protocol | Port | Source | Description |
+|------|----------|------|--------|-------------|
+| Custom TCP | TCP | 8080 | 173.245.48.0/20 | Cloudflare IP 1 |
+| Custom TCP | TCP | 8080 | 103.21.244.0/22 | Cloudflare IP 2 |
+| Custom TCP | TCP | 8080 | 103.22.200.0/22 | Cloudflare IP 3 |
+| ... | ... | ... | ... | (전체 목록은 아래 참조) |
+| SSH | TCP | 22 | My IP | SSH access |
+
+**Cloudflare IPv4 범위** (2025년 기준):
+```
+173.245.48.0/20
+103.21.244.0/22
+103.22.200.0/22
+103.31.4.0/22
+141.101.64.0/18
+108.162.192.0/18
+190.93.240.0/20
+188.114.96.0/20
+197.234.240.0/22
+198.41.128.0/17
+162.158.0.0/15
+104.16.0.0/13
+104.24.0.0/14
+172.64.0.0/13
+131.0.72.0/22
+```
+
+**최신 IP 목록**: https://www.cloudflare.com/ips/
+
+---
+
+## 📋 5단계: 애플리케이션 확인
+
+### EC2에서 확인
+
 ```bash
-# Security Group ID 확인
-aws ec2 describe-instances --filters "Name=tag:Name,Values=bibleai-server" \
-  --query "Reservations[0].Instances[0].SecurityGroups[0].GroupId" --output text
+# 애플리케이션 상태 확인
+sudo systemctl status bibleai
 
-# 규칙 추가
-aws ec2 authorize-security-group-ingress --group-id sg-xxx \
-  --protocol tcp --port 80 --cidr 0.0.0.0/0
+# 8080 포트 리스닝 확인
+sudo netstat -tlnp | grep 8080
 
-aws ec2 authorize-security-group-ingress --group-id sg-xxx \
-  --protocol tcp --port 443 --cidr 0.0.0.0/0
+# Health 체크
+curl http://localhost:8080/health
+```
+
+### 외부 접속 테스트
+
+**5분 후** (DNS 전파 대기):
+
+```bash
+# HTTPS 접속 테스트
+curl https://haruinfo.net/health
+
+# 브라우저 접속
+https://haruinfo.net
 ```
 
 ---
 
-## 📋 6단계: Cloudflare 추가 설정 (선택사항)
+## 📋 6단계: Cloudflare 추가 설정 (권장)
 
 ### 6.1 Always Use HTTPS
 
@@ -249,227 +230,109 @@ aws ec2 authorize-security-group-ingress --group-id sg-xxx \
 
 ### 6.3 Minimum TLS Version
 
-- **TLS 1.2** 선택 (권장)
+- **Minimum TLS Version**: TLS 1.2 이상
 
-### 6.4 캐싱 규칙
+### 6.4 Caching 설정
 
 **Caching → Configuration**
 
 - **Browser Cache TTL**: 4 hours
 - **Caching Level**: Standard
 
-**Page Rules 추가** (3개 무료):
-
-| URL | 설정 | 값 |
-|-----|------|-----|
-| `*.your-domain.com/static/*` | Cache Level | Cache Everything |
-| `*.your-domain.com/api/*` | Cache Level | Bypass |
-| `*.your-domain.com/*` | Cache Level | Standard |
-
-### 6.5 Cloudflare IP 허용 (보안 강화)
-
-EC2에서 Cloudflare IP만 허용:
-
-```bash
-# /etc/nginx/conf.d/cloudflare-ips.conf
-sudo tee /etc/nginx/conf.d/cloudflare-ips.conf > /dev/null <<'EOF'
-# Cloudflare IP 범위
-set_real_ip_from 173.245.48.0/20;
-set_real_ip_from 103.21.244.0/22;
-set_real_ip_from 103.22.200.0/22;
-set_real_ip_from 103.31.4.0/22;
-set_real_ip_from 141.101.64.0/18;
-set_real_ip_from 108.162.192.0/18;
-set_real_ip_from 190.93.240.0/20;
-set_real_ip_from 188.114.96.0/20;
-set_real_ip_from 197.234.240.0/22;
-set_real_ip_from 198.41.128.0/17;
-set_real_ip_from 162.158.0.0/15;
-set_real_ip_from 104.16.0.0/13;
-set_real_ip_from 104.24.0.0/14;
-set_real_ip_from 172.64.0.0/13;
-set_real_ip_from 131.0.72.0/22;
-
-# IPv6
-set_real_ip_from 2400:cb00::/32;
-set_real_ip_from 2606:4700::/32;
-set_real_ip_from 2803:f800::/32;
-set_real_ip_from 2405:b500::/32;
-set_real_ip_from 2405:8100::/32;
-set_real_ip_from 2c0f:f248::/32;
-set_real_ip_from 2a06:98c0::/29;
-
-real_ip_header CF-Connecting-IP;
-EOF
-
-sudo nginx -t
-sudo systemctl reload nginx
-```
+**정적 파일 캐싱 규칙**:
+1. Rules → Page Rules → Create Page Rule
+2. URL: `haruinfo.net/static/*`
+3. Settings:
+   - Cache Level: Cache Everything
+   - Edge Cache TTL: 1 month
 
 ---
 
-## 🧪 테스트
+## 🔍 문제 해결
 
-### 1. DNS 전파 확인
+### 1. "Too Many Redirects" 오류
 
+**원인**: SSL/TLS 모드가 잘못 설정됨
+
+**해결**:
+1. Cloudflare → SSL/TLS → Overview
+2. **Flexible** 모드로 변경
+3. 브라우저 캐시 삭제 후 재접속
+
+### 2. 502 Bad Gateway
+
+**원인**: EC2 애플리케이션이 8080 포트에서 실행되지 않음
+
+**해결**:
 ```bash
-# Cloudflare IP로 반환되는지 확인
-nslookup your-domain.com
+# 애플리케이션 재시작
+sudo systemctl restart bibleai
+sudo systemctl status bibleai
 
-# 예상 결과: 104.21.x.x 또는 172.67.x.x
+# 포트 확인
+sudo netstat -tlnp | grep 8080
 ```
 
-### 2. HTTPS 접속 테스트
+### 3. DNS가 전파되지 않음
 
+**확인**:
 ```bash
-# 명령어 테스트
-curl -I https://your-domain.com/health
+# Cloudflare 네임서버 확인
+dig haruinfo.net NS
 
-# 예상 출력:
-# HTTP/2 200
-# server: cloudflare
-# cf-ray: ...
+# DNS 전파 확인 (글로벌)
+https://www.whatsmydns.net/#NS/haruinfo.net
 ```
 
-### 3. HTTP → HTTPS 리다이렉트 테스트
+**대기**: 최대 24시간 (보통 1-2시간)
 
+### 4. Security Group 차단
+
+**확인**:
 ```bash
-curl -I http://your-domain.com
-
-# 예상 출력:
-# HTTP/1.1 301 Moved Permanently
-# Location: https://your-domain.com/
+# 로컬에서 8080 포트 접근 테스트
+curl http://13.209.47.72:8080/health
 ```
 
-### 4. 브라우저 테스트
-
-1. https://your-domain.com 접속
-2. 🔒 자물쇠 아이콘 확인
-3. 인증서 확인: **Cloudflare** 발급
-
-### 5. SSL 등급 확인
-
-**SSL Labs**: https://www.ssllabs.com/ssltest/
-- A+ 등급 예상
+**해결**: AWS Console → Security Group → 8080 포트 규칙 추가
 
 ---
 
-## 📊 포트 흐름 요약
+## 📊 현재 구성 요약
+
+**성공한 구성** (haruinfo.net):
 
 ```
 사용자 (브라우저)
-    ↓ https://your-domain.com (443 포트)
-Cloudflare (SSL 인증서: Cloudflare 자동)
-    ↓ HTTP (80) 또는 HTTPS (443) - Full 모드
-EC2 Nginx (자체 서명 인증서)
-    ↓ HTTP (8080 포트, 내부)
-Go 애플리케이션 (.env의 PORT=8080)
+    ↓ HTTPS
+Cloudflare CDN (SSL 종료)
+    ↓ HTTP
+EC2:8080 (BibleAI 애플리케이션)
+    ↓
+PostgreSQL (로컬)
 ```
 
-**핵심**:
-- 사용자는 **443 포트** (HTTPS)만 사용
-- Go 앱은 **8080 포트**에서 실행 (내부 통신)
-- Nginx가 **80, 443 포트**를 Listen
-- **포트 충돌 없음!**
+**설정 완료 항목**:
+- ✅ Cloudflare DNS: A 레코드 (Proxied)
+- ✅ SSL/TLS: Flexible Mode
+- ✅ EC2 Security Group: 8080 포트 개방
+- ✅ 애플리케이션: 8080 포트 리스닝
+
+**비용**:
+- Cloudflare: 무료 플랜
+- EC2: t4g.micro ($6/월)
+- **총 $6/월**
 
 ---
 
-## 💰 비용
+## 🔗 참고 자료
 
-| 항목 | 비용 |
-|------|------|
-| **Cloudflare Free** | $0/월 |
-| - SSL 인증서 | 무료 |
-| - CDN | 무료 |
-| - DDoS 방어 (기본) | 무료 |
-| - Page Rules (3개) | 무료 |
-| **도메인** | $8-12/년 |
-| **EC2 + RDS** | $22/월 |
-| **총 비용** | **$22/월 + 도메인** |
+- [Cloudflare SSL Modes](https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/)
+- [Cloudflare IP Ranges](https://www.cloudflare.com/ips/)
+- [Cloudflare Free Plan Features](https://www.cloudflare.com/plans/free/)
 
 ---
 
-## 🚨 문제 해결
-
-### 1. "Too many redirects" 오류
-
-**원인**: Cloudflare Flexible 모드 + Nginx HTTPS 리다이렉트
-
-**해결**:
-1. Cloudflare SSL/TLS 모드를 **Full**로 변경
-2. Nginx에서 HTTPS 리다이렉트 제거
-
-### 2. "526 Invalid SSL certificate"
-
-**원인**: Cloudflare Full (Strict) 모드 + 자체 서명 인증서
-
-**해결**:
-- Cloudflare SSL/TLS 모드를 **Full**로 변경 (Strict 아님)
-
-### 3. "502 Bad Gateway"
-
-**원인**: Go 앱이 실행되지 않음
-
-**해결**:
-```bash
-# 앱 상태 확인
-sudo systemctl status bibleai
-
-# 로그 확인
-sudo journalctl -u bibleai -n 50
-
-# 재시작
-sudo systemctl restart bibleai
-```
-
-### 4. Cloudflare IP 대신 EC2 IP로 응답
-
-**원인**: DNS가 **Proxied** 모드가 아님
-
-**해결**:
-- Cloudflare DNS 레코드에서 주황색 구름 ☁️ 활성화
-
----
-
-## 📋 체크리스트
-
-### Cloudflare 설정
-- [ ] Cloudflare 계정 생성
-- [ ] 도메인 추가 및 네임서버 변경
-- [ ] DNS 전파 확인 (1-24시간)
-- [ ] A 레코드 추가 (Proxied 모드)
-- [ ] SSL/TLS Full 모드 선택
-- [ ] Always Use HTTPS 활성화
-
-### EC2 설정
-- [ ] 자체 서명 SSL 인증서 생성
-- [ ] Nginx 설정 (80, 443 포트)
-- [ ] Security Group (80, 443 열기)
-- [ ] Nginx 재시작 성공
-- [ ] Go 앱 실행 중
-
-### 테스트
-- [ ] DNS 전파 확인 (Cloudflare IP)
-- [ ] HTTPS 접속 성공
-- [ ] HTTP → HTTPS 리다이렉트 확인
-- [ ] 브라우저 🔒 아이콘 확인
-- [ ] SSL Labs A+ 등급
-
----
-
-## 🎯 Cloudflare vs Let's Encrypt
-
-| 항목 | Cloudflare | Let's Encrypt |
-|------|-----------|---------------|
-| **설정 복잡도** | ⭐ (매우 쉬움) | ⭐⭐⭐ (복잡) |
-| **SSL 인증서** | 자동 (무료) | 수동 발급 필요 |
-| **갱신** | 자동 | 자동 (90일마다) |
-| **CDN** | ✅ 포함 | ❌ 없음 |
-| **DDoS 방어** | ✅ 기본 제공 | ❌ 없음 |
-| **비용** | $0 | $0 |
-| **추천** | ✅ **강력 추천** | 일반적 |
-
----
-
-**작성일**: 2025년 10월 3일
-**추천 방식**: Cloudflare (가장 간단하고 강력)
+**작성일**: 2025년 10월 4일
+**테스트 완료**: haruinfo.net (Flexible Mode + 8080)
+**상태**: ✅ 프로덕션 검증 완료

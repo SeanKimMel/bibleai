@@ -120,13 +120,21 @@ sudo journalctl -u bibleai -f
 curl http://localhost/health
 ```
 
-### 7. HTTPS 설정 (선택사항, 도메인 필요)
+### 7. HTTPS 설정 (도메인 필요) ⭐
 
+**권장: Cloudflare Proxy (가장 간단)**
+
+1. Cloudflare 계정 생성 및 도메인 등록
+2. DNS A 레코드: @ → EC2 Public IP (Proxied ☁️)
+3. SSL/TLS: Flexible 모드
+4. EC2 Security Group: 8080 포트 개방
+
+**상세 가이드**: [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md) ⭐
+
+**대안: Let's Encrypt + Nginx**
 ```bash
-# 도메인이 있다면 HTTPS 설정
 sudo /opt/bibleai/development-only/setup-https.sh your-domain.com
 ```
-
 **상세 가이드**: [HTTPS_SETUP.md](HTTPS_SETUP.md)
 
 ---
@@ -238,7 +246,11 @@ psql -h localhost -U bibleai -d bibleai
 ### EC2 접속 실패
 
 ```bash
-# Security Group 확인 (포트 22, 80, 443 열려있는지)
+# Security Group 확인
+# - SSH: 22 포트 (필수)
+# - HTTP: 8080 포트 (Cloudflare 사용시)
+# - HTTPS: 80/443 포트 (Let's Encrypt 사용시)
+
 # SSH 키 권한 확인
 chmod 600 your-key.pem
 ```
@@ -246,4 +258,4 @@ chmod 600 your-key.pem
 ---
 
 **작성일**: 2025년 10월 3일
-**업데이트**: 2025년 10월 3일
+**업데이트**: 2025년 10월 4일 (Cloudflare Proxy 방식 추가)
