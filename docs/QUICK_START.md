@@ -120,6 +120,15 @@ sudo journalctl -u bibleai -f
 curl http://localhost/health
 ```
 
+### 7. HTTPS 설정 (선택사항, 도메인 필요)
+
+```bash
+# 도메인이 있다면 HTTPS 설정
+sudo /opt/bibleai/development-only/setup-https.sh your-domain.com
+```
+
+**상세 가이드**: [HTTPS_SETUP.md](HTTPS_SETUP.md)
+
 ---
 
 ## 🔄 일상 배포 (3분)

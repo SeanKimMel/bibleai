@@ -1,6 +1,6 @@
 # 바이너리 실행 파일
 bibleai
-server
+/server
 
 # 환경 변수 및 설정 파일
 .env

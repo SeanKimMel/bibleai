@@ -23,8 +23,23 @@ echo ""
 echo "3️⃣  Go 1.23.0 설치 중..."
 if [ ! -d "/usr/local/go" ]; then
     cd /tmp
-    wget -q https://go.dev/dl/go1.23.0.linux-amd64.tar.gz
-    sudo tar -C /usr/local -xzf go1.23.0.linux-amd64.tar.gz
+
+    # CPU 아키텍처 감지
+    ARCH=$(uname -m)
+    if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+        echo "   ℹ️  ARM64 아키텍처 감지됨"
+        GO_ARCH="arm64"
+    elif [ "$ARCH" = "x86_64" ]; then
+        echo "   ℹ️  x86_64 아키텍처 감지됨"
+        GO_ARCH="amd64"
+    else
+        echo "   ❌ 지원하지 않는 아키텍처: $ARCH"
+        exit 1
+    fi
+
+    echo "   📥 go1.23.0.linux-${GO_ARCH}.tar.gz 다운로드 중..."
+    wget -q https://go.dev/dl/go1.23.0.linux-${GO_ARCH}.tar.gz
+    sudo tar -C /usr/local -xzf go1.23.0.linux-${GO_ARCH}.tar.gz
     echo 'export PATH=$PATH:/usr/local/go/bin' | sudo tee -a /etc/profile
     echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
     source ~/.bashrc
