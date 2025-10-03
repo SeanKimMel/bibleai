@@ -1,7 +1,6 @@
 package database
 
 import (
-	"bibleai/internal/secrets"
 	"database/sql"
 	"fmt"
 	"log"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
+	"github.com/joho/godotenv"
 )
 
 type DB struct {
@@ -17,26 +17,11 @@ type DB struct {
 }
 
 func NewConnection() (*DB, error) {
-	var connStr string
+	// .env 파일 로드 시도 (있으면 로드, 없어도 무시)
+	_ = godotenv.Load()
 
-	// AWS Parameter Store 사용 여부 확인
-	useAWSParams := getEnv("USE_AWS_PARAMS", "false")
-
-	if useAWSParams == "true" {
-		// AWS Parameter Store에서 DB 설정 로드
-		log.Println("🔐 AWS Parameter Store 모드 활성화")
-		dbConfig, err := secrets.GetDBConfig()
-		if err != nil {
-			log.Printf("⚠️  AWS Parameter Store 로드 실패, 환경 변수로 폴백: %v", err)
-			connStr = buildConnStrFromEnv()
-		} else {
-			connStr = dbConfig.GetConnectionString()
-		}
-	} else {
-		// 로컬 개발: 환경 변수 사용
-		log.Println("🔧 로컬 개발 모드: 환경 변수 사용")
-		connStr = buildConnStrFromEnv()
-	}
+	// 환경 변수에서 DB 연결 정보 가져오기
+	connStr := buildConnStrFromEnv()
 
 	log.Printf("연결 문자열: %s", maskPassword(connStr))
 	db, err := sql.Open("postgres", connStr)
