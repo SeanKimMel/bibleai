@@ -53,7 +53,7 @@ open http://localhost:8080
 # EC2 SSH 접속
 ssh ec2-user@your-ec2-ip
 
-# 초기 환경 구축 (Go, PostgreSQL, Nginx 설치)
+# 초기 환경 구축 (Go, PostgreSQL 설치)
 curl -o setup-ec2.sh https://raw.githubusercontent.com/SeanKimMel/bibleai/main/development-only/setup-ec2.sh
 chmod +x setup-ec2.sh
 ./setup-ec2.sh
@@ -94,10 +94,10 @@ bibleai/
 │       ├── js/main.js          # JavaScript 유틸리티
 │       └── sw.js               # Service Worker (PWA)
 ├── migrations/                  # DB 스키마 및 데이터
-├── development-only/            # 배포 스크립트
-│   ├── setup-ec2.sh            # EC2 초기 설정
-│   ├── setup-https.sh          # Let's Encrypt SSL
-│   └── check-setup.sh          # 설정 확인
+├── development-only/                  # 배포 스크립트
+│   ├── setup-ec2.sh                  # EC2 초기 설정
+│   ├── setup-nginx-letsencrypt.sh    # Nginx + Let's Encrypt (대안)
+│   └── check-setup.sh                # 설정 확인
 └── docs/                        # 문서
 ```
 

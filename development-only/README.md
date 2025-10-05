@@ -7,28 +7,32 @@
 
 ### 🚀 EC2 배포 스크립트
 ```
-setup-ec2.sh           - EC2 초기 환경 구축 (Go, PostgreSQL, Nginx 설치)
-setup-cloudflare.sh    - Cloudflare Tunnel HTTPS 설정 ⭐
-setup-https.sh         - Let's Encrypt SSL 인증서 설정 (대안)
-update-app.sh          - 애플리케이션 업데이트 (3분)
+setup-ec2.sh                  - EC2 초기 환경 구축 (Go, PostgreSQL 설치)
+setup-nginx-letsencrypt.sh    - Nginx + Let's Encrypt SSL (Cloudflare 미사용시)
+update-app.sh                 - 애플리케이션 업데이트 (3분)
+check-setup.sh                - 설정 상태 확인
 ```
 
 ### 🌐 HTTPS 설정 방식
-**권장: Cloudflare Tunnel (무료, 간편)**
-```bash
-./setup-cloudflare.sh
-```
+**권장: Cloudflare Proxy (무료, 간편)** ⭐
+- Cloudflare 대시보드에서 DNS 설정만으로 완료
+- Nginx 설정 불필요
 - ✅ 무료 SSL/TLS 인증서
 - ✅ DDoS 보호 및 CDN
-- ✅ 방화벽 규칙 불필요 (Inbound 포트 차단 가능)
+- ✅ 8080 포트만 개방
 - ✅ 자동 인증서 갱신
 
-**대안: Let's Encrypt + Nginx**
+**상세 가이드**: [CLOUDFLARE_SETUP.md](../docs/CLOUDFLARE_SETUP.md)
+
+**대안: Nginx + Let's Encrypt** (Cloudflare 미사용시)
 ```bash
-./setup-https.sh
+./setup-nginx-letsencrypt.sh your-domain.com
 ```
 - 전통적인 SSL 인증서 방식
+- Nginx 설치 및 설정 필요
 - 80/443 포트 개방 필요
+
+**상세 가이드**: [HTTPS_SETUP.md](../docs/HTTPS_SETUP.md)
 
 ### 🧪 테스트 스크립트
 ```
@@ -66,7 +70,7 @@ stop.sh                - 애플리케이션 종료
 - 네이티브 Go 바이너리 (Docker보다 빠름)
 - .env 파일 설정 (간단함)
 - Systemd 서비스 관리 (AWS EC2 네이티브)
-- Cloudflare Tunnel (무료 HTTPS + 보안)
+- Cloudflare Proxy (무료 HTTPS + CDN + DDoS 보호)
 
 **비용 및 보안**:
 - EC2: t4g.micro (ARM64) 충분 ($6/월)

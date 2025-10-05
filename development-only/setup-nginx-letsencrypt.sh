@@ -1,15 +1,20 @@
 #!/bin/bash
-# HTTPS 설정 스크립트 (Let's Encrypt)
-# 사용법: sudo ./setup-https.sh your-domain.com
+# HTTPS 설정 스크립트 (Nginx + Let's Encrypt)
+# ⚠️  주의: Cloudflare를 사용하지 않는 경우에만 사용
+# ⚠️  권장: Cloudflare Proxy 사용 (무료, 간편, Nginx 불필요)
+# 사용법: sudo ./setup-nginx-letsencrypt.sh your-domain.com
 
 set -e
 
 # 도메인 확인
 if [ -z "$1" ]; then
-    echo "❌ 사용법: sudo ./setup-https.sh your-domain.com"
+    echo "❌ 사용법: sudo ./setup-nginx-letsencrypt.sh your-domain.com"
+    echo ""
+    echo "⚠️  주의: 이 스크립트는 Nginx + Let's Encrypt 방식입니다"
+    echo "⚠️  권장: Cloudflare Proxy 사용 (더 간단, Nginx 불필요)"
     echo ""
     echo "예시:"
-    echo "  sudo ./setup-https.sh bibleai.example.com"
+    echo "  sudo ./setup-nginx-letsencrypt.sh bibleai.example.com"
     echo ""
     exit 1
 fi
@@ -17,8 +22,11 @@ fi
 DOMAIN=$1
 
 echo "========================================="
-echo "HTTPS 설정 (Let's Encrypt)"
+echo "HTTPS 설정 (Nginx + Let's Encrypt)"
 echo "========================================="
+echo ""
+echo "⚠️  이 방식은 Cloudflare를 사용하지 않는 경우에만 사용하세요"
+echo "⚠️  Cloudflare Proxy를 사용하면 Nginx 설정이 불필요합니다"
 echo ""
 echo "도메인: $DOMAIN"
 echo ""

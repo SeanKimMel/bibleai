@@ -1,8 +1,17 @@
-# HTTPS 설정 가이드
+# HTTPS 설정 가이드 (Nginx + Let's Encrypt)
+
+⚠️ **주의**: Cloudflare를 사용하지 않는 경우에만 사용하세요
+
+⭐ **권장**: [Cloudflare Proxy 방식](CLOUDFLARE_SETUP.md) 사용 (더 간단, Nginx 불필요)
 
 ## 🎯 개요
 
-EC2에서 Let's Encrypt를 사용하여 무료 SSL 인증서를 설정하고 HTTPS를 활성화합니다.
+EC2에서 Nginx와 Let's Encrypt를 사용하여 무료 SSL 인증서를 설정하고 HTTPS를 활성화합니다.
+
+**이 방식을 사용하는 경우**:
+- Cloudflare를 사용할 수 없을 때
+- 자체 서버에서 완전한 제어가 필요할 때
+- Nginx의 추가 기능이 필요할 때
 
 ## 📋 사전 준비
 
@@ -33,9 +42,9 @@ dig your-domain.com
 # EC2 SSH 접속
 ssh ec2-user@your-ec2-ip
 
-# HTTPS 설정 스크립트 실행
+# HTTPS 설정 스크립트 실행 (Nginx + Let's Encrypt)
 cd /opt/bibleai
-sudo ./development-only/setup-https.sh your-domain.com
+sudo ./development-only/setup-nginx-letsencrypt.sh your-domain.com
 ```
 
 **스크립트가 자동으로 수행**:

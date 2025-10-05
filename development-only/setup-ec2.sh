@@ -16,7 +16,7 @@ sudo dnf update -y
 # 2. 필요한 패키지 설치
 echo ""
 echo "2️⃣  필수 패키지 설치 중..."
-sudo dnf install -y git wget postgresql16 nginx
+sudo dnf install -y git wget postgresql16
 
 # 3. Go 설치
 echo ""
@@ -130,43 +130,12 @@ sudo systemctl enable bibleai
 
 echo "   ✅ Systemd 서비스 생성 완료"
 
-# 9. Nginx 설정
+# 9. 포트 8080 확인 및 안내
 echo ""
-echo "9️⃣  Nginx 설정 중..."
-sudo tee /etc/nginx/conf.d/bibleai.conf > /dev/null <<'NGINX'
-server {
-    listen 80;
-    server_name _;
-
-    # 클라이언트 최대 업로드 크기
-    client_max_body_size 10M;
-
-    location / {
-        proxy_pass http://localhost:8080;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-
-        # 타임아웃 설정
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-    }
-
-    # 정적 파일 직접 서빙 (선택사항)
-    location /static/ {
-        alias /opt/bibleai/web/static/;
-        expires 30d;
-        add_header Cache-Control "public, immutable";
-    }
-}
-NGINX
-
-sudo systemctl enable nginx
-sudo systemctl restart nginx
-
-echo "   ✅ Nginx 설정 완료"
+echo "9️⃣  애플리케이션 포트 설정"
+echo "   ℹ️  BibleAI는 8080 포트에서 실행됩니다"
+echo "   ℹ️  Cloudflare Proxy 사용시: Security Group에서 8080 포트 개방"
+echo "   ℹ️  Nginx는 사용하지 않습니다 (Cloudflare가 대신함)"
 
 # 10. PostgreSQL 설정 안내
 echo ""
@@ -199,6 +168,10 @@ echo "   5. 상태 확인: sudo systemctl status bibleai"
 echo "   6. 로그 확인: sudo journalctl -u bibleai -f"
 echo ""
 echo "🌐 접속 테스트:"
-echo "   curl http://localhost:8080/health"
-echo "   curl http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4)/health"
+echo "   로컬: curl http://localhost:8080/health"
+echo "   외부: curl http://$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4):8080/health"
+echo ""
+echo "🔐 HTTPS 설정 (권장):"
+echo "   Cloudflare Proxy 사용을 권장합니다 (무료, 간편)"
+echo "   가이드: https://github.com/SeanKimMel/bibleai/blob/main/docs/CLOUDFLARE_SETUP.md"
 echo ""

@@ -131,11 +131,11 @@ curl http://localhost/health
 
 **상세 가이드**: [CLOUDFLARE_SETUP.md](CLOUDFLARE_SETUP.md) ⭐
 
-**대안: Let's Encrypt + Nginx**
+**대안: Nginx + Let's Encrypt** (Cloudflare 미사용시)
 ```bash
-sudo /opt/bibleai/development-only/setup-https.sh your-domain.com
+sudo /opt/bibleai/development-only/setup-nginx-letsencrypt.sh your-domain.com
 ```
-**상세 가이드**: [HTTPS_SETUP.md](HTTPS_SETUP.md)
+**상세 가이드**: [HTTPS_SETUP.md](HTTPS_SETUP.md) (Nginx + Let's Encrypt 방식)
 
 ---
 
