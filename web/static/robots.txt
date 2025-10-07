@@ -1,0 +1,30 @@
+# 주님말씀AI - Robots.txt
+# Google, Naver 검색엔진 최적화
+
+# 모든 검색엔진 허용
+User-agent: *
+Allow: /
+
+# Google Bot
+User-agent: Googlebot
+Allow: /
+
+# Naver Bot
+User-agent: Yeti
+Allow: /
+
+# Naver 모바일
+User-agent: NaverBot
+Allow: /
+
+# Bing Bot
+User-agent: Bingbot
+Allow: /
+
+# 크롤링 제외 경로
+Disallow: /api/admin/
+Disallow: /static/
+Disallow: /test/
+
+# 사이트맵 위치
+Sitemap: https://bibleai.wiki/sitemap.xml

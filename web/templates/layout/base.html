@@ -4,10 +4,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}} - 주님말씀AI</title>
-    
+
+    <!-- SEO 메타 태그 -->
+    <meta name="description" content="{{if .Description}}{{.Description}}{{else}}성경, 찬송가, 기도문을 한 곳에서 쉽게 찾아보세요. 키워드 검색으로 원하는 성경 구절과 찬송가를 빠르게 찾을 수 있습니다.{{end}}">
+    <meta name="keywords" content="성경, 찬송가, 기도문, 성경검색, 새찬송가, 키워드검색, 성경구절, 기독교, 크리스천, 주님말씀AI">
+    <meta name="author" content="주님말씀AI">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://bibleai.wiki{{.CurrentPath}}">
+
+    <!-- Geo 타겟팅 (한국/서울) -->
+    <meta name="geo.region" content="KR-11">
+    <meta name="geo.placename" content="Seoul, South Korea">
+    <meta name="geo.position" content="37.5665;126.9780">
+    <meta name="ICBM" content="37.5665, 126.9780">
+
+    <!-- Open Graph (소셜 미디어 공유) -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="주님말씀AI">
+    <meta property="og:title" content="{{.Title}} - 주님말씀AI">
+    <meta property="og:description" content="{{if .Description}}{{.Description}}{{else}}성경, 찬송가, 기도문을 한 곳에서 쉽게 찾아보세요{{end}}">
+    <meta property="og:url" content="https://bibleai.wiki{{.CurrentPath}}">
+    <meta property="og:locale" content="ko_KR">
+    <meta property="og:image" content="https://bibleai.wiki/static/og-image.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{.Title}} - 주님말씀AI">
+    <meta name="twitter:description" content="{{if .Description}}{{.Description}}{{else}}성경, 찬송가, 기도문을 한 곳에서 쉽게 찾아보세요{{end}}">
+    <meta name="twitter:image" content="https://bibleai.wiki/static/og-image.png">
+
+    <!-- Naver 메타 태그 -->
+    <meta name="naver-site-verification" content="">
+
+    <!-- Google Search Console -->
+    <meta name="google-site-verification" content="">
+
+    <!-- 구조화된 데이터 (JSON-LD for SEO) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "주님말씀AI",
+      "alternateName": "BibleAI",
+      "url": "https://bibleai.wiki",
+      "description": "성경, 찬송가, 기도문을 한 곳에서 쉽게 찾아보세요",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://bibleai.wiki/bible/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      },
+      "audience": {
+        "@type": "Audience",
+        "audienceType": "Christian, 크리스천, 기독교인"
+      },
+      "inLanguage": "ko-KR",
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "37.5665",
+        "longitude": "126.9780"
+      }
+    }
+    </script>
+
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- 모바일 최적화 -->
     <meta name="theme-color" content="#3B82F6">
     <meta name="mobile-web-app-capable" content="yes">

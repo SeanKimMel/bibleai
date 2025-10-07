@@ -26,6 +26,13 @@ logs/
 server.log
 nohup.out
 
+# 배포 관련
+deploy_*.log
+deploy.config           # 실제 배포 설정 (민감 정보 포함)
+bibleai-ec2-key.pem
+*.pem
+*.key
+
 # 임시 파일
 tmp/
 temp/

@@ -1,0 +1,9 @@
+# 배포 설정 파일 예시
+# 실제 사용시 이 파일을 복사하여 deploy.config 파일을 생성하세요
+# cp deploy.config.example deploy.config
+
+SERVER_USER="ec2-user"
+SERVER_HOST="your-ec2-ip-here"           # 예: 13.209.47.72
+SSH_KEY="/path/to/your/key.pem"          # 예: /workspace/bibleai-ec2-key.pem
+SSH_PORT="22"
+SERVER_PATH="/home/ec2-user/bibleai"

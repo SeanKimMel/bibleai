@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,6 +21,8 @@ func SetDB(database *sql.DB) {
 func HomePage(c *gin.Context) {
 	c.HTML(http.StatusOK, "bible-analysis.html", gin.H{
 		"Title": "오늘의 키워드",
+		"Description": "성경, 찬송가, 기도문을 키워드로 통합 검색하세요. 매일 업데이트되는 추천 키워드로 오늘 필요한 말씀을 찾아보세요.",
+		"CurrentPath": c.Request.URL.Path,
 		"ShowNavigation": true,
 		"PageType": "bible-analysis",
 		"CacheVersion": "4",
@@ -30,6 +33,8 @@ func HomePage(c *gin.Context) {
 func BibleSearchPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "bible-search.html", gin.H{
 		"Title": "성경 검색",
+		"Description": "키워드로 성경 구절을 빠르게 검색하세요. 66권 성경 전체에서 원하는 말씀을 찾을 수 있습니다.",
+		"CurrentPath": c.Request.URL.Path,
 		"ShowBackButton": true,
 		"ShowNavigation": true,
 		"PageType": "bible-search",
@@ -40,6 +45,8 @@ func BibleSearchPage(c *gin.Context) {
 func BibleAnalysisPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "bible-analysis.html", gin.H{
 		"Title": "오늘의 키워드",
+		"Description": "성경, 찬송가, 기도문을 키워드로 통합 검색하세요. 매일 업데이트되는 추천 키워드로 오늘 필요한 말씀을 찾아보세요.",
+		"CurrentPath": c.Request.URL.Path,
 		"ShowBackButton": true,
 		"ShowNavigation": true,
 		"PageType": "bible-analysis",
@@ -50,6 +57,8 @@ func BibleAnalysisPage(c *gin.Context) {
 func HymnsPage(c *gin.Context) {
 	c.HTML(http.StatusOK, "hymns.html", gin.H{
 		"Title": "찬송가",
+		"Description": "새찬송가 645곡 전체를 검색하고 감상하세요. 가사, 주제별로 찬송가를 쉽게 찾을 수 있습니다.",
+		"CurrentPath": c.Request.URL.Path,
 		"ShowBackButton": true,
 		"ShowNavigation": true,
 		"PageType": "hymns",
@@ -70,6 +79,8 @@ func PrayersPage(c *gin.Context) {
 
 	c.HTML(http.StatusOK, "a-prayers.html", gin.H{
 		"Title": "기도문 찾기",
+		"Description": "상황과 주제에 맞는 기도문을 태그로 찾아보세요. 새벽기도, 감사기도, 회개기도 등 다양한 기도문을 제공합니다.",
+		"CurrentPath": c.Request.URL.Path,
 		"ShowBackButton": true,
 		"ShowNavigation": true,
 		"PageType": "prayers",
@@ -104,4 +115,60 @@ func getTagsFromDB() ([]map[string]interface{}, error) {
 	}
 
 	return tags, nil
+}
+
+// SEO: Sitemap.xml 동적 생성 핸들러
+func GenerateSitemap(c *gin.Context) {
+	baseURL := "https://bibleai.wiki"
+	now := time.Now().Format("2006-01-02")
+
+	sitemap := `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:geo="http://www.google.com/geo/sitemap/1.0">
+  <!-- 홈페이지 (최우선) -->
+  <url>
+    <loc>` + baseURL + `/</loc>
+    <lastmod>` + now + `</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+    <geo:geo>
+      <geo:format>kml</geo:format>
+    </geo:geo>
+  </url>
+
+  <!-- 성경 검색 -->
+  <url>
+    <loc>` + baseURL + `/bible/search</loc>
+    <lastmod>` + now + `</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- 오늘의 키워드 -->
+  <url>
+    <loc>` + baseURL + `/bible/analysis</loc>
+    <lastmod>` + now + `</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 찬송가 -->
+  <url>
+    <loc>` + baseURL + `/hymns</loc>
+    <lastmod>` + now + `</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- 기도문 -->
+  <url>
+    <loc>` + baseURL + `/prayers</loc>
+    <lastmod>` + now + `</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>`
+
+	c.Header("Content-Type", "application/xml; charset=utf-8")
+	c.String(http.StatusOK, sitemap)
 }

@@ -40,6 +40,14 @@ func main() {
 	r.GET("/favicon.ico", func(c *gin.Context) {
 		c.File("web/static/favicon.ico")
 	})
+
+	// SEO: robots.txt
+	r.GET("/robots.txt", func(c *gin.Context) {
+		c.File("web/static/robots.txt")
+	})
+
+	// SEO: sitemap.xml (동적 생성)
+	r.GET("/sitemap.xml", handlers.GenerateSitemap)
 	
 	// 테스트 페이지
 	r.StaticFile("/test/bible-search", "./test_bible_search.html")
