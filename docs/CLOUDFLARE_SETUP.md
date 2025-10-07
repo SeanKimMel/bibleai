@@ -139,20 +139,62 @@ nslookup haruinfo.net
 
 ---
 
-## 📋 4단계: EC2 Security Group 설정
+## 📋 4단계: Origin Rules 설정 (8080 포트) ⭐
+
+**중요**: Cloudflare가 EC2의 8080 포트로 연결하도록 설정
+
+### 4.1 Origin Rules 생성
+
+**Cloudflare 대시보드 → Rules → Origin Rules**
+
+1. **Create Rule** 클릭
+2. 설정:
+   ```
+   Rule name: Use port 8080
+
+   When incoming requests match:
+   - Field: Hostname
+   - Operator: equals
+   - Value: haruinfo.net (또는 All incoming requests)
+
+   Then:
+   - Destination Port: Override
+   - Port: 8080
+   ```
+3. **Deploy** 클릭
+
+**이 설정이 없으면**:
+- Cloudflare가 기본 80 포트로 연결 시도
+- Security Group에서 80 포트를 열어야 함
+- Nginx 등 리버스 프록시 필요
+
+**이 설정 후**:
+- Cloudflare가 8080 포트로 직접 연결
+- Security Group에서 8080만 열면 됨
+- Nginx 불필요 ✅
+
+---
+
+## 📋 5단계: EC2 Security Group 설정
 
 ### AWS Console에서 설정
 
 **EC2 → Security Groups → 인스턴스의 SG 선택 → Inbound Rules**
 
-#### 옵션 1: 전체 개방 (간단)
+**필수 규칙**:
 
 | Type | Protocol | Port | Source | Description |
 |------|----------|------|--------|-------------|
-| Custom TCP | TCP | 8080 | 0.0.0.0/0 | BibleAI HTTP |
+| Custom TCP | TCP | 8080 | 0.0.0.0/0 | Cloudflare → BibleAI |
 | SSH | TCP | 22 | My IP | SSH access |
 
-#### 옵션 2: Cloudflare IP만 허용 (보안 강화)
+⚠️ **주의**:
+- **80 포트는 불필요합니다** (Origin Rules로 8080 사용)
+- 80 포트 규칙이 있다면 제거 가능
+
+**선택사항: Cloudflare IP만 허용 (보안 강화)**
+
+8080 포트 접근을 Cloudflare IP만 허용하려면:
 
 | Type | Protocol | Port | Source | Description |
 |------|----------|------|--------|-------------|
@@ -185,7 +227,7 @@ nslookup haruinfo.net
 
 ---
 
-## 📋 5단계: 애플리케이션 확인
+## 📋 6단계: 애플리케이션 확인
 
 ### EC2에서 확인
 
@@ -214,25 +256,25 @@ https://haruinfo.net
 
 ---
 
-## 📋 6단계: Cloudflare 추가 설정 (권장)
+## 📋 7단계: Cloudflare 추가 설정 (권장)
 
-### 6.1 Always Use HTTPS
+### 7.1 Always Use HTTPS
 
 **SSL/TLS → Edge Certificates**
 
 - ✅ **Always Use HTTPS**: ON
   - HTTP 요청을 자동으로 HTTPS로 리다이렉트
 
-### 6.2 Automatic HTTPS Rewrites
+### 7.2 Automatic HTTPS Rewrites
 
 - ✅ **Automatic HTTPS Rewrites**: ON
   - HTTP 링크를 자동으로 HTTPS로 변환
 
-### 6.3 Minimum TLS Version
+### 7.3 Minimum TLS Version
 
 - **Minimum TLS Version**: TLS 1.2 이상
 
-### 6.4 Caching 설정
+### 7.4 Caching 설정
 
 **Caching → Configuration**
 
@@ -315,7 +357,8 @@ PostgreSQL (로컬)
 **설정 완료 항목**:
 - ✅ Cloudflare DNS: A 레코드 (Proxied)
 - ✅ SSL/TLS: Flexible Mode
-- ✅ EC2 Security Group: 8080 포트 개방
+- ✅ **Origin Rules: 8080 포트 설정** ⭐
+- ✅ EC2 Security Group: 8080 포트만 개방 (80 포트 불필요)
 - ✅ 애플리케이션: 8080 포트 리스닝
 
 **비용**:

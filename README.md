@@ -69,7 +69,8 @@ sudo systemctl start bibleai
 1. Cloudflare 계정 생성 및 도메인 등록
 2. DNS A 레코드: @ → EC2 Public IP (Proxied ☁️)
 3. SSL/TLS: Flexible 모드
-4. Security Group: 8080 포트 개방
+4. **Origin Rules: 8080 포트 설정** ⭐
+5. Security Group: 8080 포트 개방 (80 포트 불필요)
 
 **상세 가이드**: [CLOUDFLARE_SETUP.md](docs/CLOUDFLARE_SETUP.md)
 
