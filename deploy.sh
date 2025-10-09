@@ -85,7 +85,24 @@ log "✅ SSH 인증 성공"
 # 2단계: 빌드 및 배포
 # ============================================
 log ""
-log "🔨 2단계: ARM64 바이너리 빌드 중..."
+log "🎨 2단계: Tailwind CSS 빌드 중..."
+if [ ! -f "node_modules/.bin/tailwindcss" ]; then
+    log "⚠️  Tailwind CSS가 설치되지 않았습니다. npm install 실행 중..."
+    npm install >> "$LOG_FILE" 2>&1
+fi
+
+npm run build:css >> "$LOG_FILE" 2>&1
+
+if [ ! -f "web/static/css/output.css" ]; then
+    log "❌ CSS 빌드 실패: output.css가 생성되지 않았습니다"
+    exit 1
+fi
+
+CSS_SIZE=$(du -h web/static/css/output.css | cut -f1)
+log "✅ CSS 빌드 완료 (크기: $CSS_SIZE)"
+
+log ""
+log "🔨 3단계: ARM64 바이너리 빌드 중..."
 GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o bibleai cmd/server/main.go >> "$LOG_FILE" 2>&1
 
 if [ ! -f "bibleai" ]; then
@@ -97,30 +114,35 @@ BINARY_SIZE=$(du -h bibleai | cut -f1)
 log "✅ 빌드 완료 (크기: $BINARY_SIZE)"
 
 log ""
-log "📦 전송할 파일 확인 중..."
+log "📦 4단계: 전송할 파일 확인 중..."
 log "   [필수] bibleai (바이너리)"
 log "   [필수] web/templates/ (HTML 템플릿)"
-log "   [필수] web/static/ (CSS, JS, robots.txt 등)"
+log "   [필수] web/static/css/output.css (Tailwind CSS)"
+log "   [필수] web/static/js/ (JavaScript)"
+log "   [필수] web/static/robots.txt (SEO)"
 
 log ""
-log "📤 EC2로 파일 전송 중 (rsync 사용, 포트: $SSH_PORT)..."
+log "📤 5단계: EC2로 파일 전송 중 (rsync 사용, 포트: $SSH_PORT)..."
+
+# 바이너리 전송
 rsync -avz --progress \
+  -e "ssh -i $SSH_KEY_EXPANDED -p $SSH_PORT -o StrictHostKeyChecking=no" \
+  bibleai \
+  ${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/ 2>&1 | tee -a "$LOG_FILE"
+
+# web 디렉토리 전송 (구조 유지)
+rsync -avz --progress --delete \
   -e "ssh -i $SSH_KEY_EXPANDED -p $SSH_PORT -o StrictHostKeyChecking=no" \
   --exclude='.git' \
   --exclude='*.log' \
   --exclude='node_modules' \
   --exclude='bak' \
   --exclude='*.md' \
-  --exclude='cmd' \
-  --exclude='internal' \
-  --exclude='migrations' \
-  --exclude='*.sh' \
-  bibleai \
   web/ \
-  ${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/ 2>&1 | tee -a "$LOG_FILE"
+  ${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/web/ 2>&1 | tee -a "$LOG_FILE"
 
 log ""
-log "🔄 서버 재시작 중..."
+log "🔄 6단계: 서버 재시작 중..."
 ssh -i "$SSH_KEY_EXPANDED" -p $SSH_PORT -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} << EOF 2>&1 | tee -a "$LOG_FILE"
   cd ${SERVER_PATH}
 

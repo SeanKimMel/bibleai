@@ -1,122 +1,29 @@
-# 바이너리 실행 파일
+# Node modules
+node_modules/
+
+# Build artifacts
 bibleai
-/server
 
-# 환경 변수 및 설정 파일
-.env
-.env.local
-.env.*.local
-*.env
+# CSS output (generated file)
+web/static/css/output.css
 
-# 데이터베이스 관련
-*.db
-*.sqlite
-*.sqlite3
-*.sql.backup
-*.dump
-
-# PostgreSQL 백업
-*.backup
-*.tar
-*.sql.gz
-
-# 로그 파일
+# Logs
 *.log
 logs/
-server.log
-nohup.out
+/tmp/
 
-# 배포 관련
-deploy_*.log
-deploy.config           # 실제 배포 설정 (민감 정보 포함)
-bibleai-ec2-key.pem
-*.pem
-*.key
-
-# 임시 파일
-tmp/
-temp/
-*.tmp
-*.swp
-*.swo
-*~
-.DS_Store
-
-# IDE 설정 파일
+# IDE
 .vscode/
 .idea/
-*.iml
-.project
-.classpath
-.settings/
 
-# Go 관련
-vendor/
-*.test
-*.out
-coverage.txt
-*.prof
-
-# 빌드 산출물
-dist/
-build/
-bin/
-
-# 민감한 설정 파일
-config.local.json
-secrets.json
-credentials.json
-
-# PID 파일
-*.pid
-
-# 테스트 관련
-*.coverprofile
-
-# macOS
+# OS
 .DS_Store
-.AppleDouble
-.LSOverride
-
-# Windows
 Thumbs.db
-ehthumbs.db
-Desktop.ini
 
-# Linux
-.directory
+# Environment
+.env.local
+deploy.config
 
-# 에디터 백업
-*~
+# Temporary
+*.tmp
 *.bak
-*.orig
-
-# Air (hot reload) 임시 파일
-tmp/
-.air.toml.tmp
-
-# 개발용 테스트 파일
-test_*.html
-*_test_*.html
-playground/
-scratch/
-
-# 민감한 마이그레이션 파일 (실제 프로덕션 데이터)
-migrations/*_production.sql
-migrations/*_secret.sql
-
-# 백업 파일
-backup/
-backups/
-*.backup.*
-bak/
-
-# 테스트 결과 파일
-*_test_results.txt
-*_errors.txt
-*_output.txt
-
-# 개발 전용 디렉토리 (Git에는 추적하지만 배포는 제외)
-# development-only/
-# docs/
-# migrations/commentary/
