@@ -130,5 +130,22 @@
 .markdown-content a:hover {
     color: #0f766e;
 }
+
+/* 반응형 iframe (YouTube 임베디드 등) */
+.markdown-content iframe {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border-radius: 0.5rem;
+    margin: 1.5rem 0;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+    .markdown-content iframe {
+        margin: 1rem 0;
+    }
+}
 </style>
 {{end}}
