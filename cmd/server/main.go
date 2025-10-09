@@ -35,6 +35,8 @@ func main() {
 	r.GET("/bible/analysis", handlers.BibleAnalysisPage)
 	r.GET("/hymns", handlers.HymnsPage)
 	r.GET("/prayers", handlers.PrayersPage)
+	r.GET("/blog", handlers.BlogPage)
+	r.GET("/blog/:slug", handlers.BlogDetailPage)
 
 	// 파비콘 라우트
 	r.GET("/favicon.ico", func(c *gin.Context) {
@@ -157,6 +159,12 @@ func main() {
 	r.GET("/api/keywords/featured", handlers.GetFeaturedKeywords)              // 추천 키워드 조회 (메인 페이지용)
 	r.POST("/api/admin/update-keyword-counts", handlers.UpdateKeywordCounts)   // 키워드 카운트 업데이트
 	r.GET("/api/keywords/:keyword/counts", handlers.GetKeywordContentCounts)   // 키워드별 콘텐츠 개수
+
+	// 블로그 API 엔드포인트
+	r.POST("/api/admin/blog/posts", handlers.CreateBlogPost)            // 블로그 생성 (관리자)
+	r.GET("/api/blog/posts", handlers.GetBlogPosts)                     // 블로그 목록 (페이지네이션)
+	r.GET("/api/blog/posts/:slug", handlers.GetBlogPost)                // 블로그 상세
+	r.GET("/api/admin/blog/generate-data", handlers.GenerateBlogData)   // 블로그 자동 생성용 데이터 수집
 
 	log.Println("서버가 :8080 포트에서 시작됩니다...")
 	r.Run("0.0.0.0:8080")

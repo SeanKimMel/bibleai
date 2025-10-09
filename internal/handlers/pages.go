@@ -3,10 +3,13 @@ package handlers
 import (
 	"database/sql"
 	"fmt"
+	"html/template"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/russross/blackfriday/v2"
 )
 
 // 데이터베이스 연결을 저장할 변수
@@ -86,6 +89,96 @@ func PrayersPage(c *gin.Context) {
 		"PageType": "prayers",
 		"Tags": tags,
 		"CacheVersion": "3",
+	})
+}
+
+// 블로그 페이지
+func BlogPage(c *gin.Context) {
+	c.HTML(http.StatusOK, "blog.html", gin.H{
+		"Title": "신앙 이야기",
+		"Description": "매일 업데이트되는 묵상과 신앙 이야기를 나눕니다.",
+		"CurrentPath": c.Request.URL.Path,
+		"ShowBackButton": false,
+		"ShowNavigation": true,
+		"PageType": "blog",
+	})
+}
+
+// 블로그 상세 페이지
+func BlogDetailPage(c *gin.Context) {
+	slug := c.Param("slug")
+
+	// 데이터베이스에서 블로그 글 조회
+	var post struct {
+		ID          int
+		Title       string
+		Slug        string
+		Content     string
+		ContentHTML template.HTML
+		Excerpt     string
+		Keywords    string
+		PublishedAt time.Time
+		ViewCount   int
+	}
+
+	err := db.QueryRow(`
+		SELECT id, title, slug, content, excerpt, keywords, published_at, view_count
+		FROM blog_posts
+		WHERE slug = $1 AND is_published = true
+	`, slug).Scan(
+		&post.ID,
+		&post.Title,
+		&post.Slug,
+		&post.Content,
+		&post.Excerpt,
+		&post.Keywords,
+		&post.PublishedAt,
+		&post.ViewCount,
+	)
+
+	if err == sql.ErrNoRows {
+		c.HTML(http.StatusNotFound, "404.html", gin.H{
+			"Title": "페이지를 찾을 수 없습니다",
+		})
+		return
+	}
+
+	if err != nil {
+		c.HTML(http.StatusInternalServerError, "500.html", gin.H{
+			"Title": "서버 오류",
+		})
+		return
+	}
+
+	// 마크다운 → HTML 변환
+	htmlContent := blackfriday.Run([]byte(post.Content))
+	post.ContentHTML = template.HTML(htmlContent)
+
+	// 조회수 증가
+	db.Exec("UPDATE blog_posts SET view_count = view_count + 1 WHERE id = $1", post.ID)
+
+	// 키워드 리스트 생성
+	var keywordList []string
+	if post.Keywords != "" {
+		keywordList = strings.Split(post.Keywords, ",")
+		for i, k := range keywordList {
+			keywordList[i] = strings.TrimSpace(k)
+		}
+	}
+
+	// 날짜 포맷팅
+	formattedDate := post.PublishedAt.Format("2006년 1월 2일")
+
+	c.HTML(http.StatusOK, "blog_detail.html", gin.H{
+		"Title":         post.Title,
+		"Description":   post.Excerpt,
+		"CurrentPath":   c.Request.URL.Path,
+		"ShowBackButton": false,
+		"ShowNavigation": true,
+		"PageType":      "blog-detail",
+		"Post":          post,
+		"KeywordList":   keywordList,
+		"FormattedDate": formattedDate,
 	})
 }
 

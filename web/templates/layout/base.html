@@ -227,25 +227,32 @@
             {{template "hymns-content" .}}
         {{else if eq .PageType "prayers"}}
             {{template "prayers-content" .}}
+        {{else if eq .PageType "blog"}}
+            {{template "blog-content" .}}
+        {{else if eq .PageType "blog-detail"}}
+            {{template "blog-detail-content" .}}
         {{end}}
     </main>
 
-    <!-- 모던 네비게이션 - 버전 3.0 (최고 z-index 우선도) -->
+    <!-- 모던 네비게이션 - 버전 4.0 (6개 탭, 간격 조정) -->
     {{if .ShowNavigation}}
     <nav class="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white to-white/95 backdrop-blur-sm border-t border-gray-200/80 shadow-2xl z-[9999]" role="navigation" aria-label="메인 메뉴">
-        <div class="max-w-2xl mx-auto px-4">
+        <div class="max-w-2xl mx-auto px-2">
             <div class="flex justify-around py-2">
-                <a href="/" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-white rounded-2xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="키워드">
+                <a href="/" class="nav-btn group relative flex items-center justify-center py-2 px-2 min-w-0 flex-1 mx-0.5 text-gray-600 bg-white rounded-xl font-semibold text-xs transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="키워드">
                     <span class="relative z-10">키워드</span>
                 </a>
-                <a href="/bible/search" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-white rounded-2xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="성경 검색">
+                <a href="/bible/search" class="nav-btn group relative flex items-center justify-center py-2 px-2 min-w-0 flex-1 mx-0.5 text-gray-600 bg-white rounded-xl font-semibold text-xs transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="성경">
                     <span class="relative z-10">성경</span>
                 </a>
-                <a href="/prayers" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-white rounded-2xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="기도문">
+                <a href="/prayers" class="nav-btn group relative flex items-center justify-center py-2 px-2 min-w-0 flex-1 mx-0.5 text-gray-600 bg-white rounded-xl font-semibold text-xs transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="기도문">
                     <span class="relative z-10">기도문</span>
                 </a>
-                <a href="/hymns" class="nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-gray-600 bg-white rounded-2xl font-semibold text-sm transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="찬송가">
+                <a href="/hymns" class="nav-btn group relative flex items-center justify-center py-2 px-2 min-w-0 flex-1 mx-0.5 text-gray-600 bg-white rounded-xl font-semibold text-xs transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="찬송가">
                     <span class="relative z-10">찬송가</span>
+                </a>
+                <a href="/blog" class="nav-btn group relative flex items-center justify-center py-2 px-2 min-w-0 flex-1 mx-0.5 text-gray-600 bg-white rounded-xl font-semibold text-xs transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 focus:ring-2 focus:ring-gray-300 focus:outline-none active:scale-95 border border-gray-200" aria-label="블로그">
+                    <span class="relative z-10">블로그</span>
                 </a>
             </div>
         </div>
@@ -270,18 +277,21 @@
                                 (currentPath === '/' && href === '/') ||
                                 (currentPath.startsWith('/bible/search') && href === '/bible/search') ||
                                 (currentPath.startsWith('/prayers') && href === '/prayers') ||
-                                (currentPath.startsWith('/hymns') && href === '/hymns');
+                                (currentPath.startsWith('/hymns') && href === '/hymns') ||
+                                (currentPath.startsWith('/blog') && href === '/blog');
 
                 if (isActive) {
-                    // 활성 상태의 클래스 적용
+                    // 활성 상태의 클래스 적용 (6개 탭용 - 작은 크기)
                     if (href === '/') {
-                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-orange-700 bg-gradient-to-br from-orange-100 to-orange-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-orange-200/60 -translate-y-0.5 focus:ring-2 focus:ring-orange-300 focus:outline-none active:scale-95 border border-orange-300";
+                        btn.className = "nav-btn group relative flex items-center justify-center py-2 px-2 min-w-0 flex-1 mx-0.5 text-orange-700 bg-gradient-to-br from-orange-100 to-orange-200/90 rounded-xl font-bold text-xs transition-all duration-300 shadow-lg shadow-orange-200/60 -translate-y-0.5 focus:ring-2 focus:ring-orange-300 focus:outline-none active:scale-95 border border-orange-300";
                     } else if (href === '/bible/search') {
-                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-blue-700 bg-gradient-to-br from-blue-100 to-blue-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-blue-200/60 -translate-y-0.5 focus:ring-2 focus:ring-blue-300 focus:outline-none active:scale-95 border border-blue-300";
+                        btn.className = "nav-btn group relative flex items-center justify-center py-2 px-2 min-w-0 flex-1 mx-0.5 text-blue-700 bg-gradient-to-br from-blue-100 to-blue-200/90 rounded-xl font-bold text-xs transition-all duration-300 shadow-lg shadow-blue-200/60 -translate-y-0.5 focus:ring-2 focus:ring-blue-300 focus:outline-none active:scale-95 border border-blue-300";
                     } else if (href === '/prayers') {
-                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-green-700 bg-gradient-to-br from-green-100 to-green-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-green-200/60 -translate-y-0.5 focus:ring-2 focus:ring-green-300 focus:outline-none active:scale-95 border border-green-300";
+                        btn.className = "nav-btn group relative flex items-center justify-center py-2 px-2 min-w-0 flex-1 mx-0.5 text-green-700 bg-gradient-to-br from-green-100 to-green-200/90 rounded-xl font-bold text-xs transition-all duration-300 shadow-lg shadow-green-200/60 -translate-y-0.5 focus:ring-2 focus:ring-green-300 focus:outline-none active:scale-95 border border-green-300";
                     } else if (href === '/hymns') {
-                        btn.className = "nav-btn group relative flex items-center justify-center py-3 px-3 min-w-0 flex-1 mx-1 text-purple-700 bg-gradient-to-br from-purple-100 to-purple-200/90 rounded-2xl font-bold text-sm transition-all duration-300 shadow-lg shadow-purple-200/60 -translate-y-0.5 focus:ring-2 focus:ring-purple-300 focus:outline-none active:scale-95 border border-purple-300";
+                        btn.className = "nav-btn group relative flex items-center justify-center py-2 px-2 min-w-0 flex-1 mx-0.5 text-purple-700 bg-gradient-to-br from-purple-100 to-purple-200/90 rounded-xl font-bold text-xs transition-all duration-300 shadow-lg shadow-purple-200/60 -translate-y-0.5 focus:ring-2 focus:ring-purple-300 focus:outline-none active:scale-95 border border-purple-300";
+                    } else if (href === '/blog') {
+                        btn.className = "nav-btn group relative flex items-center justify-center py-2 px-2 min-w-0 flex-1 mx-0.5 text-teal-700 bg-gradient-to-br from-teal-100 to-teal-200/90 rounded-xl font-bold text-xs transition-all duration-300 shadow-lg shadow-teal-200/60 -translate-y-0.5 focus:ring-2 focus:ring-teal-300 focus:outline-none active:scale-95 border border-teal-300";
                     }
                 }
             });
