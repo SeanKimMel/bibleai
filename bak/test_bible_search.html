@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>성경 검색 테스트</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50">
+    <div class="max-w-md mx-auto px-4 py-6">
+        <h1 class="text-2xl font-bold text-center mb-6">성경 검색 테스트</h1>
+        
+        <!-- 성경책 목록 테스트 -->
+        <div class="card mb-6 p-4 bg-white rounded-lg shadow">
+            <h2 class="text-lg font-bold mb-4">성경책 목록 로드 테스트</h2>
+            <select id="bibleBookSelect" class="w-full p-2 border rounded">
+                <option>로딩 중...</option>
+            </select>
+            <div id="bookLoadStatus" class="mt-2 text-sm"></div>
+        </div>
+        
+        <!-- 검색 테스트 -->
+        <div class="card p-4 bg-white rounded-lg shadow">
+            <h2 class="text-lg font-bold mb-4">성경 검색 테스트</h2>
+            <div class="space-y-4">
+                <input type="text" id="searchInput" placeholder="검색어 입력 (예: 사랑)" 
+                       class="w-full p-2 border rounded">
+                <button onclick="testSearch()" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+                    검색 테스트
+                </button>
+            </div>
+            <div id="searchResults" class="mt-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // 성경책 목록 로드 테스트
+        async function loadBibleBooks() {
+            try {
+                const response = await fetch('/api/bible/books');
+                const data = await response.json();
+                
+                const select = document.getElementById('bibleBookSelect');
+                const status = document.getElementById('bookLoadStatus');
+                
+                if (response.ok) {
+                    select.innerHTML = '<option value="">전체 성경</option>';
+                    
+                    // 구약 추가
+                    const oldGroup = document.createElement('optgroup');
+                    oldGroup.label = '구약성경';
+                    data.old_testament.forEach(book => {
+                        const option = document.createElement('option');
+                        option.value = book.id;
+                        option.textContent = book.name;
+                        oldGroup.appendChild(option);
+                    });
+                    select.appendChild(oldGroup);
+                    
+                    // 신약 추가
+                    const newGroup = document.createElement('optgroup');
+                    newGroup.label = '신약성경';
+                    data.new_testament.forEach(book => {
+                        const option = document.createElement('option');
+                        option.value = book.id;
+                        option.textContent = book.name;
+                        newGroup.appendChild(option);
+                    });
+                    select.appendChild(newGroup);
+                    
+                    status.innerHTML = `<span class="text-green-600">✅ 성공: ${data.total}권 로드됨</span>`;
+                } else {
+                    throw new Error(data.error || 'Unknown error');
+                }
+            } catch (error) {
+                document.getElementById('bookLoadStatus').innerHTML = 
+                    `<span class="text-red-600">❌ 실패: ${error.message}</span>`;
+            }
+        }
+        
+        // 검색 테스트
+        async function testSearch() {
+            const searchInput = document.getElementById('searchInput');
+            const resultsDiv = document.getElementById('searchResults');
+            const bookSelect = document.getElementById('bibleBookSelect');
+            
+            const query = searchInput.value.trim();
+            if (!query) {
+                alert('검색어를 입력하세요');
+                return;
+            }
+            
+            resultsDiv.innerHTML = '<div class="text-blue-600">🔍 검색 중...</div>';
+            
+            try {
+                let url = `/api/bible/search?q=${encodeURIComponent(query)}`;
+                if (bookSelect.value) {
+                    url += `&book=${bookSelect.value}`;
+                }
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    if (data.results && data.results.length > 0) {
+                        resultsDiv.innerHTML = `
+                            <div class="text-green-600 mb-4">✅ ${data.total}개 결과 찾음</div>
+                            <div class="space-y-2 max-h-64 overflow-y-auto">
+                                ${data.results.slice(0, 5).map(result => `
+                                    <div class="p-2 bg-gray-50 rounded text-sm">
+                                        <div class="font-medium">${result.book} ${result.chapter}:${result.verse}</div>
+                                        <div class="text-gray-700">${result.content}</div>
+                                    </div>
+                                `).join('')}
+                                ${data.results.length > 5 ? '<div class="text-gray-500 text-center">... 더 많은 결과</div>' : ''}
+                            </div>
+                        `;
+                    } else {
+                        resultsDiv.innerHTML = '<div class="text-yellow-600">⚠️ 검색 결과가 없습니다</div>';
+                    }
+                } else {
+                    throw new Error(data.error || 'Search failed');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="text-red-600">❌ 검색 실패: ${error.message}</div>`;
+            }
+        }
+        
+        // 페이지 로드 시 성경책 목록 로드
+        document.addEventListener('DOMContentLoaded', function() {
+            loadBibleBooks();
+            
+            // 엔터 키로 검색
+            document.getElementById('searchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    testSearch();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

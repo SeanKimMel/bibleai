@@ -159,8 +159,13 @@ func GetBlogPost(c *gin.Context) {
 		return
 	}
 
-	// 마크다운 → HTML 변환
-	htmlContent := blackfriday.Run([]byte(post.Content))
+	// 마크다운 → HTML 변환 (raw HTML 허용)
+	renderer := blackfriday.NewHTMLRenderer(blackfriday.HTMLRendererParameters{
+		Flags: blackfriday.CommonHTMLFlags,
+	})
+	htmlContent := blackfriday.Run([]byte(post.Content),
+		blackfriday.WithRenderer(renderer),
+		blackfriday.WithExtensions(blackfriday.CommonExtensions))
 	post.ContentHTML = string(htmlContent)
 
 	// 조회수 증가

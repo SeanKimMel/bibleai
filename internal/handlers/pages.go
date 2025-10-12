@@ -212,21 +212,18 @@ func getTagsFromDB() ([]map[string]interface{}, error) {
 
 // SEO: Sitemap.xml 동적 생성 핸들러
 func GenerateSitemap(c *gin.Context) {
-	baseURL := "https://bibleai.wiki"
+	baseURL := "https://haruinfo.net"
 	now := time.Now().Format("2006-01-02")
 
+	// 정적 페이지들
 	sitemap := `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
-        xmlns:geo="http://www.google.com/geo/sitemap/1.0">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- 홈페이지 (최우선) -->
   <url>
     <loc>` + baseURL + `/</loc>
     <lastmod>` + now + `</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
-    <geo:geo>
-      <geo:format>kml</geo:format>
-    </geo:geo>
   </url>
 
   <!-- 성경 검색 -->
@@ -260,7 +257,51 @@ func GenerateSitemap(c *gin.Context) {
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
-</urlset>`
+
+  <!-- 블로그 목록 -->
+  <url>
+    <loc>` + baseURL + `/blog</loc>
+    <lastmod>` + now + `</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+`
+
+	// 블로그 포스트들 동적 추가
+	if db != nil {
+		rows, err := db.Query(`
+			SELECT slug, published_at, updated_at
+			FROM blog_posts
+			WHERE is_published = true
+			ORDER BY published_at DESC
+		`)
+		if err == nil {
+			defer rows.Close()
+
+			for rows.Next() {
+				var slug string
+				var publishedAt, updatedAt time.Time
+				if err := rows.Scan(&slug, &publishedAt, &updatedAt); err == nil {
+					lastmod := updatedAt
+					if lastmod.IsZero() {
+						lastmod = publishedAt
+					}
+
+					sitemap += `
+  <!-- 블로그: ` + slug + ` -->
+  <url>
+    <loc>` + baseURL + `/blog/` + slug + `</loc>
+    <lastmod>` + lastmod.Format("2006-01-02") + `</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+`
+				}
+			}
+		}
+	}
+
+	sitemap += `</urlset>`
 
 	c.Header("Content-Type", "application/xml; charset=utf-8")
 	c.String(http.StatusOK, sitemap)

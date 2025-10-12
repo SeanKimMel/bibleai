@@ -6,8 +6,11 @@ DROP DATABASE IF EXISTS bibleai;
 CREATE DATABASE bibleai;
 
 -- bibleai 사용자 생성 (애플리케이션 연결용)
+-- 비밀번호는 .env 파일의 DB_PASSWORD 값과 동일하게 설정해야 함
+-- 실행 방법: PGPASSWORD를 .env에서 읽어서 실행
+-- source .env && psql -h localhost -U postgres -v db_password="'${DB_PASSWORD}'" -f init.sql
 DROP USER IF EXISTS bibleai;
-CREATE USER bibleai WITH ENCRYPTED PASSWORD 'bibleai123';
+CREATE USER bibleai WITH ENCRYPTED PASSWORD :'db_password';
 
 -- bibleai 데이터베이스에 대한 권한 부여
 GRANT ALL PRIVILEGES ON DATABASE bibleai TO bibleai;

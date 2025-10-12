@@ -14,7 +14,6 @@ import (
 type Hymn struct {
 	ID             int    `json:"id" db:"id"`
 	Number         int    `json:"number" db:"number"`
-	NewHymnNumber  *int   `json:"new_hymn_number" db:"new_hymn_number"`
 	Title          string `json:"title" db:"title"`
 	Lyrics         string `json:"lyrics" db:"lyrics"`
 	Theme          string `json:"theme" db:"theme"`
@@ -40,7 +39,6 @@ func NewHymnHandlers(db *sql.DB) *HymnHandlers {
 func (h *HymnHandlers) SearchHymns(c *gin.Context) {
 	query := strings.TrimSpace(c.Query("q"))
 	theme := strings.TrimSpace(c.Query("theme"))
-	numberStr := strings.TrimSpace(c.Query("number"))
 	limitStr := c.DefaultQuery("limit", "50")
 
 	// limit 파라미터 파싱
@@ -56,7 +54,9 @@ func (h *HymnHandlers) SearchHymns(c *gin.Context) {
 
 	// 기본 쿼리
 	queryBuilder.WriteString(`
-		SELECT id, number, new_hymn_number, title, lyrics, theme,
+		SELECT id, number, title,
+			   COALESCE(lyrics, '') as lyrics,
+			   COALESCE(theme, '') as theme,
 			   COALESCE(composer, '') as composer,
 			   COALESCE(author, '') as author,
 			   COALESCE(tempo, '') as tempo,
@@ -64,19 +64,6 @@ func (h *HymnHandlers) SearchHymns(c *gin.Context) {
 			   COALESCE(bible_reference, '') as bible_reference,
 			   COALESCE(external_link, '') as external_link
 		FROM hymns WHERE 1=1`)
-
-	// 번호로 검색 (신찬송가 번호 우선, 없으면 기존 번호)
-	if numberStr != "" {
-		if number, err := strconv.Atoi(numberStr); err == nil {
-			queryBuilder.WriteString(" AND (new_hymn_number = $")
-			queryBuilder.WriteString(strconv.Itoa(argIndex))
-			queryBuilder.WriteString(" OR (new_hymn_number IS NULL AND number = $")
-			queryBuilder.WriteString(strconv.Itoa(argIndex))
-			queryBuilder.WriteString("))")
-			args = append(args, number)
-			argIndex++
-		}
-	}
 
 	// 주제로 검색
 	if theme != "" {
@@ -87,9 +74,20 @@ func (h *HymnHandlers) SearchHymns(c *gin.Context) {
 		argIndex++
 	}
 
-	// 텍스트 검색 (제목, 가사) - LIKE만 사용
+	// 통합 검색 (번호 + 제목 + 가사)
 	if query != "" {
 		queryBuilder.WriteString(" AND (")
+
+		// 숫자인 경우 번호 검색도 포함
+		if number, err := strconv.Atoi(query); err == nil {
+			queryBuilder.WriteString("number = $")
+			queryBuilder.WriteString(strconv.Itoa(argIndex))
+			queryBuilder.WriteString(" OR ")
+			args = append(args, number)
+			argIndex++
+		}
+
+		// 제목과 가사 검색
 		queryBuilder.WriteString("LOWER(title) LIKE LOWER($")
 		queryBuilder.WriteString(strconv.Itoa(argIndex))
 		queryBuilder.WriteString(") OR ")
@@ -120,7 +118,7 @@ func (h *HymnHandlers) SearchHymns(c *gin.Context) {
 	for rows.Next() {
 		var hymn Hymn
 		err := rows.Scan(
-			&hymn.ID, &hymn.Number, &hymn.NewHymnNumber, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
+			&hymn.ID, &hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
 			&hymn.Composer, &hymn.Author, &hymn.Tempo, &hymn.KeySignature, &hymn.BibleReference, &hymn.ExternalLink,
 		)
 		if err != nil {
@@ -136,7 +134,6 @@ func (h *HymnHandlers) SearchHymns(c *gin.Context) {
 		"hymns":   hymns,
 		"query":   query,
 		"theme":   theme,
-		"number":  numberStr,
 	})
 }
 
@@ -153,18 +150,20 @@ func (h *HymnHandlers) GetHymnByNumber(c *gin.Context) {
 
 	var hymn Hymn
 	query := `
-		SELECT id, number, new_hymn_number, title, lyrics, theme,
+		SELECT id, number, title,
+			   COALESCE(lyrics, '') as lyrics,
+			   COALESCE(theme, '') as theme,
 			   COALESCE(composer, '') as composer,
 			   COALESCE(author, '') as author,
 			   COALESCE(tempo, '') as tempo,
 			   COALESCE(key_signature, '') as key_signature,
 			   COALESCE(bible_reference, '') as bible_reference,
 			   COALESCE(external_link, '') as external_link
-		FROM hymns WHERE new_hymn_number = $1`
+		FROM hymns WHERE number = $1`
 
 	row := h.DB.QueryRow(query, number)
 	err = row.Scan(
-		&hymn.ID, &hymn.Number, &hymn.NewHymnNumber, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
+		&hymn.ID, &hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
 		&hymn.Composer, &hymn.Author, &hymn.Tempo, &hymn.KeySignature, &hymn.BibleReference, &hymn.ExternalLink,
 	)
 	if err != nil {
@@ -205,16 +204,18 @@ func (h *HymnHandlers) GetHymnsByTheme(c *gin.Context) {
 
 	var hymns []Hymn
 	query := `
-		SELECT id, number, new_hymn_number, title, lyrics, theme,
+		SELECT id, number, title,
+			   COALESCE(lyrics, '') as lyrics,
+			   COALESCE(theme, '') as theme,
 			   COALESCE(composer, '') as composer,
 			   COALESCE(author, '') as author,
 			   COALESCE(tempo, '') as tempo,
 			   COALESCE(key_signature, '') as key_signature,
 			   COALESCE(bible_reference, '') as bible_reference,
 			   COALESCE(external_link, '') as external_link
-		FROM hymns 
+		FROM hymns
 		WHERE LOWER(theme) LIKE LOWER($1)
-		ORDER BY number ASC 
+		ORDER BY number ASC
 		LIMIT $2`
 
 	rows, err := h.DB.Query(query, "%"+theme+"%", limit)
@@ -229,7 +230,7 @@ func (h *HymnHandlers) GetHymnsByTheme(c *gin.Context) {
 	for rows.Next() {
 		var hymn Hymn
 		err := rows.Scan(
-			&hymn.ID, &hymn.Number, &hymn.NewHymnNumber, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
+			&hymn.ID, &hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
 			&hymn.Composer, &hymn.Author, &hymn.Tempo, &hymn.KeySignature, &hymn.BibleReference, &hymn.ExternalLink,
 		)
 		if err != nil {
@@ -382,14 +383,16 @@ func (h *HymnHandlers) GetRandomHymns(c *gin.Context) {
 
 	var hymns []Hymn
 	query := `
-		SELECT id, number, new_hymn_number, title, lyrics, theme,
+		SELECT id, number, title,
+			   COALESCE(lyrics, '') as lyrics,
+			   COALESCE(theme, '') as theme,
 			   COALESCE(composer, '') as composer,
 			   COALESCE(author, '') as author,
 			   COALESCE(tempo, '') as tempo,
 			   COALESCE(key_signature, '') as key_signature,
 			   COALESCE(bible_reference, '') as bible_reference,
 			   COALESCE(external_link, '') as external_link
-		FROM hymns 
+		FROM hymns
 		ORDER BY RANDOM()
 		LIMIT $1`
 
@@ -405,7 +408,7 @@ func (h *HymnHandlers) GetRandomHymns(c *gin.Context) {
 	for rows.Next() {
 		var hymn Hymn
 		err := rows.Scan(
-			&hymn.ID, &hymn.Number, &hymn.NewHymnNumber, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
+			&hymn.ID, &hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
 			&hymn.Composer, &hymn.Author, &hymn.Tempo, &hymn.KeySignature, &hymn.BibleReference, &hymn.ExternalLink,
 		)
 		if err != nil {

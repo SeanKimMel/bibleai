@@ -1,0 +1,167 @@
+[
+  {
+    "number": 66,
+    "title": "높은 산이 거뜬하고",
+    "lyrics": "높은 산이 거뜬하고\n험한 길이 평탄하며\n거친 들이 기름지고\n메마른 땅이 샘이 되며\n\n임마누엘 임마누엘\n하나님이 함께 하시네\n임마누엘 임마누엘\n우리와 함께 계시네",
+    "theme": "위로",
+    "composer": "전통 찬양",
+    "author": "이사야 저자",
+    "tempo": "Moderato",
+    "key_signature": "F",
+    "bible_reference": "이사야 40:4"
+  },
+  {
+    "number": 67,
+    "title": "내 주님 지으신 모든 세계",
+    "lyrics": "내 주님 지으신 모든 세계\n내 마음 속에 그리어\n새와 바람 산과 들에서도\n주님의 솜씨 느끼네\n\n크시다 크시다\n하나님의 그 사랑\n크시다 크시다\n온 우주에 가득해",
+    "theme": "창조",
+    "composer": "Carl G. Boberg",
+    "author": "Stuart K. Hine",
+    "tempo": "Andante",
+    "key_signature": "Ab",
+    "bible_reference": "시편 19:1"
+  },
+  {
+    "number": 68,
+    "title": "나는 예수님의 보배",
+    "lyrics": "나는 예수님의 보배\n예수님은 나의 보배\n서로 사랑하는 사이\n끊을 수 없는 사랑\n\n보배로워 보배로워\n주님과의 그 관계\n보배로워 보배로워\n영원토록 변치 않네",
+    "theme": "사랑",
+    "composer": "현대 찬양",
+    "author": "현대 작사",
+    "tempo": "Dolce",
+    "key_signature": "D",
+    "bible_reference": "베드로전서 2:9"
+  },
+  {
+    "number": 69,
+    "title": "복 있는 사람은",
+    "lyrics": "복 있는 사람은\n악인의 꾀를 좇지 아니하며\n죄인의 길에 서지 아니하며\n오만한 자의 자리에 앉지 아니하고\n\n오직 여호와의 율법을 즐거워하여\n그 율법을 주야로 묵상하는 자로다\n저는 시냇가에 심은 나무가\n시절을 좇아 과실을 맺으며",
+    "theme": "말씀",
+    "composer": "현대 찬양",
+    "author": "시편 저자",
+    "tempo": "Andante",
+    "key_signature": "G",
+    "bible_reference": "시편 1:1-3"
+  },
+  {
+    "number": 70,
+    "title": "주의 친근한 친구가",
+    "lyrics": "주의 친근한 친구가\n되기 원하네\n주님과 교제하며\n살기 원하네\n\n친구 친구 주님은 나의 친구\n가장 가까운 친구\n친구 친구 주님은 나의 친구\n영원한 나의 친구",
+    "theme": "교제",
+    "composer": "현대 찬양",
+    "author": "현대 작사",
+    "tempo": "Moderato",
+    "key_signature": "C",
+    "bible_reference": "요한복음 15:15"
+  },
+  {
+    "number": 71,
+    "title": "거룩한 성전에서",
+    "lyrics": "거룩한 성전에서\n하나님께 경배하며\n정성을 다하여\n찬양을 올려드리네\n\n성전에서 성전에서\n주님께 예배하네\n성전에서 성전에서\n거룩한 주님을 만나네",
+    "theme": "예배",
+    "composer": "현대 찬양",
+    "author": "시편 저자",
+    "tempo": "Andante",
+    "key_signature": "Eb",
+    "bible_reference": "시편 96:9"
+  },
+  {
+    "number": 72,
+    "title": "주님 다시 오실 때까지",
+    "lyrics": "주님 다시 오실 때까지\n충성되게 섬기리\n맡겨주신 이 사명\n끝까지 감당하리\n\n충성하며 충성하며\n주님께 충성하며\n충성하며 충성하며\n면류관을 받으리",
+    "theme": "충성",
+    "composer": "현대 찬양",
+    "author": "현대 작사",
+    "tempo": "Moderato",
+    "key_signature": "F",
+    "bible_reference": "계시록 2:10"
+  },
+  {
+    "number": 73,
+    "title": "하늘 가는 밝은 길이",
+    "lyrics": "하늘 가는 밝은 길이\n예수님께 있으니\n십자가의 그 보혈로\n정결케 되었도다\n\n밝은 길 밝은 길\n예수님이 밝은 길\n밝은 길 밝은 길\n생명의 길 되시네",
+    "theme": "길",
+    "composer": "전통 찬양",
+    "author": "전통 작사",
+    "tempo": "Moderato",
+    "key_signature": "G",
+    "bible_reference": "요한복음 14:6"
+  },
+  {
+    "number": 74,
+    "title": "내 구주 예수를 더욱 사랑",
+    "lyrics": "내 구주 예수를 더욱 사랑\n나의 맘이 간절히 원하네\n세상에서 받는 그 고난도\n주님을 위해서라면\n\n더욱 더욱 사랑하리\n나의 구주 예수님을\n더욱 더욱 사랑하리\n목숨 다해 사랑하리",
+    "theme": "사랑",
+    "composer": "현대 찬양",
+    "author": "현대 작사",
+    "tempo": "Dolce",
+    "key_signature": "Bb",
+    "bible_reference": "마태복음 22:37"
+  },
+  {
+    "number": 75,
+    "title": "주를 앙망하는 자",
+    "lyrics": "주를 앙망하는 자\n새 힘을 얻으리라\n독수리 날개 치며\n올라갈 것이라\n\n앙망하라 앙망하라\n주님만을 앙망하라\n앙망하라 앙망하라\n새 힘을 주실 것이라",
+    "theme": "소망",
+    "composer": "현대 찬양",
+    "author": "이사야 저자",
+    "tempo": "Moderato",
+    "key_signature": "D",
+    "bible_reference": "이사야 40:31"
+  },
+  {
+    "number": 76,
+    "title": "예수로 나의 구주 삼고",
+    "lyrics": "예수로 나의 구주 삼고\n그 말씀 따라 살 때에\n그 어떤 시험이 와도\n두려워하지 않으리\n\n구주여 구주여\n나의 영원한 구주여\n구주여 구주여\n나를 인도하소서",
+    "theme": "구원",
+    "composer": "전통 찬양",
+    "author": "전통 작사",
+    "tempo": "Andante",
+    "key_signature": "F",
+    "bible_reference": "로마서 10:9"
+  },
+  {
+    "number": 77,
+    "title": "주님의 사랑 받고",
+    "lyrics": "주님의 사랑 받고\n구원을 얻었으니\n이제는 주님만을\n사랑하며 살리라\n\n사랑받아 사랑받아\n주님께 사랑받아\n사랑해요 사랑해요\n주님만을 사랑해요",
+    "theme": "사랑",
+    "composer": "현대 찬양",
+    "author": "현대 작사",
+    "tempo": "Dolce",
+    "key_signature": "C",
+    "bible_reference": "요한일서 4:19"
+  },
+  {
+    "number": 78,
+    "title": "주님께서 주신 평안",
+    "lyrics": "주님께서 주신 평안\n이 세상이 줄 수 없는\n참된 평안을 내게 주사\n마음에 기쁨이 넘치네\n\n평안해요 평안해요\n주님 안에서 평안해요\n평안해요 평안해요\n영원한 평안 있어요",
+    "theme": "평안",
+    "composer": "현대 찬양",
+    "author": "현대 작사",
+    "tempo": "Andante",
+    "key_signature": "Bb",
+    "bible_reference": "요한복음 14:27"
+  },
+  {
+    "number": 79,
+    "title": "주의 나라가 임하시니",
+    "lyrics": "주의 나라가 임하시니\n온 세상이 기뻐하며\n정의와 평화가 강같이\n흘러가게 하소서\n\n나라가 나라가\n주님의 나라가 임하네\n나라가 나라가\n영광스런 주님의 나라",
+    "theme": "하나님 나라",
+    "composer": "현대 찬양",
+    "author": "현대 작사",
+    "tempo": "Maestoso",
+    "key_signature": "D",
+    "bible_reference": "마태복음 6:10"
+  },
+  {
+    "number": 80,
+    "title": "나 주님의 기쁨 되기 원하네",
+    "lyrics": "나 주님의 기쁨 되기 원하네\n주님을 기쁘시게 하는 자가\n되기를 간절히 원하네\n주님만을 사랑하며\n\n기쁨이 되리 기쁨이 되리\n주님의 기쁨이 되리\n기쁨이 되리 기쁨이 되리\n주님을 기쁘시게 하리",
+    "theme": "헌신",
+    "composer": "현대 찬양",
+    "author": "현대 작사",
+    "tempo": "Moderato",
+    "key_signature": "G",
+    "bible_reference": "시편 149:4"
+  }
+]

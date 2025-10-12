@@ -20,8 +20,13 @@ if ! pg_isready -h localhost -p 5432 > /dev/null 2>&1; then
     exit 1
 fi
 
+# .env 파일에서 DB_PASSWORD 로드
+if [ -f .env ]; then
+    source .env
+fi
+
 # bibleai 데이터베이스 존재 확인
-if ! PGPASSWORD=bibleai psql -h localhost -U bibleai -d bibleai -c "SELECT 1;" > /dev/null 2>&1; then
+if ! PGPASSWORD=${DB_PASSWORD} psql -h localhost -U bibleai -d bibleai -c "SELECT 1;" > /dev/null 2>&1; then
     echo "❌ bibleai 데이터베이스에 접근할 수 없습니다."
     echo "먼저 ./init-db.sh 를 실행하여 데이터베이스를 초기화하세요."
     exit 1

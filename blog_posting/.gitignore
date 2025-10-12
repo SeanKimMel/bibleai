@@ -1,0 +1,10 @@
+# 작업용 임시 파일 (개인 작업물)
+data.json
+output.json
+
+# 작업 기록
+work_log.txt
+
+# 임시 백업
+*.bak
+*.tmp

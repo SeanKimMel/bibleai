@@ -182,7 +182,7 @@ test_bible_search.html                       # 테스트용 HTML
 prayers (기도문)
     ↓ 1:N
 prayer_tags (연결테이블)
-    ↓ N:1  
+    ↓ N:1
 tags (태그)
 
 별도 테이블:
@@ -202,6 +202,30 @@ bible_verses: id, book, chapter, verse, content, version, book_id, testament, bo
               chapter_title, chapter_summary, chapter_themes, chapter_context, chapter_application
 hymns: id, number(unique), new_hymn_number, title, lyrics, theme, composer, author, tempo, key_signature, bible_reference, external_link
 ```
+
+### 📖 찬송가 데이터 현황 (2025-10-11 업데이트)
+
+**총 찬송가**: 645개 (통합찬송가)
+
+**메타데이터 완성도**:
+- ✅ **기본 정보**: 645개 (100%) - 번호, 제목, 가사
+- ✅ **성경구절**: 569개 (88.2%) - hbible.co.kr 스크레이핑 + 인기 찬송가 수작업
+- ❌ **작곡가**: 0개 (0%) - 온라인 소스 없음
+- ❌ **작사가**: 0개 (0%) - 온라인 소스 없음
+- ✅ **외부링크**: 645개 (100%) - hymnkorea.org
+
+**성경구절 데이터 예시**:
+- 1장: 시편 100:5
+- 8장: 요한계시록 4:6-8
+- 153장: 요한복음 19:2 (가시 면류관)
+- 252장: 요한1서 1:7 (나의 죄를 씻기는)
+- 371장: 마가복음 4:39 (구주여 광풍이 불어)
+
+**데이터 수집 방법**:
+- **1차**: Python 스크레이핑 537개 (`scripts/scrape_hymn_bible_references.py`)
+- **2차**: 인기 찬송가 30개 수작업 (`scripts/generate_popular_30_refs.py`)
+- **마이그레이션**: `migrations/008_update_hymn_bible_references.sql`, `migrations/009_popular_hymns_bible_references.sql`
+- **수집일**: 2025-10-11
 
 ### 📖 성경 해석 시스템 (Bible Commentary)
 
@@ -519,6 +543,50 @@ DB_USER=bibleai                     # 애플리케이션 전용 사용자
 DB_PASSWORD=<실제_비밀번호>         # 애플리케이션 사용자 암호
 DB_NAME=bibleai                     # 데이터베이스 명
 DB_SSLMODE=disable                  # 로컬 환경에서는 SSL 비활성화
+```
+
+### 🚨 배포 규칙 (절대 준수)
+
+**절대 규칙**: 사용자가 **명시적으로 배포를 요청하지 않는 한 절대 배포하지 않습니다.**
+
+- ❌ **금지**: `./deploy.sh` 스크립트를 임의로 실행하지 않음
+- ❌ **금지**: EC2 서버로 코드를 자동으로 배포하지 않음
+- ✅ **허용**: 로컬 서버 재시작 (`./server.sh restart`)
+- ✅ **허용**: 로컬 개발 및 테스트
+
+**배포가 필요한 경우**: 반드시 사용자에게 배포 여부를 먼저 확인하고 승인을 받아야 합니다.
+
+### 🚨 데이터베이스 접근 규칙 (필수)
+
+**중요**: 데이터베이스에 접근할 때는 **반드시 .env 파일의 정보**를 사용해야 합니다.
+
+#### CLI에서 psql 접속 시 필수 형식
+```bash
+# .env 파일의 정보를 환경변수로 사용
+source .env
+PGPASSWORD=${DB_PASSWORD} psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME}
+
+# 또는 직접 .env 파일에서 읽어서 사용
+PGPASSWORD=$(grep DB_PASSWORD .env | cut -d '=' -f2) psql -h localhost -U bibleai -d bibleai
+```
+
+#### .env 파일 확인 방법
+```bash
+# 프로젝트 루트의 .env 파일 내용 확인
+cat .env | grep DB_
+
+# 또는 개별 변수 확인
+grep DB_PASSWORD .env
+grep DB_USER .env
+```
+
+#### Go 코드에서 환경 변수 사용
+```go
+// 코드에서는 os.Getenv()로 .env 파일 정보 자동 로드
+dbHost := os.Getenv("DB_HOST")
+dbUser := os.Getenv("DB_USER")
+dbPassword := os.Getenv("DB_PASSWORD")
+dbName := os.Getenv("DB_NAME")
 ```
 
 ### 데이터베이스 구조 (로컬 PostgreSQL)

@@ -114,7 +114,7 @@ aws ssm get-parameter --name "/bibleai/db/password" --with-decryption
 #     "Parameter": {
 #         "Name": "/bibleai/db/password",
 #         "Type": "SecureString",
-#         "Value": "bibleai123",
+#         "Value": "<from .env file>",
 #         "Version": 1,
 #         ...
 #     }
@@ -224,11 +224,15 @@ aws ssm get-parameter --name "/bibleai/db/password" --with-decryption --profile 
 ### 일반 개발 (로컬 환경 변수)
 
 ```bash
-# .env 파일 또는 직접 export
+# .env 파일 사용 (권장)
+source .env
+./server.sh start
+
+# 또는 .env 파일 없이 직접 export (테스트용)
 export DB_HOST=localhost
 export DB_PORT=5432
 export DB_USER=bibleai
-export DB_PASSWORD=bibleai123
+export DB_PASSWORD=<.env 파일 참조>
 export DB_NAME=bibleai
 export DB_SSLMODE=disable
 
@@ -476,13 +480,7 @@ aws configure
 
 ```bash
 # 로컬 환경 변수로 개발 (빠르고 간단)
-export DB_HOST=localhost
-export DB_PORT=5432
-export DB_USER=bibleai
-export DB_PASSWORD=bibleai123
-export DB_NAME=bibleai
-export DB_SSLMODE=disable
-
+source .env  # .env 파일의 DB_PASSWORD 사용
 ./server.sh start
 ```
 
