@@ -68,8 +68,50 @@
     }
     </script>
 
-    <!-- Tailwind CSS (Production Build) -->
-    <link rel="stylesheet" href="/static/css/output.css">
+    <!-- Performance optimizations: Preload critical resources -->
+    <link rel="preload" href="/static/css/output.css" as="style">
+    <link rel="preload" href="/static/js/main.js?v={{if .CacheVersion}}{{.CacheVersion}}{{else}}1{{end}}" as="script">
+
+    <!-- Prefetch next likely navigations -->
+    <link rel="prefetch" href="/bible/search">
+    <link rel="prefetch" href="/hymns">
+    <link rel="prefetch" href="/prayers">
+
+    <!-- DNS Prefetch for faster resolution -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+
+    <!-- Critical CSS inline for faster initial render -->
+    <style>
+        /* Critical CSS - Above the fold styles */
+        body{margin:0;font-family:'Malgun Gothic','맑은 고딕',sans-serif;font-size:18px;line-height:1.75;background-color:#f9fafb;min-height:100vh;color:#1f2937}
+        header{background-color:#fff;box-shadow:0 1px 3px 0 rgba(0,0,0,0.1);border-bottom:2px solid #e5e7eb}
+        .max-w-2xl{max-width:42rem;margin:0 auto}
+        .px-6{padding-left:1.5rem;padding-right:1.5rem}
+        .py-5{padding-top:1.25rem;padding-bottom:1.25rem}
+        .flex{display:flex}
+        .items-center{align-items:center}
+        .justify-between{justify-content:space-between}
+        .space-x-3>*+*{margin-left:0.75rem}
+        .text-2xl{font-size:1.5rem;line-height:2rem}
+        .font-bold{font-weight:700}
+        .bg-blue-600{background-color:#2563eb}
+        .text-white{color:#fff}
+        .rounded-xl{border-radius:0.75rem}
+        .hidden{display:none!important}
+        /* Prevent layout shift */
+        nav{position:fixed;bottom:0;left:0;right:0;height:5rem}
+        main{padding-bottom:7rem}
+        /* Font optimization with font-display */
+        @font-face {
+            font-family: 'Malgun Gothic';
+            font-display: swap;
+        }
+    </style>
+
+    <!-- Tailwind CSS (Production Build) - Async loading -->
+    <link rel="preload" href="/static/css/output.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="/static/css/output.css"></noscript>
 
     <!-- 모바일 최적화 -->
     <meta name="theme-color" content="#3B82F6">
@@ -262,11 +304,11 @@
     <div class="h-20"></div>
     {{end}}
 
-    <!-- JavaScript -->
-    <script src="/static/js/main.js?v={{if .CacheVersion}}{{.CacheVersion}}{{else}}1{{end}}"></script>
+    <!-- JavaScript (deferred loading for better performance) -->
+    <script defer src="/static/js/main.js?v={{if .CacheVersion}}{{.CacheVersion}}{{else}}1{{end}}"></script>
 
-    <!-- 네비게이션 활성 탭 표시 -->
-    <script>
+    <!-- 네비게이션 활성 탭 표시 (inline script with defer compatibility) -->
+    <script defer>
         document.addEventListener('DOMContentLoaded', function() {
             const currentPath = window.location.pathname;
             const navBtns = document.querySelectorAll('.nav-btn');
