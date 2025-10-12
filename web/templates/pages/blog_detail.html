@@ -48,6 +48,56 @@
         </div>
     </div>
 
+    <!-- 공유하기 섹션 -->
+    <div class="px-8 pb-8 md:px-12 md:pb-12">
+        <div class="border-t pt-8">
+            <div class="text-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-700">이 글이 도움이 되셨나요?</h3>
+                <p class="text-sm text-gray-500 mt-1">좋은 말씀을 더 많은 분들과 나누어보세요!</p>
+            </div>
+
+            <!-- 공유 버튼들 -->
+            <div class="flex flex-wrap justify-center gap-3">
+                <!-- 카카오톡 공유 -->
+                <button onclick="shareKakao()" class="inline-flex items-center px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md">
+                    <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 3C6.48 3 2 6.84 2 11.5c0 2.95 1.82 5.54 4.56 7.04.16.09.33.13.5.13.13 0 .26-.02.38-.07.29-.12.48-.42.45-.73l-.11-1.85c-.04-.64-.51-1.15-1.15-1.23-2.16-.27-3.77-1.93-3.77-3.89 0-2.19 2.01-3.96 4.5-3.96s4.5 1.77 4.5 3.96c0 1.29-.7 2.49-1.83 3.15-.31.18-.42.57-.24.88l.96 1.66c.09.16.25.27.43.31.18.04.37 0 .52-.11C14.41 16.36 16 14.06 16 11.5c0-2.95-1.82-5.54-4.56-7.04C11.94 3.16 10.99 3 10.04 3H12z"/>
+                    </svg>
+                    카카오톡
+                </button>
+
+                <!-- 페이스북 공유 -->
+                <button onclick="shareFacebook()" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18.77 7.46H14.5v-1.9c0-.9.6-1.1 1-1.1h3V.5h-4.33C10.24.5 9.5 3.44 9.5 5.32v2.15h-3v4h3v12h5v-12h3.85l.42-4z"/>
+                    </svg>
+                    페이스북
+                </button>
+
+                <!-- X (트위터) 공유 -->
+                <button onclick="shareTwitter()" class="inline-flex items-center px-4 py-2 bg-black hover:bg-gray-800 text-white rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                    X
+                </button>
+
+                <!-- 링크 복사 -->
+                <button onclick="copyLink()" class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
+                    </svg>
+                    링크 복사
+                </button>
+            </div>
+
+            <!-- 복사 완료 메시지 -->
+            <div id="copyMessage" class="hidden mt-4 text-center text-sm text-green-600 font-medium">
+                ✅ 링크가 복사되었습니다!
+            </div>
+        </div>
+    </div>
+
     <!-- 하단 네비게이션 -->
     <div class="px-8 py-6 bg-gray-50 border-t border-gray-200">
         <a href="/blog" class="inline-flex items-center text-teal-600 hover:text-teal-700 font-medium transition-colors">
@@ -148,4 +198,124 @@
     }
 }
 </style>
+
+<!-- 카카오톡 SDK -->
+<script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
+
+<!-- 공유 기능 스크립트 -->
+<script>
+// 카카오 SDK 초기화 (JavaScript 키 사용)
+// TODO: 실제 배포시 환경변수로 관리
+try {
+    // Kakao.init('YOUR_KAKAO_JS_KEY');
+} catch (e) {
+    console.log('Kakao SDK not initialized');
+}
+
+// 페이지 정보
+const pageTitle = "{{.Post.Title}}";
+const pageDescription = "{{if .Post.Content}}{{.Post.Title}}{{else}}하루말씀 - 성경, 찬송가, 기도문을 한 곳에서{{end}}";
+const pageUrl = window.location.href;
+
+// 카카오톡 공유
+function shareKakao() {
+    // Kakao SDK가 초기화되지 않은 경우 대체 방법 사용
+    if (typeof Kakao === 'undefined' || !Kakao.isInitialized || !Kakao.isInitialized()) {
+        // 카카오톡 웹 공유 URL 사용 (SDK 없이도 동작)
+        const kakaoUrl = `https://story.kakao.com/share?url=${encodeURIComponent(pageUrl)}`;
+        window.open(kakaoUrl, '_blank', 'width=600,height=400');
+        return;
+    }
+
+    Kakao.Share.sendDefault({
+        objectType: 'feed',
+        content: {
+            title: pageTitle,
+            description: pageDescription || '하루말씀 - 성경, 찬송가, 기도문을 한 곳에서',
+            imageUrl: 'https://haruinfo.net/static/og-image.png',
+            link: {
+                mobileWebUrl: pageUrl,
+                webUrl: pageUrl,
+            },
+        },
+        buttons: [
+            {
+                title: '자세히 보기',
+                link: {
+                    mobileWebUrl: pageUrl,
+                    webUrl: pageUrl,
+                },
+            },
+        ],
+    });
+}
+
+// 페이스북 공유
+function shareFacebook() {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(pageUrl)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+}
+
+// 트위터(X) 공유
+function shareTwitter() {
+    const text = `${pageTitle} - 하루말씀`;
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(pageUrl)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+}
+
+// 링크 복사
+function copyLink() {
+    // Clipboard API 지원 여부 확인
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(pageUrl).then(() => {
+            showCopyMessage();
+        }).catch(err => {
+            // Clipboard API 실패시 fallback
+            fallbackCopyTextToClipboard(pageUrl);
+        });
+    } else {
+        // Clipboard API 미지원시 fallback
+        fallbackCopyTextToClipboard(pageUrl);
+    }
+}
+
+// Clipboard API fallback
+function fallbackCopyTextToClipboard(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.width = "2em";
+    textArea.style.height = "2em";
+    textArea.style.padding = "0";
+    textArea.style.border = "none";
+    textArea.style.outline = "none";
+    textArea.style.boxShadow = "none";
+    textArea.style.background = "transparent";
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        document.execCommand('copy');
+        showCopyMessage();
+    } catch (err) {
+        console.error('링크 복사 실패:', err);
+        alert('링크 복사에 실패했습니다. 주소창에서 직접 복사해주세요.');
+    }
+
+    document.body.removeChild(textArea);
+}
+
+// 복사 완료 메시지 표시
+function showCopyMessage() {
+    const message = document.getElementById('copyMessage');
+    message.classList.remove('hidden');
+    setTimeout(() => {
+        message.classList.add('hidden');
+    }, 3000);
+}
+</script>
 {{end}}
