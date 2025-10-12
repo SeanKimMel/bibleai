@@ -58,12 +58,12 @@
 
             <!-- 공유 버튼들 -->
             <div class="flex flex-wrap justify-center gap-3">
-                <!-- 카카오톡 공유 -->
-                <button onclick="shareKakao()" class="inline-flex items-center px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-800 rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md">
-                    <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 3C6.48 3 2 6.84 2 11.5c0 2.95 1.82 5.54 4.56 7.04.16.09.33.13.5.13.13 0 .26-.02.38-.07.29-.12.48-.42.45-.73l-.11-1.85c-.04-.64-.51-1.15-1.15-1.23-2.16-.27-3.77-1.93-3.77-3.89 0-2.19 2.01-3.96 4.5-3.96s4.5 1.77 4.5 3.96c0 1.29-.7 2.49-1.83 3.15-.31.18-.42.57-.24.88l.96 1.66c.09.16.25.27.43.31.18.04.37 0 .52-.11C14.41 16.36 16 14.06 16 11.5c0-2.95-1.82-5.54-4.56-7.04C11.94 3.16 10.99 3 10.04 3H12z"/>
+                <!-- 링크 복사 (주요 버튼) -->
+                <button onclick="copyLink()" class="inline-flex items-center px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md font-medium">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
                     </svg>
-                    카카오톡
+                    링크 복사
                 </button>
 
                 <!-- 페이스북 공유 -->
@@ -80,14 +80,6 @@
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                     </svg>
                     X
-                </button>
-
-                <!-- 링크 복사 -->
-                <button onclick="copyLink()" class="inline-flex items-center px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/>
-                    </svg>
-                    링크 복사
                 </button>
             </div>
 
@@ -199,56 +191,11 @@
 }
 </style>
 
-<!-- 카카오톡 SDK -->
-<script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
-
 <!-- 공유 기능 스크립트 -->
 <script>
-// 카카오 SDK 초기화 (JavaScript 키 사용)
-// TODO: 실제 배포시 환경변수로 관리
-try {
-    // Kakao.init('YOUR_KAKAO_JS_KEY');
-} catch (e) {
-    console.log('Kakao SDK not initialized');
-}
-
 // 페이지 정보
 const pageTitle = "{{.Post.Title}}";
-const pageDescription = "{{if .Post.Content}}{{.Post.Title}}{{else}}하루말씀 - 성경, 찬송가, 기도문을 한 곳에서{{end}}";
 const pageUrl = window.location.href;
-
-// 카카오톡 공유
-function shareKakao() {
-    // Kakao SDK가 초기화되지 않은 경우 대체 방법 사용
-    if (typeof Kakao === 'undefined' || !Kakao.isInitialized || !Kakao.isInitialized()) {
-        // 카카오톡 웹 공유 URL 사용 (SDK 없이도 동작)
-        const kakaoUrl = `https://story.kakao.com/share?url=${encodeURIComponent(pageUrl)}`;
-        window.open(kakaoUrl, '_blank', 'width=600,height=400');
-        return;
-    }
-
-    Kakao.Share.sendDefault({
-        objectType: 'feed',
-        content: {
-            title: pageTitle,
-            description: pageDescription || '하루말씀 - 성경, 찬송가, 기도문을 한 곳에서',
-            imageUrl: 'https://haruinfo.net/static/og-image.png',
-            link: {
-                mobileWebUrl: pageUrl,
-                webUrl: pageUrl,
-            },
-        },
-        buttons: [
-            {
-                title: '자세히 보기',
-                link: {
-                    mobileWebUrl: pageUrl,
-                    webUrl: pageUrl,
-                },
-            },
-        ],
-    });
-}
 
 // 페이스북 공유
 function shareFacebook() {
