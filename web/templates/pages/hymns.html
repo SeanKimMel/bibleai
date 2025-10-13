@@ -2,74 +2,114 @@
 {{template "base.html" .}}
 {{end}}
 {{define "hymns-content"}}
-<!-- 찬송가 페이지 -->
-<div class="card mb-8">
-    <div class="text-center mb-6">
-        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<!-- 찬송가 헤더 -->
+<div class="relative overflow-hidden bg-gradient-to-br from-purple-50 via-white to-purple-50/50 rounded-3xl mb-8 p-8 border border-purple-100/80 shadow-lg shadow-purple-100/50">
+    <div class="relative z-10 text-center">
+        <div class="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-purple-300/30">
+            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
             </svg>
         </div>
-        <h2 class="text-3xl font-bold text-primary mb-3">찬송가</h2>
-        <p class="text-lg text-secondary leading-relaxed mb-4">새찬송가를 검색하고 찾아보세요</p>
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent mb-3">찬송가</h1>
+        <p class="text-lg text-gray-600 leading-relaxed max-w-md mx-auto">새찬송가를 검색하고 찾아보세요</p>
 
-        <!-- 전체 저작권 안내 -->
-        <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <div class="flex items-center">
-                <svg class="w-5 h-5 text-blue-500 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <div class="text-sm text-blue-800">
-                    <span class="font-medium">📚 교육용 서비스:</span>
-                    <span class="ml-1">찬송가 가사는 참고 목적으로 일부만 제공됩니다. 완전한 가사와 악보는 공식 찬송가집을 이용해주세요.</span>
-                </div>
-            </div>
-        </div>
     </div>
+    <div class="absolute top-0 right-0 w-32 h-32 bg-purple-200/20 rounded-full -translate-y-16 translate-x-16"></div>
+    <div class="absolute bottom-0 left-0 w-24 h-24 bg-purple-300/20 rounded-full translate-y-12 -translate-x-12"></div>
+</div>
 
+<!-- 검색 영역 -->
+<div class="relative overflow-hidden bg-white rounded-3xl mb-8 p-8 border border-gray-100 shadow-lg shadow-gray-100/50">
     <!-- 검색 폼 -->
-    <form id="hymnSearchForm" class="mb-6">
-        <div class="flex space-x-3">
+    <form id="hymnSearchForm" class="mb-8">
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </div>
             <input type="text"
                    id="hymnSearchInput"
-                   placeholder="찬송가 제목이나 번호를 입력하세요"
-                   class="flex-1 px-4 py-3 text-lg border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none">
+                   placeholder="찬송가 제목이나 번호를 입력하세요 (예: 찬양, 10)"
+                   class="w-full pl-14 pr-32 py-5 text-lg bg-gray-50 border-2 border-gray-200/80 rounded-2xl focus:border-purple-400 focus:bg-white focus:outline-none transition-all duration-300 placeholder-gray-400">
             <button type="submit"
-                    class="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 text-lg font-medium transition-colors">
+                    class="absolute right-2 top-2 bottom-2 px-8 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-purple-200/50 hover:shadow-purple-300/60">
                 검색
             </button>
         </div>
     </form>
 
     <!-- 빠른 검색 주제 -->
-    <div class="mb-6">
-        <p class="text-sm text-secondary mb-3">주제별 찾기:</p>
-        <div class="flex flex-wrap gap-2">
-            <button onclick="searchByTheme('찬양')" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">찬양</button>
-            <button onclick="searchByTheme('감사')" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">감사</button>
-            <button onclick="searchByTheme('예배')" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">예배</button>
-            <button onclick="searchByTheme('성탄')" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">성탄</button>
-            <button onclick="searchByTheme('부활')" class="px-4 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors">부활</button>
+    <div>
+        <div class="flex items-center mb-4">
+            <div class="w-8 h-8 bg-gradient-to-br from-purple-400 to-purple-500 rounded-lg flex items-center justify-center mr-3">
+                <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-700">주제별 찾기</h3>
+        </div>
+        <div class="flex flex-wrap gap-3">
+            <button onclick="searchByTheme('찬양')" class="group px-5 py-3 bg-gradient-to-r from-purple-50 to-purple-100/80 hover:from-purple-100 hover:to-purple-200/90 text-purple-700 font-semibold rounded-xl border border-purple-200/60 transition-all duration-300 hover:shadow-lg hover:shadow-purple-200/40 hover:-translate-y-0.5 active:scale-95">찬양</button>
+            <button onclick="searchByTheme('감사')" class="group px-5 py-3 bg-gradient-to-r from-purple-50 to-purple-100/80 hover:from-purple-100 hover:to-purple-200/90 text-purple-700 font-semibold rounded-xl border border-purple-200/60 transition-all duration-300 hover:shadow-lg hover:shadow-purple-200/40 hover:-translate-y-0.5 active:scale-95">감사</button>
+            <button onclick="searchByTheme('예배')" class="group px-5 py-3 bg-gradient-to-r from-purple-50 to-purple-100/80 hover:from-purple-100 hover:to-purple-200/90 text-purple-700 font-semibold rounded-xl border border-purple-200/60 transition-all duration-300 hover:shadow-lg hover:shadow-purple-200/40 hover:-translate-y-0.5 active:scale-95">예배</button>
+            <button onclick="searchByTheme('성탄')" class="group px-5 py-3 bg-gradient-to-r from-purple-50 to-purple-100/80 hover:from-purple-100 hover:to-purple-200/90 text-purple-700 font-semibold rounded-xl border border-purple-200/60 transition-all duration-300 hover:shadow-lg hover:shadow-purple-200/40 hover:-translate-y-0.5 active:scale-95">성탄</button>
+            <button onclick="searchByTheme('부활')" class="group px-5 py-3 bg-gradient-to-r from-purple-50 to-purple-100/80 hover:from-purple-100 hover:to-purple-200/90 text-purple-700 font-semibold rounded-xl border border-purple-200/60 transition-all duration-300 hover:shadow-lg hover:shadow-purple-200/40 hover:-translate-y-0.5 active:scale-95">부활</button>
+        </div>
+    </div>
+
+    <!-- 저작권 안내 -->
+    <div class="mt-6 p-4 bg-purple-50/50 border border-purple-100 rounded-xl">
+        <div class="flex items-start">
+            <div class="w-5 h-5 bg-purple-500 rounded-full flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
+                <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <div class="text-sm text-purple-700">
+                <p class="font-medium mb-1">교육용 서비스</p>
+                <p class="text-purple-600">찬송가 가사는 참고 목적으로 일부만 제공됩니다. 완전한 가사와 악보는 공식 찬송가집을 이용해주세요.</p>
+            </div>
         </div>
     </div>
 </div>
 
-
 <!-- 로딩 스피너 -->
-<div id="hymnLoading" class="hidden card text-center py-12">
-    <div class="flex flex-col items-center space-y-4">
-        <div class="w-16 h-16 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
-        <p class="text-xl text-secondary font-medium">🎵 찬송가를 찾고 있습니다...</p>
+<div id="hymnLoading" class="hidden relative overflow-hidden bg-white rounded-3xl p-12 border border-gray-100 shadow-lg shadow-gray-100/50">
+    <div class="relative z-10 text-center">
+        <div class="w-20 h-20 mx-auto mb-6 relative">
+            <div class="absolute inset-0 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full animate-pulse"></div>
+            <div class="absolute inset-2 bg-white rounded-full flex items-center justify-center">
+                <svg class="w-8 h-8 text-purple-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                </svg>
+            </div>
+        </div>
+        <h3 class="text-2xl font-bold text-gray-800 mb-3">찬송가를 찾고 있습니다</h3>
+        <p class="text-lg text-gray-600">요청하신 찬송가를 검색 중입니다...</p>
     </div>
+    <div class="absolute top-0 right-0 w-32 h-32 bg-purple-200/20 rounded-full -translate-y-16 translate-x-16"></div>
 </div>
 
 <!-- 검색 결과 -->
 <div id="hymnSearchResults" class="hidden">
-    <div class="card">
-        <h3 id="hymnResultsTitle" class="text-2xl font-bold text-primary mb-4"></h3>
-        <div id="hymnResultsList" class="space-y-4">
-            <!-- 검색 결과가 여기에 표시됩니다 -->
+    <div class="relative overflow-hidden bg-white rounded-3xl p-8 border border-gray-100 shadow-lg shadow-gray-100/50">
+        <div class="relative z-10">
+            <div class="flex items-center justify-between mb-8">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-purple-300/30">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                        </svg>
+                    </div>
+                    <h3 id="hymnResultsTitle" class="text-2xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent"></h3>
+                </div>
+            </div>
+            <div id="hymnResultsList" class="space-y-6">
+                <!-- 검색 결과가 여기에 표시됩니다 -->
+            </div>
         </div>
+        <div class="absolute bottom-0 right-0 w-40 h-40 bg-purple-200/20 rounded-full translate-y-20 translate-x-20"></div>
     </div>
 </div>
 
@@ -254,22 +294,25 @@ function displayHymnResults(query, hymns) {
         const displayNumber = hymn.new_hymn_number || hymn.number;
         const paddedNumber = String(displayNumber).padStart(3, '0');
         return `
-        <div class="content-card cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1" onclick="viewHymnDetail(${displayNumber}, '신찬송가 ${paddedNumber}장 ${hymn.title.replace(/'/g, "\\'")}')">
-            <div class="flex items-center justify-between mb-3">
-                <div>
-                    <h4 class="text-lg font-bold text-primary mb-1">신찬송가 ${paddedNumber}장 ${hymn.title}</h4>
-                    <p class="text-sm text-purple-600">주제: ${hymn.theme}</p>
+        <div class="group relative overflow-hidden bg-gradient-to-br from-purple-50/50 to-white hover:from-purple-100/60 hover:to-purple-50/80 rounded-2xl p-6 border border-purple-100/60 transition-all duration-300 hover:shadow-lg hover:shadow-purple-200/30 hover:-translate-y-0.5 cursor-pointer active:scale-[0.98]" onclick="viewHymnDetail(${displayNumber}, '신찬송가 ${paddedNumber}장 ${hymn.title.replace(/'/g, "\\'")}')">
+            <div class="relative z-10">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h4 class="text-xl font-bold text-gray-800 mb-2">신찬송가 ${paddedNumber}장 ${hymn.title}</h4>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                            주제: ${hymn.theme}
+                        </span>
+                    </div>
+                    <div class="flex items-center text-purple-500 group-hover:text-purple-600 transition-colors ml-4">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"/>
+                        </svg>
+                        <span class="text-sm font-medium">보기</span>
+                    </div>
                 </div>
-                <div class="text-2xl">🎵</div>
+                ${hymn.lyrics ? `<p class="text-gray-600 leading-relaxed">${BibleAI.truncate(hymn.lyrics, 150)}</p>` : ''}
             </div>
-            ${hymn.lyrics ? `<p class="text-sm text-secondary">${BibleAI.truncate(hymn.lyrics, 150)}</p>` : ''}
-            <div class="mt-4 flex items-center text-purple-500 font-medium">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                </svg>
-                전체 가사 보기
-            </div>
+            <div class="absolute top-0 right-0 w-24 h-24 bg-purple-200/20 rounded-full -translate-y-12 translate-x-12 group-hover:scale-125 transition-transform duration-500"></div>
         </div>
         `;
     }).join('');
