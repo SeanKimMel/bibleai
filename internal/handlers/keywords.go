@@ -273,36 +273,35 @@ func GetKeywordContentCounts(c *gin.Context) {
 		return
 	}
 
-	// 일단 더미 데이터로 응답 (실제 매핑 데이터가 없으므로)
-	counts := map[string]int{
-		"prayers": 0,
-		"verses":  0,
-		"hymns":   0,
-	}
+	// 배열 기반으로 실제 데이터 조회
+	var hymnCount, prayerCount, bibleChapterCount int
 
-	// 기도문 개수 (tags 테이블과 연결되어 있는 기존 시스템 사용)
-	var prayerCount int
 	err := db.QueryRow(`
-		SELECT COUNT(DISTINCT p.id)
-		FROM prayers p
-		JOIN prayer_tags pt ON p.id = pt.prayer_id
-		JOIN tags t ON pt.tag_id = t.id
-		WHERE t.name = $1
-	`, keywordName).Scan(&prayerCount)
-	if err == nil {
-		counts["prayers"] = prayerCount
+		SELECT
+			COALESCE(array_length(hymn_numbers, 1), 0) as hymn_count,
+			COALESCE(array_length(prayer_ids, 1), 0) as prayer_count,
+			COALESCE(jsonb_array_length(bible_chapters), 0) as bible_count
+		FROM keywords
+		WHERE name = $1
+	`, keywordName).Scan(&hymnCount, &prayerCount, &bibleChapterCount)
+
+	if err != nil {
+		// 키워드가 없는 경우 0으로 반환
+		hymnCount = 0
+		prayerCount = 0
+		bibleChapterCount = 0
 	}
 
-	// 성경구절 개수 (더미)
-	counts["verses"] = 3 + len(keywordName)%5
-
-	// 찬송가 개수 (더미)
-	counts["hymns"] = 2 + len(keywordName)%4
+	counts := map[string]int{
+		"hymns":   hymnCount,
+		"prayers": prayerCount,
+		"verses":  bibleChapterCount,  // 실제로는 장(chapter) 수
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"keyword": keywordName,
 		"counts":  counts,
-		"total":   counts["prayers"] + counts["verses"] + counts["hymns"],
+		"total":   hymnCount + prayerCount + bibleChapterCount,
 	})
 }
 

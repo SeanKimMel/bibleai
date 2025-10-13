@@ -6,6 +6,7 @@ import (
 
 	"bibleai/internal/database"
 	"bibleai/internal/handlers"
+	"bibleai/internal/static"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,14 +22,23 @@ func main() {
 	// 템플릿 캐시 방지를 위해 개발 모드 설정
 	gin.SetMode(gin.DebugMode)
 	r := gin.Default()
-	
+
+	// HTML 템플릿을 글로빙 패턴으로 효율적 로드
+	r.LoadHTMLGlob("web/templates/**/*.html")
+
+	// 파비콘 라우트 (embed로 바이너리에 포함) - 정적 파일 서빙보다 먼저 등록
+	r.GET("/favicon.ico", func(c *gin.Context) {
+		c.Data(http.StatusOK, "image/x-icon", static.FaviconIco)
+	})
+
+	// SEO: robots.txt (embed로 바이너리에 포함) - 정적 파일 서빙보다 먼저 등록
+	r.GET("/robots.txt", func(c *gin.Context) {
+		c.String(http.StatusOK, static.RobotsTxt)
+	})
+
 	// 정적 파일 서빙
 	r.Static("/static", "./web/static")
-	
-	// HTML 템플릿을 글로빙 패턴으로 효율적 로드
-	gin.SetMode(gin.DebugMode)
-	r.LoadHTMLGlob("web/templates/**/*.html")
-	
+
 	// 웹 페이지 라우트
 	r.GET("/", handlers.HomePage)
 	r.GET("/bible/search", handlers.BibleSearchPage)
@@ -37,16 +47,6 @@ func main() {
 	r.GET("/prayers", handlers.PrayersPage)
 	r.GET("/blog", handlers.BlogPage)
 	r.GET("/blog/:slug", handlers.BlogDetailPage)
-
-	// 파비콘 라우트
-	r.GET("/favicon.ico", func(c *gin.Context) {
-		c.File("web/static/favicon.ico")
-	})
-
-	// SEO: robots.txt
-	r.GET("/robots.txt", func(c *gin.Context) {
-		c.File("web/static/robots.txt")
-	})
 
 	// SEO: sitemap.xml (동적 생성)
 	r.GET("/sitemap.xml", handlers.GenerateSitemap)
