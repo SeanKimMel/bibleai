@@ -124,6 +124,11 @@
       <iframe width="560" height="315" src="https://www.youtube.com/embed/비디오ID" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     </div>
     ```
+  - **🚨 CRITICAL: 비디오ID 필수 규칙** (이 규칙을 어기면 임베드가 동작하지 않음!):
+    - ❌ **절대 금지**: `https://www.youtube.com/embed/search?query=...` (검색 URL은 임베드 불가!)
+    - ❌ **절대 금지**: `https://www.youtube.com/results?search_query=...` (검색 결과 URL)
+    - ✅ **반드시 사용**: `https://www.youtube.com/embed/SfUoRQy-LH4` (실제 비디오 ID)
+    - ✅ **올바른 형식**: 영문자+숫자+하이픈 조합 (예: `XP8WsSZAx1o`, `SfUoRQy-LH4`)
   - **중요**: 비디오ID 찾는 방법 (완전 자동화):
     1. 먼저 데이터베이스 확인: `./scripts/get_hymn_video.sh [찬송가번호]`
     2. 데이터베이스에 없으면 자동 검색: `./scripts/auto_find_hymn_video.sh "찬송가 [번호]장 [제목]"`
@@ -134,7 +139,14 @@
        - 첫 번째 동작하는 비디오 ID 반환
     4. 출력된 비디오 ID를 사용
     5. 검증된 ID는 자동으로 scripts/hymn_videos.json에 저장됨
-  - **주의**: 스크립트가 자동으로 검증하므로 별도 확인 불필요
+  - **⚠️ 발행 전 검증 필수**:
+    ```bash
+    # output.json에서 iframe src 확인
+    grep -o 'youtube.com/embed/[^"]*' output.json
+    # 출력 예시 (올바름): youtube.com/embed/SfUoRQy-LH4
+    # 출력 예시 (잘못됨): youtube.com/embed/search?query=...
+    ```
+  - **주의**: 스크립트가 자동으로 검증하므로 스크립트 사용 시 별도 확인 불필요
 - 가사 일부(1절 또는 후렴)를 ``` 코드블록으로 인용
 - 찬송가의 의미와 메시지 설명 (2-3문단)
 
@@ -218,6 +230,9 @@
 - [ ] 찬송가 가사가 제공된 것만 사용했는가?
 - [ ] 찬송가 시즌이 맞는가? (성탄=12월, 부활=3-4월)
 - [ ] 외부 링크를 curl로 검증했는가? (200 OK 확인)
+- [ ] **YouTube 임베드가 실제 비디오 ID인가?** (검색 URL 아님!)
+  - `grep -o 'youtube.com/embed/[^"]*' output.json` 실행
+  - `search?query=` 포함 시 ❌ 잘못됨 → 스크립트로 비디오 ID 찾기
 
 **기술**
 - [ ] JSON 형식이 올바른가? (따옴표, 이스케이프)
@@ -254,11 +269,15 @@
 8. ❌ 성경 구절 임의 수정
 9. ❌ 시즌 외 찬송가 사용 (10월에 성탄 찬송가 등)
 10. ❌ 외부 링크를 curl로 검증하지 않음 (특히 찬송가 가사 링크)
+11. ❌ **YouTube 임베드에 검색 URL 사용** (가장 흔한 오류!)
+    - 잘못된 예: `youtube.com/embed/search?query=찬송가+305장`
+    - 올바른 예: `youtube.com/embed/SfUoRQy-LH4`
+    - 반드시 `auto_find_hymn_video.sh` 스크립트로 실제 비디오 ID 확인
 
 **기술 관련**
-11. ❌ slug 중복 (같은 날짜/제목)
-12. ❌ JSON 이스케이프 누락 (특히 HTML 속성의 따옴표)
-13. ❌ HTML 태그를 텍스트로 escape (마크다운 파서가 자동 처리함)
+12. ❌ slug 중복 (같은 날짜/제목)
+13. ❌ JSON 이스케이프 누락 (특히 HTML 속성의 따옴표)
+14. ❌ HTML 태그를 텍스트로 escape (마크다운 파서가 자동 처리함)
 
 ---
 

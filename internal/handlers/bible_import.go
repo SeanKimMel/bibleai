@@ -967,9 +967,33 @@ func SearchBibleByChapter(c *gin.Context) {
 	var searchQuery string
 	var rows *sql.Rows
 	var err error
+	var bibleChaptersJSON []byte  // goto 문제 해결을 위해 미리 선언
 
-	// 1. 먼저 keywords 테이블에서 해당 키워드의 bible_chapters 배열 조회
-	var bibleChaptersJSON []byte
+	// 1. 최우선: chapter_primary_keywords 테이블에서 조회 (마스터 데이터)
+	searchQuery = `
+		SELECT
+			cpk.book,
+			COALESCE(bv.book_name_korean, cpk.book) as book_name,
+			cpk.chapter,
+			cpk.primary_keyword as theme,
+			cpk.confidence_score * 10 as relevance_score,
+			cpk.confidence_score as keyword_count
+		FROM chapter_primary_keywords cpk
+		LEFT JOIN bible_verses bv ON cpk.book = bv.book_id AND cpk.chapter = bv.chapter AND bv.verse = 1
+		WHERE $1 = ANY(cpk.keywords)
+		ORDER BY
+			(cpk.primary_keyword = $1) DESC,  -- 주요 키워드가 검색어와 일치하면 우선
+			cpk.confidence_score DESC,
+			cpk.book,
+			cpk.chapter
+	`
+	rows, err = db.Query(searchQuery, query)
+
+	if err == nil {
+		goto processResults
+	}
+
+	// 2. 폴백: keywords 테이블의 bible_chapters 배열 조회 (기존 방식)
 	err = db.QueryRow(`
 		SELECT bible_chapters FROM keywords WHERE name = $1
 	`, query).Scan(&bibleChaptersJSON)

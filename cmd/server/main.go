@@ -161,10 +161,15 @@ func main() {
 	r.GET("/api/keywords/:keyword/counts", handlers.GetKeywordContentCounts)   // 키워드별 콘텐츠 개수
 
 	// 블로그 API 엔드포인트
-	r.POST("/api/admin/blog/posts", handlers.CreateBlogPost)            // 블로그 생성 (관리자)
-	r.GET("/api/blog/posts", handlers.GetBlogPosts)                     // 블로그 목록 (페이지네이션)
-	r.GET("/api/blog/posts/:slug", handlers.GetBlogPost)                // 블로그 상세
-	r.GET("/api/admin/blog/generate-data", handlers.GenerateBlogData)   // 블로그 자동 생성용 데이터 수집
+	r.POST("/api/admin/blog/posts", handlers.CreateBlogPost)                    // 블로그 생성 (관리자)
+	r.GET("/api/blog/posts", handlers.GetBlogPosts)                             // 블로그 목록 (페이지네이션)
+	r.GET("/api/blog/posts/:slug", handlers.GetBlogPost)                        // 블로그 상세
+	r.GET("/api/admin/blog/posts/:id", handlers.GetBlogPostByID)                // 블로그 ID 기반 조회 (관리자)
+	r.PUT("/api/admin/blog/posts/:id", handlers.UpdateBlogPost)                 // 블로그 수정 (관리자)
+	r.DELETE("/api/admin/blog/posts/:id", handlers.DeleteBlogPost)              // 블로그 소프트 삭제 (관리자)
+	r.POST("/api/admin/blog/posts/:id/evaluate", handlers.EvaluateBlogPost)     // 블로그 품질 평가 (관리자)
+	r.GET("/api/admin/blog/posts/:id/quality-history", handlers.GetBlogQualityHistory) // 품질 평가 이력 조회
+	r.GET("/api/admin/blog/generate-data", handlers.GenerateBlogData)           // 블로그 자동 생성용 데이터 수집
 
 	log.Println("서버가 :8080 포트에서 시작됩니다...")
 	r.Run("0.0.0.0:8080")

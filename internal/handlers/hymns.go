@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 )
 
 // Hymn 구조체
@@ -48,64 +49,104 @@ func (h *HymnHandlers) SearchHymns(c *gin.Context) {
 	}
 
 	var hymns []Hymn
-	var queryBuilder strings.Builder
-	var args []interface{}
-	argIndex := 1
+	var rows *sql.Rows
 
-	// 기본 쿼리
-	queryBuilder.WriteString(`
-		SELECT id, number, title,
-			   COALESCE(lyrics, '') as lyrics,
-			   COALESCE(theme, '') as theme,
-			   COALESCE(composer, '') as composer,
-			   COALESCE(author, '') as author,
-			   COALESCE(tempo, '') as tempo,
-			   COALESCE(key_signature, '') as key_signature,
-			   COALESCE(bible_reference, '') as bible_reference,
-			   COALESCE(external_link, '') as external_link
-		FROM hymns WHERE 1=1`)
+	// 1. 키워드 배열 기반 조회 시도
+	if query != "" && theme == "" {
+		var hymnNumbers pq.Int64Array
+		err := h.DB.QueryRow(`
+			SELECT hymn_numbers FROM keywords WHERE name = $1
+		`, query).Scan(&hymnNumbers)
 
-	// 주제로 검색
-	if theme != "" {
-		queryBuilder.WriteString(" AND LOWER(theme) LIKE LOWER($")
-		queryBuilder.WriteString(strconv.Itoa(argIndex))
-		queryBuilder.WriteString(")")
-		args = append(args, "%"+theme+"%")
-		argIndex++
+		if err == nil && len(hymnNumbers) > 0 {
+			// Convert int64 to int
+			hymnNumbersInt := make([]int, len(hymnNumbers))
+			for i, n := range hymnNumbers {
+				hymnNumbersInt[i] = int(n)
+			}
+
+			// 키워드 배열 기반 조회 (정확한 매칭)
+			rows, err = h.DB.Query(`
+				SELECT id, number, title,
+					   COALESCE(lyrics, '') as lyrics,
+					   COALESCE(theme, '') as theme,
+					   COALESCE(composer, '') as composer,
+					   COALESCE(author, '') as author,
+					   COALESCE(tempo, '') as tempo,
+					   COALESCE(key_signature, '') as key_signature,
+					   COALESCE(bible_reference, '') as bible_reference,
+					   COALESCE(external_link, '') as external_link
+				FROM hymns
+				WHERE number = ANY($1)
+				ORDER BY number ASC
+			`, pq.Array(hymnNumbersInt))
+
+			if err == nil {
+				goto processResults
+			}
+		}
 	}
 
-	// 통합 검색 (번호 + 제목 + 가사)
-	if query != "" {
-		queryBuilder.WriteString(" AND (")
+	// 2. ILIKE 기반 자유 검색 (검색창용 또는 theme 검색)
+	{
+		var queryBuilder strings.Builder
+		var args []interface{}
+		argIndex := 1
 
-		// 숫자인 경우 번호 검색도 포함
-		if number, err := strconv.Atoi(query); err == nil {
-			queryBuilder.WriteString("number = $")
+		queryBuilder.WriteString(`
+			SELECT id, number, title,
+				   COALESCE(lyrics, '') as lyrics,
+				   COALESCE(theme, '') as theme,
+				   COALESCE(composer, '') as composer,
+				   COALESCE(author, '') as author,
+				   COALESCE(tempo, '') as tempo,
+				   COALESCE(key_signature, '') as key_signature,
+				   COALESCE(bible_reference, '') as bible_reference,
+				   COALESCE(external_link, '') as external_link
+			FROM hymns WHERE 1=1`)
+
+		// 주제로 검색
+		if theme != "" {
+			queryBuilder.WriteString(" AND LOWER(theme) LIKE LOWER($")
 			queryBuilder.WriteString(strconv.Itoa(argIndex))
-			queryBuilder.WriteString(" OR ")
-			args = append(args, number)
+			queryBuilder.WriteString(")")
+			args = append(args, "%"+theme+"%")
 			argIndex++
 		}
 
-		// 제목과 가사 검색
-		queryBuilder.WriteString("LOWER(title) LIKE LOWER($")
+		// 통합 검색 (번호 + 제목 + 가사)
+		if query != "" {
+			queryBuilder.WriteString(" AND (")
+
+			// 숫자인 경우 번호 검색도 포함
+			if number, err := strconv.Atoi(query); err == nil {
+				queryBuilder.WriteString("number = $")
+				queryBuilder.WriteString(strconv.Itoa(argIndex))
+				queryBuilder.WriteString(" OR ")
+				args = append(args, number)
+				argIndex++
+			}
+
+			// 제목과 가사 검색
+			queryBuilder.WriteString("LOWER(title) LIKE LOWER($")
+			queryBuilder.WriteString(strconv.Itoa(argIndex))
+			queryBuilder.WriteString(") OR ")
+			queryBuilder.WriteString("LOWER(lyrics) LIKE LOWER($")
+			queryBuilder.WriteString(strconv.Itoa(argIndex + 1))
+			queryBuilder.WriteString("))")
+			args = append(args, "%"+query+"%", "%"+query+"%")
+			argIndex += 2
+		}
+
+		// 정렬 및 제한
+		queryBuilder.WriteString(" ORDER BY number ASC LIMIT $")
 		queryBuilder.WriteString(strconv.Itoa(argIndex))
-		queryBuilder.WriteString(") OR ")
-		queryBuilder.WriteString("LOWER(lyrics) LIKE LOWER($")
-		queryBuilder.WriteString(strconv.Itoa(argIndex + 1))
-		queryBuilder.WriteString("))")
-		args = append(args, "%"+query+"%", "%"+query+"%")
-		argIndex += 2
+		args = append(args, limit)
+
+		rows, err = h.DB.Query(queryBuilder.String(), args...)
 	}
 
-	// 정렬 및 제한
-	queryBuilder.WriteString(" ORDER BY number ASC LIMIT $")
-	queryBuilder.WriteString(strconv.Itoa(argIndex))
-	args = append(args, limit)
-
-	finalQuery := queryBuilder.String()
-
-	rows, err := h.DB.Query(finalQuery, args...)
+processResults:
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "데이터베이스 조회 중 오류가 발생했습니다",

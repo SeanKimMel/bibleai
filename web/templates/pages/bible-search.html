@@ -3,24 +3,24 @@
 {{end}}
 {{define "bible-search-content"}}
 <!-- 성경 검색 헤더 -->
-<div class="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-blue-50/50 rounded-3xl mb-8 p-8 border border-blue-100/80 shadow-lg shadow-blue-100/50">
-    <div class="relative z-10 text-center">
-        <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-300/30">
-            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<div class="bg-gradient-to-br from-blue-50 via-white to-blue-50/50 rounded-3xl mb-6 p-6 border border-blue-100/80">
+    <div class="flex items-center space-x-4">
+        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+            <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
             </svg>
         </div>
-        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-3">성경 검색</h1>
-        <p class="text-lg text-gray-600 leading-relaxed max-w-md mx-auto">키워드로 성경구절을 빠르게 찾아보세요</p>
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">성경 검색</h1>
+            <p class="text-gray-600 text-sm">키워드로 성경구절을 빠르게 찾아보세요</p>
+        </div>
     </div>
-    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-200/20 rounded-full -translate-y-16 translate-x-16"></div>
-    <div class="absolute bottom-0 left-0 w-24 h-24 bg-blue-300/20 rounded-full translate-y-12 -translate-x-12"></div>
 </div>
 
 <!-- 검색 영역 -->
-<div class="relative overflow-hidden bg-white rounded-3xl mb-8 p-8 border border-gray-100 shadow-lg shadow-gray-100/50">
+<div class="bg-white rounded-2xl mb-6 p-6 border border-gray-200">
     <!-- 탭 메뉴 -->
-    <div class="flex mb-8 bg-gray-100 rounded-2xl p-1">
+    <div class="flex mb-6 bg-gray-100 rounded-2xl p-1">
         <button id="searchTab" class="flex-1 py-3 px-6 text-center font-semibold rounded-xl transition-all duration-300 bg-blue-500 text-white">
             키워드 검색
         </button>
@@ -31,7 +31,7 @@
 
     <!-- 키워드 검색 폼 -->
     <div id="searchSection">
-        <form id="searchForm" class="mb-8">
+        <form id="searchForm" class="mb-6">
             <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
                     <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,7 +52,7 @@
 
     <!-- 장별 보기 섹션 -->
     <div id="chapterSection" class="hidden">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <!-- 성경 선택 -->
             <div>
                 <label for="bookSelect" class="block text-lg font-semibold text-gray-700 mb-3">성경 선택</label>
@@ -112,56 +112,36 @@
 </div>
 
 <!-- 로딩 스피너 -->
-<div id="loading" class="hidden relative overflow-hidden bg-white rounded-3xl p-12 border border-gray-100 shadow-lg shadow-gray-100/50">
-    <div class="relative z-10 text-center">
-        <div class="w-20 h-20 mx-auto mb-6 relative">
-            <div class="absolute inset-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full animate-pulse"></div>
-            <div class="absolute inset-2 bg-white rounded-full flex items-center justify-center">
-                <svg class="w-8 h-8 text-blue-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                </svg>
-            </div>
-        </div>
-        <h3 class="text-2xl font-bold text-gray-800 mb-3">관련 성경 장을 찾고 있습니다</h3>
-        <p class="text-lg text-gray-600">키워드와 연관성이 높은 성경 장들을 분석 중입니다...</p>
-    </div>
-    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-200/20 rounded-full -translate-y-16 translate-x-16"></div>
+<div id="loading" class="hidden text-center py-12">
+    <div class="inline-block w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+    <p class="mt-4 text-gray-600">로딩 중...</p>
 </div>
 
 <!-- 검색 결과 -->
 <div id="searchResults" class="hidden">
-    <div class="relative overflow-hidden bg-white rounded-3xl p-8 border border-gray-100 shadow-lg shadow-gray-100/50">
-        <div class="relative z-10">
-            <div class="flex items-center justify-between mb-8">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-lg shadow-blue-300/30">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                    </div>
-                    <h3 id="resultsTitle" class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent"></h3>
+    <div class="bg-white rounded-2xl p-6 border border-gray-200">
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
                 </div>
-            </div>
-            <div id="resultsList" class="space-y-6">
-                <!-- 검색 결과가 여기에 표시됩니다 -->
+                <h3 id="resultsTitle" class="text-xl font-bold text-gray-900"></h3>
             </div>
         </div>
-        <div class="absolute bottom-0 right-0 w-40 h-40 bg-blue-200/20 rounded-full translate-y-20 translate-x-20"></div>
+        <div id="resultsList" class="space-y-4">
+            <!-- 검색 결과가 여기에 표시됩니다 -->
+        </div>
     </div>
 </div>
 
 <!-- 에러 메시지 -->
-<div id="errorMessage" class="hidden relative overflow-hidden bg-gradient-to-br from-red-50 via-white to-red-50/50 rounded-3xl p-12 border border-red-100 shadow-lg shadow-red-100/50">
-    <div class="relative z-10 text-center">
-        <div class="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-red-300/30">
-            <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-        </div>
-        <h3 class="text-2xl font-bold text-red-800 mb-3">검색 중 오류가 발생했습니다</h3>
-        <p class="text-lg text-red-600">네트워크 연결을 확인하고 다시 시도해주세요</p>
-    </div>
-    <div class="absolute top-0 right-0 w-32 h-32 bg-red-200/20 rounded-full -translate-y-16 translate-x-16"></div>
+<div id="errorMessage" class="hidden text-center py-12">
+    <p class="text-red-600">❌ 검색 중 오류가 발생했습니다.</p>
+    <button onclick="document.getElementById('searchInput').focus()" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        다시 시도
+    </button>
 </div>
 
 <script>

@@ -174,6 +174,347 @@ func GetBlogPost(c *gin.Context) {
 	c.JSON(http.StatusOK, post)
 }
 
+// UpdateBlogPost - 블로그 수정 API (ID 기반)
+func UpdateBlogPost(c *gin.Context) {
+	id := c.Param("id")
+
+	var post struct {
+		Title    *string `json:"title"`
+		Slug     *string `json:"slug"`
+		Content  *string `json:"content"`
+		Excerpt  *string `json:"excerpt"`
+		Keywords *string `json:"keywords"`
+	}
+
+	if err := c.ShouldBindJSON(&post); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 요청입니다", "details": err.Error()})
+		return
+	}
+
+	// 업데이트할 필드 동적 구성
+	updates := []string{}
+	args := []interface{}{}
+	argCount := 1
+
+	if post.Title != nil {
+		updates = append(updates, "title = $"+strconv.Itoa(argCount))
+		args = append(args, *post.Title)
+		argCount++
+	}
+	if post.Slug != nil {
+		updates = append(updates, "slug = $"+strconv.Itoa(argCount))
+		args = append(args, *post.Slug)
+		argCount++
+	}
+	if post.Content != nil {
+		updates = append(updates, "content = $"+strconv.Itoa(argCount))
+		args = append(args, *post.Content)
+		argCount++
+	}
+	if post.Excerpt != nil {
+		updates = append(updates, "excerpt = $"+strconv.Itoa(argCount))
+		args = append(args, *post.Excerpt)
+		argCount++
+	}
+	if post.Keywords != nil {
+		updates = append(updates, "keywords = $"+strconv.Itoa(argCount))
+		args = append(args, *post.Keywords)
+		argCount++
+	}
+
+	if len(updates) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "업데이트할 필드가 없습니다"})
+		return
+	}
+
+	updates = append(updates, "updated_at = NOW()")
+	args = append(args, id)
+
+	query := "UPDATE blog_posts SET " + string(updates[0])
+	for i := 1; i < len(updates); i++ {
+		query += ", " + updates[i]
+	}
+	query += " WHERE id = $" + strconv.Itoa(argCount) + " AND is_published = true"
+
+	result, err := db.Exec(query, args...)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "블로그 수정 실패", "details": err.Error()})
+		return
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "블로그를 찾을 수 없습니다"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "블로그가 수정되었습니다",
+	})
+}
+
+// DeleteBlogPost - 블로그 소프트 삭제 API (is_published = false 설정)
+func DeleteBlogPost(c *gin.Context) {
+	id := c.Param("id")
+
+	result, err := db.Exec("UPDATE blog_posts SET is_published = false, updated_at = NOW() WHERE id = $1", id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "블로그 삭제 실패", "details": err.Error()})
+		return
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "블로그를 찾을 수 없습니다"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "블로그가 삭제되었습니다 (외부 노출 중단)",
+	})
+}
+
+// GetBlogPostByID - ID 기반 블로그 조회 (관리자용, is_published 무관)
+func GetBlogPostByID(c *gin.Context) {
+	id := c.Param("id")
+
+	var post BlogPost
+	var theologicalAccuracy, contentStructure, engagement, technicalQuality, seoOptimization, totalScore sql.NullFloat64
+	var qualityFeedback sql.NullString
+	var evaluationDate sql.NullTime
+	var evaluator sql.NullString
+
+	err := db.QueryRow(`
+		SELECT id, title, slug, content, excerpt, keywords, published_at, view_count,
+		       theological_accuracy, content_structure, engagement,
+		       technical_quality, seo_optimization, total_score,
+		       quality_feedback, evaluation_date, evaluator
+		FROM blog_posts
+		WHERE id = $1
+	`, id).Scan(
+		&post.ID,
+		&post.Title,
+		&post.Slug,
+		&post.Content,
+		&post.Excerpt,
+		&post.Keywords,
+		&post.PublishedAt,
+		&post.ViewCount,
+		&theologicalAccuracy,
+		&contentStructure,
+		&engagement,
+		&technicalQuality,
+		&seoOptimization,
+		&totalScore,
+		&qualityFeedback,
+		&evaluationDate,
+		&evaluator,
+	)
+
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"error": "블로그를 찾을 수 없습니다"})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "블로그 조회 실패"})
+		return
+	}
+
+	// 품질 점수 포함 응답
+	response := gin.H{
+		"id":           post.ID,
+		"title":        post.Title,
+		"slug":         post.Slug,
+		"content":      post.Content,
+		"excerpt":      post.Excerpt,
+		"keywords":     post.Keywords,
+		"published_at": post.PublishedAt,
+		"view_count":   post.ViewCount,
+	}
+
+	// 품질 평가 정보 추가 (있는 경우만)
+	if totalScore.Valid {
+		response["quality_scores"] = gin.H{
+			"theological_accuracy": theologicalAccuracy.Float64,
+			"content_structure":    contentStructure.Float64,
+			"engagement":           engagement.Float64,
+			"technical_quality":    technicalQuality.Float64,
+			"seo_optimization":     seoOptimization.Float64,
+			"total_score":          totalScore.Float64,
+		}
+		if qualityFeedback.Valid {
+			response["quality_feedback"] = qualityFeedback.String
+		}
+		if evaluationDate.Valid {
+			response["evaluation_date"] = evaluationDate.Time
+		}
+		if evaluator.Valid {
+			response["evaluator"] = evaluator.String
+		}
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// EvaluateBlogPost - 블로그 품질 평가 API (외부 스크립트 호출용)
+func EvaluateBlogPost(c *gin.Context) {
+	id := c.Param("id")
+
+	// 요청 본문에서 평가 점수 받기
+	var evaluation struct {
+		TheologicalAccuracy float64 `json:"theological_accuracy" binding:"required,min=0,max=10"`
+		ContentStructure    float64 `json:"content_structure" binding:"required,min=0,max=10"`
+		Engagement          float64 `json:"engagement" binding:"required,min=0,max=10"`
+		TechnicalQuality    float64 `json:"technical_quality" binding:"required,min=0,max=10"`
+		SeoOptimization     float64 `json:"seo_optimization" binding:"required,min=0,max=10"`
+		TotalScore          float64 `json:"total_score" binding:"required,min=0,max=10"`
+		QualityFeedback     string  `json:"quality_feedback"`
+		Evaluator           string  `json:"evaluator"`
+	}
+
+	if err := c.ShouldBindJSON(&evaluation); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "잘못된 요청입니다", "details": err.Error()})
+		return
+	}
+
+	// 기본값 설정
+	if evaluation.Evaluator == "" {
+		evaluation.Evaluator = "gemini-api"
+	}
+
+	// 블로그 존재 확인
+	var exists bool
+	err := db.QueryRow("SELECT EXISTS(SELECT 1 FROM blog_posts WHERE id = $1)", id).Scan(&exists)
+	if err != nil || !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "블로그를 찾을 수 없습니다"})
+		return
+	}
+
+	// 품질 점수 업데이트
+	_, err = db.Exec(`
+		UPDATE blog_posts
+		SET theological_accuracy = $1,
+		    content_structure = $2,
+		    engagement = $3,
+		    technical_quality = $4,
+		    seo_optimization = $5,
+		    total_score = $6,
+		    quality_feedback = $7,
+		    evaluation_date = NOW(),
+		    evaluator = $8,
+		    updated_at = NOW()
+		WHERE id = $9
+	`, evaluation.TheologicalAccuracy,
+		evaluation.ContentStructure,
+		evaluation.Engagement,
+		evaluation.TechnicalQuality,
+		evaluation.SeoOptimization,
+		evaluation.TotalScore,
+		evaluation.QualityFeedback,
+		evaluation.Evaluator,
+		id)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "품질 점수 저장 실패", "details": err.Error()})
+		return
+	}
+
+	// 자동 발행 여부 확인
+	var isPublished bool
+	db.QueryRow("SELECT is_published FROM blog_posts WHERE id = $1", id).Scan(&isPublished)
+
+	response := gin.H{
+		"success":      true,
+		"message":      "품질 평가가 저장되었습니다",
+		"is_published": isPublished,
+	}
+
+	// 자동 발행 조건 체크
+	autoPublishCondition := evaluation.TotalScore >= 7.0 &&
+		evaluation.TheologicalAccuracy >= 6.0 &&
+		evaluation.TechnicalQuality >= 7.0
+
+	if autoPublishCondition && isPublished {
+		response["auto_published"] = true
+		response["message"] = "품질 기준을 충족하여 자동으로 발행되었습니다"
+	} else if !autoPublishCondition {
+		response["auto_published"] = false
+		response["message"] = "품질 평가 저장 완료 (발행 기준 미달)"
+		response["publish_requirements"] = gin.H{
+			"total_score_required":          7.0,
+			"theological_accuracy_required": 6.0,
+			"technical_quality_required":    7.0,
+		}
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// GetBlogQualityHistory - 블로그 품질 평가 이력 조회
+func GetBlogQualityHistory(c *gin.Context) {
+	id := c.Param("id")
+
+	rows, err := db.Query(`
+		SELECT theological_accuracy, content_structure, engagement,
+		       technical_quality, seo_optimization, total_score,
+		       quality_feedback, evaluator, evaluated_at
+		FROM blog_quality_history
+		WHERE blog_post_id = $1
+		ORDER BY evaluated_at DESC
+		LIMIT 10
+	`, id)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "이력 조회 실패"})
+		return
+	}
+	defer rows.Close()
+
+	var history []gin.H
+	for rows.Next() {
+		var theologicalAccuracy, contentStructure, engagement, technicalQuality, seoOptimization, totalScore float64
+		var qualityFeedback, evaluator string
+		var evaluatedAt time.Time
+
+		err := rows.Scan(
+			&theologicalAccuracy,
+			&contentStructure,
+			&engagement,
+			&technicalQuality,
+			&seoOptimization,
+			&totalScore,
+			&qualityFeedback,
+			&evaluator,
+			&evaluatedAt,
+		)
+
+		if err != nil {
+			continue
+		}
+
+		history = append(history, gin.H{
+			"theological_accuracy": theologicalAccuracy,
+			"content_structure":    contentStructure,
+			"engagement":           engagement,
+			"technical_quality":    technicalQuality,
+			"seo_optimization":     seoOptimization,
+			"total_score":          totalScore,
+			"quality_feedback":     qualityFeedback,
+			"evaluator":            evaluator,
+			"evaluated_at":         evaluatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"blog_post_id": id,
+		"history":      history,
+		"total":        len(history),
+	})
+}
+
 // GenerateBlogData - 블로그 자동 생성을 위한 데이터 수집 API
 // GET /api/admin/blog/generate-data?keyword={키워드}&random={true/false}
 func GenerateBlogData(c *gin.Context) {

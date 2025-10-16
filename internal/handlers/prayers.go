@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 )
 
 // Prayer 기도문 구조체
@@ -223,18 +225,46 @@ func SearchPrayers(c *gin.Context) {
 		return
 	}
 
-	// 기도문 제목과 내용에서 키워드 검색
-	query := `
-		SELECT DISTINCT p.id, p.title, p.content, p.created_at, p.updated_at
-		FROM prayers p
-		LEFT JOIN prayer_tags pt ON p.id = pt.prayer_id
-		LEFT JOIN tags t ON pt.tag_id = t.id
-		WHERE p.title ILIKE $1 OR p.content ILIKE $1 OR t.name ILIKE $1
-		ORDER BY p.created_at DESC
-	`
+	var prayers []Prayer
+	var query string
+	var rows *sql.Rows
+	var err error
 
-	searchTerm := "%" + keyword + "%"
-	rows, err := db.Query(query, searchTerm)
+	// 1. 먼저 keywords 테이블에서 해당 키워드가 있는지 확인
+	var prayerIDs pq.Int64Array
+	err = db.QueryRow(`
+		SELECT prayer_ids FROM keywords WHERE name = $1
+	`, keyword).Scan(&prayerIDs)
+
+	if err == nil && len(prayerIDs) > 0 {
+		// Convert int64 to int
+		prayerIDsInt := make([]int, len(prayerIDs))
+		for i, n := range prayerIDs {
+			prayerIDsInt[i] = int(n)
+		}
+
+		// 키워드 배열 기반 조회 (정확한 매칭)
+		query = `
+			SELECT id, title, content, created_at, updated_at
+			FROM prayers
+			WHERE id = ANY($1)
+			ORDER BY created_at DESC
+		`
+		rows, err = db.Query(query, pq.Array(prayerIDsInt))
+	} else {
+		// ILIKE 기반 자유 검색 (검색창용)
+		query = `
+			SELECT DISTINCT p.id, p.title, p.content, p.created_at, p.updated_at
+			FROM prayers p
+			LEFT JOIN prayer_tags pt ON p.id = pt.prayer_id
+			LEFT JOIN tags t ON pt.tag_id = t.id
+			WHERE p.title ILIKE $1 OR p.content ILIKE $1 OR t.name ILIKE $1
+			ORDER BY p.created_at DESC
+		`
+		searchTerm := "%" + keyword + "%"
+		rows, err = db.Query(query, searchTerm)
+	}
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Database query failed",
@@ -244,7 +274,6 @@ func SearchPrayers(c *gin.Context) {
 	}
 	defer rows.Close()
 
-	var prayers []Prayer
 	for rows.Next() {
 		var prayer Prayer
 		err := rows.Scan(
