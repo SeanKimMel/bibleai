@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -916,7 +917,7 @@ func SearchBibleByChapter(c *gin.Context) {
 		return
 	}
 
-	// 한글 성경책 이름 매핑
+	// 한글 성경책 이름 매핑 (영문코드 → 한글)
 	bookNameMap := map[string]string{
 		"gn": "창세기", "ex": "출애굽기", "lv": "레위기", "nm": "민수기", "dt": "신명기",
 		"js": "여호수아", "rt": "룻기", "1sm": "사무엘상", "2sm": "사무엘하",
@@ -934,35 +935,23 @@ func SearchBibleByChapter(c *gin.Context) {
 		"3jo": "요한삼서", "jd": "유다서", "re": "요한계시록",
 	}
 
-	// 챕터 주제 테이블에서 검색
-	searchQuery := `
-		SELECT
-			bct.book,
-			bct.book_name,
-			bct.chapter,
-			bct.theme,
-			bct.relevance_score,
-			bct.keyword_count,
-			COUNT(*) OVER() as total_results
-		FROM bible_chapter_themes bct
-		WHERE bct.theme ILIKE $1
-		ORDER BY
-			bct.relevance_score DESC,
-			bct.keyword_count DESC,
-			bct.book,
-			bct.chapter
-		LIMIT 20
-	`
-
-	rows, err := db.Query(searchQuery, "%"+query+"%")
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to search chapters",
-			"details": err.Error(),
-		})
-		return
+	// 한글 축약형 → 영문 코드 매핑 (keywords 테이블 bible_chapters용)
+	koreanToCodeMap := map[string]string{
+		"창": "gn", "출": "ex", "레": "lv", "민": "nm", "신": "dt",
+		"수": "js", "룻": "rt", "삼상": "1sm", "삼하": "2sm",
+		"왕상": "1kgs", "왕하": "2kgs", "대상": "1ch", "대하": "2ch",
+		"스": "ezr", "느": "ne", "에": "et", "욥": "job", "시": "ps",
+		"잠": "prv", "전": "ec", "아": "so", "사": "is", "렘": "jr",
+		"애": "lm", "겔": "ez", "단": "dn", "호": "ho", "욜": "jl",
+		"암": "am", "옵": "ob", "욘": "jn", "미": "mi", "나": "na",
+		"합": "hk", "습": "zp", "학": "hg", "슥": "zc", "말": "ml",
+		"마": "mt", "막": "mk", "눅": "lk", "요": "jo", "행": "act",
+		"롬": "rm", "고전": "1co", "고후": "2co", "갈": "gl", "엡": "eph",
+		"빌": "ph", "골": "cl", "살전": "1ts", "살후": "2ts",
+		"딤전": "1tm", "딤후": "2tm", "딛": "tt", "몬": "phm", "히": "hb",
+		"약": "jm", "벧전": "1pe", "벧후": "2pe", "요일": "1jo", "요이": "2jo",
+		"요삼": "3jo", "유": "jd", "계": "re",
 	}
-	defer rows.Close()
 
 	type ChapterResult struct {
 		Book           string `json:"book"`
@@ -975,7 +964,111 @@ func SearchBibleByChapter(c *gin.Context) {
 	}
 
 	var results []ChapterResult
-	var totalResults int
+	var searchQuery string
+	var rows *sql.Rows
+	var err error
+
+	// 1. 먼저 keywords 테이블에서 해당 키워드의 bible_chapters 배열 조회
+	var bibleChaptersJSON []byte
+	err = db.QueryRow(`
+		SELECT bible_chapters FROM keywords WHERE name = $1
+	`, query).Scan(&bibleChaptersJSON)
+
+	if err == nil && len(bibleChaptersJSON) > 0 {
+		// JSONB 배열을 파싱
+		type BibleChapter struct {
+			Book    string `json:"book"`
+			Chapter int    `json:"chapter"`
+		}
+		var chapters []BibleChapter
+		if err := json.Unmarshal(bibleChaptersJSON, &chapters); err == nil && len(chapters) > 0 {
+			// 한글 코드를 영문 코드로 변환
+			type EnglishBibleChapter struct {
+				Book    string `json:"book"`
+				Chapter int    `json:"chapter"`
+			}
+			var englishChapters []EnglishBibleChapter
+			for _, ch := range chapters {
+				if englishCode, ok := koreanToCodeMap[ch.Book]; ok {
+					englishChapters = append(englishChapters, EnglishBibleChapter{
+						Book:    englishCode,
+						Chapter: ch.Chapter,
+					})
+				}
+			}
+
+			if len(englishChapters) > 0 {
+				// 변환된 영문 코드로 JSONB 생성
+				englishChaptersJSON, err := json.Marshal(englishChapters)
+				if err == nil {
+					// 키워드 배열 기반 조회 (정확한 매칭)
+					// 각 장에서 가장 관련성 높은 테마만 선택 (ROW_NUMBER로 1개씩만)
+					searchQuery = `
+						WITH ranked_themes AS (
+							SELECT DISTINCT
+								bct.book,
+								bct.book_name,
+								bct.chapter,
+								bct.theme,
+								bct.relevance_score,
+								bct.keyword_count,
+								ROW_NUMBER() OVER (
+									PARTITION BY bct.book, bct.chapter
+									ORDER BY bct.relevance_score DESC, bct.keyword_count DESC
+								) AS rn
+							FROM bible_chapter_themes bct
+							CROSS JOIN jsonb_array_elements($1::jsonb) AS chapter_elem
+							WHERE bct.book = (chapter_elem->>'book')
+							  AND bct.chapter = (chapter_elem->>'chapter')::int
+						)
+						SELECT book, book_name, chapter, theme, relevance_score, keyword_count
+						FROM ranked_themes
+						WHERE rn = 1
+						ORDER BY
+							relevance_score DESC,
+							keyword_count DESC,
+							book,
+							chapter
+					`
+					rows, err = db.Query(searchQuery, englishChaptersJSON)
+
+					if err == nil {
+						goto processResults
+					}
+				}
+			}
+		}
+	}
+
+	// 2. ILIKE 기반 자유 검색 (검색창용)
+	searchQuery = `
+		SELECT
+			bct.book,
+			bct.book_name,
+			bct.chapter,
+			bct.theme,
+			bct.relevance_score,
+			bct.keyword_count
+		FROM bible_chapter_themes bct
+		WHERE bct.theme ILIKE $1
+		ORDER BY
+			bct.relevance_score DESC,
+			bct.keyword_count DESC,
+			bct.book,
+			bct.chapter
+		LIMIT 20
+	`
+	rows, err = db.Query(searchQuery, "%"+query+"%")
+
+processResults:
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to search chapters",
+			"details": err.Error(),
+		})
+		return
+	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var result ChapterResult
@@ -986,7 +1079,6 @@ func SearchBibleByChapter(c *gin.Context) {
 			&result.Theme,
 			&result.RelevanceScore,
 			&result.KeywordCount,
-			&totalResults,
 		)
 		if err != nil {
 			continue
