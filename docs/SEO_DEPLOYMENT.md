@@ -157,7 +157,7 @@ SERVER_PATH="/home/ec2-user/bibleai"
 ```bash
 # 실제 배포 설정
 SERVER_USER="ec2-user"
-SERVER_HOST="13.209.47.72"        # 실제 IP
+SERVER_HOST="YOUR_EC2_IP"        # 실제 IP
 SSH_KEY="/workspace/bibleai-ec2-key.pem"
 SSH_PORT="22"
 SERVER_PATH="/home/ec2-user/bibleai"
@@ -227,7 +227,7 @@ logs/deploy_20251007_150151.log
 ```
 [2025-10-07 15:01:51] =========================================
 [2025-10-07 15:01:51] 배포 시작
-[2025-10-07 15:01:51] 서버: 13.209.47.72
+[2025-10-07 15:01:51] 서버: YOUR_EC2_IP
 [2025-10-07 15:01:51] 경로: /home/ec2-user/bibleai
 [2025-10-07 15:01:51] =========================================
 [2025-10-07 15:01:51] ✅ SSH 포트 연결 성공
@@ -245,7 +245,7 @@ ls -lt logs/
 cat logs/deploy_20251007_150151.log
 
 # 서버 로그 실시간 확인
-ssh -i /path/to/key.pem ec2-user@13.209.47.72 'tail -f /home/ec2-user/bibleai/server.log'
+ssh -i /path/to/key.pem ec2-user@YOUR_EC2_IP 'tail -f /home/ec2-user/bibleai/server.log'
 ```
 
 #### 배포 성능
@@ -393,13 +393,13 @@ go mod download
 **서버 시작 실패**:
 ```bash
 # 서버 로그 확인
-ssh -i /path/to/key.pem ec2-user@13.209.47.72 'tail -50 /home/ec2-user/bibleai/server.log'
+ssh -i /path/to/key.pem ec2-user@YOUR_EC2_IP 'tail -50 /home/ec2-user/bibleai/server.log'
 
 # 프로세스 확인
-ssh -i /path/to/key.pem ec2-user@13.209.47.72 'ps aux | grep bibleai'
+ssh -i /path/to/key.pem ec2-user@YOUR_EC2_IP 'ps aux | grep bibleai'
 
 # 수동 실행
-ssh -i /path/to/key.pem ec2-user@13.209.47.72
+ssh -i /path/to/key.pem ec2-user@YOUR_EC2_IP
 cd /home/ec2-user/bibleai
 ./bibleai
 ```

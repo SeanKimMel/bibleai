@@ -107,7 +107,8 @@ UPDATE hymns SET bible_reference = '요한복음 19:2' WHERE number = 156;
 
 ### 단계 3: 데이터베이스 적용
 ```bash
-PGPASSWORD=bibleai psql -h localhost -U bibleai -d bibleai \
+source .env
+PGPASSWORD=${DB_PASSWORD} psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME} \
   -f migrations/009_popular_hymns_bible_references.sql
 ```
 

@@ -81,7 +81,7 @@ ns2.cloudflare.com
 ```
 Type: A
 Name: @  (루트 도메인용)
-Content: 13.209.47.72  (EC2 Public IP)
+Content: YOUR_EC2_IP  (EC2 Public IP)
 Proxy status: Proxied (주황색 구름 ☁️) ⭐
 TTL: Auto
 ```
@@ -90,7 +90,7 @@ TTL: Auto
 ```
 Type: A
 Name: www
-Content: 13.209.47.72
+Content: YOUR_EC2_IP
 Proxy status: Proxied ☁️
 TTL: Auto
 ```
@@ -333,7 +333,7 @@ https://www.whatsmydns.net/#NS/haruinfo.net
 **확인**:
 ```bash
 # 로컬에서 8080 포트 접근 테스트
-curl http://13.209.47.72:8080/health
+curl http://YOUR_EC2_IP:8080/health
 ```
 
 **해결**: AWS Console → Security Group → 8080 포트 규칙 추가
