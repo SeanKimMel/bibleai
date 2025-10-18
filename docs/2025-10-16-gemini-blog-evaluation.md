@@ -135,7 +135,7 @@ func AutoEvaluateBlogPost(c *gin.Context) {
 
 ```env
 # Gemini API 설정
-GEMINI_API_KEY=AIzaSyArjMv8H_R-845keCeTAVEcmAK58vf-Dwc
+GEMINI_API_KEY=your_actual_api_key_here
 ```
 
 서버는 `internal/database/db.go`의 `NewConnection()` 함수에서 자동으로 `.env` 파일을 로드합니다 (godotenv 사용).
