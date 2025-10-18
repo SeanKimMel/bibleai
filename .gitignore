@@ -3,6 +3,9 @@ node_modules/
 
 # Build artifacts
 bibleai
+backoffice
+server
+*.pid
 
 # CSS output (generated file)
 web/static/css/output.css
@@ -21,6 +24,7 @@ logs/
 Thumbs.db
 
 # Environment
+.env
 .env.local
 deploy.config
 
