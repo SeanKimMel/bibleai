@@ -7,6 +7,7 @@ Gemini API를 사용한 블로그 콘텐츠 품질 평가 스크립트
 import os
 import json
 import sys
+import requests
 from dotenv import load_dotenv
 from generate_blog import load_prompt_template, render_prompt, call_gemini_api
 
@@ -15,6 +16,7 @@ load_dotenv()
 
 # 설정
 QUALITY_THRESHOLD = float(os.getenv("QUALITY_THRESHOLD", "7.0"))
+API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8080")
 
 def evaluate_content(content):
     """
@@ -153,19 +155,103 @@ def should_publish(evaluation):
 
     return True, "모든 기준 통과"
 
-def main():
-    """메인 실행 함수"""
-    # 명령줄 인자로 평가할 파일 경로를 받음
-    if len(sys.argv) < 2:
-        print("사용법: python evaluate_quality.py <content.json>")
-        sys.exit(1)
+def fetch_blog_from_api(blog_id):
+    """
+    API에서 블로그 포스트 조회
 
-    content_file = sys.argv[1]
+    Args:
+        blog_id: 블로그 ID
+
+    Returns:
+        블로그 데이터 (dict)
+    """
+    url = f"{API_BASE_URL}/api/admin/blog/posts/{blog_id}"
 
     try:
-        # 콘텐츠 로드
-        with open(content_file, 'r', encoding='utf-8') as f:
-            content = json.load(f)
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"❌ API 호출 실패: {e}")
+        raise
+
+def save_evaluation_to_api(blog_id, evaluation):
+    """
+    평가 결과를 API로 저장
+
+    Args:
+        blog_id: 블로그 ID
+        evaluation: 평가 결과
+
+    Returns:
+        API 응답 (dict)
+    """
+    url = f"{API_BASE_URL}/api/admin/blog/posts/{blog_id}/evaluate"
+
+    scores = evaluation.get('scores', {})
+
+    payload = {
+        "theological_accuracy": scores.get('theological_accuracy', 0),
+        "content_structure": scores.get('content_structure', 0),
+        "engagement": scores.get('engagement', 0),
+        "technical_quality": scores.get('technical_quality', 0),
+        "seo_optimization": scores.get('seo_optimization', 0),
+        "total_score": evaluation.get('total_score', 0),
+        "quality_feedback": json.dumps(evaluation.get('feedback', {}), ensure_ascii=False),
+        "evaluator": "gemini-api"
+    }
+
+    try:
+        response = requests.post(url, json=payload)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        print(f"❌ API 저장 실패: {e}")
+        raise
+
+def main():
+    """메인 실행 함수"""
+    # 명령줄 인자: 파일 경로 또는 블로그 ID
+    if len(sys.argv) < 2:
+        print("사용법:")
+        print("  python evaluate_quality.py <content.json>  # JSON 파일로 평가")
+        print("  python evaluate_quality.py --id <blog_id>  # API에서 조회하여 평가")
+        sys.exit(1)
+
+    # API 모드 vs 파일 모드
+    use_api = False
+    blog_id = None
+    content = None
+
+    if sys.argv[1] == "--id":
+        if len(sys.argv) < 3:
+            print("❌ 블로그 ID를 입력하세요")
+            sys.exit(1)
+        use_api = True
+        blog_id = sys.argv[2]
+    else:
+        content_file = sys.argv[1]
+
+    try:
+        # API에서 블로그 조회
+        if use_api:
+            print(f"\n🔍 API에서 블로그 ID {blog_id} 조회 중...")
+            blog_data = fetch_blog_from_api(blog_id)
+
+            # 평가용 콘텐츠 구성
+            content = {
+                "title": blog_data.get("title"),
+                "slug": blog_data.get("slug"),
+                "content": blog_data.get("content"),
+                "excerpt": blog_data.get("excerpt"),
+                "keywords": blog_data.get("keywords")
+            }
+            print(f"✅ 블로그 조회 완료: {content['title']}")
+
+        # 파일에서 로드
+        else:
+            with open(content_file, 'r', encoding='utf-8') as f:
+                content = json.load(f)
 
         # 품질 평가
         evaluation = evaluate_content(content)
@@ -176,11 +262,25 @@ def main():
         # 발행 여부 판단
         can_publish, reason = should_publish(evaluation)
 
+        # API 모드인 경우 결과 저장
+        if use_api:
+            print(f"\n💾 API에 평가 결과 저장 중...")
+            api_response = save_evaluation_to_api(blog_id, evaluation)
+
+            print(f"✅ 평가 결과 저장 완료!")
+            if api_response.get('auto_published'):
+                print(f"🎉 자동 발행 완료! (is_published = true)")
+            elif api_response.get('is_published'):
+                print(f"ℹ️  이미 발행된 글입니다.")
+            else:
+                print(f"⏳ 미발행 상태 유지 (품질 기준 미달)")
+
+        # 최종 판정
         if can_publish:
-            print("✅ 발행 승인! 품질 기준을 모두 충족합니다.")
+            print("\n✅ 발행 승인! 품질 기준을 모두 충족합니다.")
             exit(0)
         else:
-            print(f"❌ 발행 거부: {reason}")
+            print(f"\n❌ 발행 거부: {reason}")
             print("   콘텐츠를 수정하거나 재생성해야 합니다.")
             exit(1)
 
@@ -188,10 +288,12 @@ def main():
         print(f"❌ 파일을 찾을 수 없습니다: {content_file}")
         exit(1)
     except json.JSONDecodeError:
-        print(f"❌ JSON 파일 형식이 잘못되었습니다: {content_file}")
+        print(f"❌ JSON 파일 형식이 잘못되었습니다")
         exit(1)
     except Exception as e:
         print(f"❌ 오류 발생: {e}")
+        import traceback
+        traceback.print_exc()
         exit(1)
 
 if __name__ == "__main__":

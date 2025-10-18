@@ -33,7 +33,7 @@ ls -t /workspace/bibleai/docs/2*.md
 - **타겟 사용자**: 기독교 신자, 모바일 사용자
 - **개발 철학**: 직관적, 접근성 우선, 모바일 퍼스트, API 우선 설계
 
-### 현재 개발 상태 (2025년 9월 29일 기준)
+### 현재 개발 상태 (2025년 10월 18일 기준)
 ```
 ✅ 1단계: 기본 프로젝트 설정 (완료)
 ✅ 2단계: 기본 웹 서버 구현 (완료)
@@ -42,6 +42,7 @@ ls -t /workspace/bibleai/docs/2*.md
 ✅ 5단계: 찬송가 시스템 완성 (완료)
 ✅ 5.5단계: 키워드 탭 완전 일관성 구현 (완료)
 ✅ 5.7단계: UI 일관성 및 기술적 최적화 (완료)
+✅ 5.8단계: 백오피스 시스템 구축 (완료) - 블로그 생성/평가/발행 시스템
 🔄 6단계: 태그/기도문 API 시스템 (다음 단계)
 ⏳ 7단계: 실제 데이터 확장 및 완성 (향후)
 ```
@@ -57,22 +58,35 @@ ls -t /workspace/bibleai/docs/2*.md
 ### 핵심 디렉토리
 ```
 bibleai/
-├── cmd/server/main.go          # 애플리케이션 진입점 ⭐
+├── cmd/
+│   ├── server/main.go          # 메인 서버 진입점 ⭐
+│   └── backoffice/main.go      # 백오피스 서버 진입점 ⭐
 ├── internal/
-│   ├── handlers/pages.go       # 웹 페이지 핸들러 ⭐
-│   ├── database/db.go          # DB 연결 ⭐
-│   └── models/                 # 데이터 모델 (향후)
+│   ├── handlers/               # 메인 서버 핸들러
+│   │   ├── pages.go           # 웹 페이지 핸들러
+│   │   ├── bible_import.go    # 성경 API
+│   │   ├── hymns.go           # 찬송가 API
+│   │   ├── prayers.go         # 기도문 API
+│   │   └── blog.go            # 블로그 API (공개용)
+│   ├── backoffice/            # 백오피스 핸들러 ⭐
+│   │   └── handlers.go        # 블로그 관리 API
+│   ├── gemini/                # Gemini API 클라이언트 ⭐
+│   │   └── client.go          # 블로그 생성/평가
+│   ├── youtube/               # YouTube API 스크레이퍼 ⭐
+│   │   └── scraper.go         # 비디오 ID 검색
+│   └── database/db.go         # DB 연결 ⭐
 ├── web/
-│   ├── templates/layout/base.html    # 기본 레이아웃 ⭐
-│   ├── templates/pages/*.html        # 페이지 템플릿들 ⭐
-│   └── static/js/main.js            # 메인 JavaScript ⭐
-├── migrations/001_initial.sql  # 기존 DB 스키마
-├── init.sql                    # 로컬 PostgreSQL 초기화 스크립트 ⭐
-├── init-db.sh                  # 데이터베이스 초기화 실행 스크립트 ⭐
-├── Dockerfile                  # 애플리케이션 Docker 이미지 ⭐
-├── docker-compose.yml          # 애플리케이션 Docker 설정 ⭐
-├── *.sh                        # 실행 스크립트들 ⭐
-└── *.md                        # 문서들
+│   ├── templates/pages/       # 메인 서버 템플릿
+│   └── backoffice/templates/  # 백오피스 템플릿 ⭐
+│       ├── base.html          # 백오피스 레이아웃
+│       ├── blog_list.html     # 블로그 목록
+│       ├── blog_detail.html   # 블로그 상세/평가
+│       └── blog_new.html      # 블로그 생성
+├── migrations/                # DB 마이그레이션
+├── deploy.sh                  # 메인 서버 배포 스크립트 ⭐
+├── deploy_backoffice.sh       # 백오피스 배포 스크립트 ⭐
+├── start_backoffice.sh        # 백오피스 로컬 실행 ⭐
+└── docs/                      # 문서
 ```
 
 ### 현재 활성화된 파일 목록 (v0.5.0-stable)
@@ -719,7 +733,157 @@ dbName := os.Getenv("DB_NAME")
 - **모바일 테스트**: 반응형 디자인 확인됨
 - **찬송가 시스템**: 검색, 상세보기, 모달, 저작권 안내, 신찬송가 매핑 검증 완료
 
+## 🏢 백오피스 시스템 (v5.8)
+
+### 개요
+백오피스는 블로그 콘텐츠를 생성, 평가, 발행하는 관리 시스템입니다. Gemini API를 활용한 AI 기반 블로그 자동 생성 및 품질 평가 기능을 제공합니다.
+
+### 핵심 기능
+
+#### 1. 블로그 자동 생성
+- **Gemini API 활용**: `gemini-2.0-flash-exp` 모델 사용
+- **키워드 기반 생성**: 성경 키워드를 기반으로 블로그 생성
+- **YouTube 임베딩**: 자동으로 관련 찬송가 영상 검색 및 임베딩
+- **성경 구절 링크**: 내부 API 링크 자동 생성
+
+#### 2. 품질 자동 평가
+- **5가지 평가 지표** (1-10점):
+  - 신학적 정확성 (가중치 25%)
+  - 콘텐츠 구조 (가중치 20%)
+  - 독자 참여도 (가중치 15%)
+  - 기술적 품질 (가중치 30%) - YouTube 임베딩 필수
+  - SEO 최적화 (가중치 10%)
+
+- **자동 발행 조건**:
+  - 총점 ≥ 7.0
+  - 신학적 정확성 ≥ 6.0
+  - 기술적 품질 ≥ 7.0
+  - YouTube 임베딩 필수 (없으면 기술 점수 ≤4)
+  - 치명적 문제 없음
+
+#### 3. 블로그 재생성
+- **평가 피드백 기반**: AI 평가 결과를 반영하여 자동 개선
+- **사용자 커스텀 피드백**: 백오피스 사용자가 직접 개선 요청사항 입력
+- **점수 비교**: 재생성 전후 점수 비교 표시
+- **항상 사용 가능**: 통과한 콘텐츠도 재생성 가능
+
+### 기술 스택
+
+#### Backend
+- **Go**: cmd/backoffice/main.go (별도 바이너리)
+- **Gin Framework**: 웹 서버 및 API
+- **Gemini API**: google.golang.org/genai v1.31.0
+- **YouTube 스크레이퍼**: internal/youtube/scraper.go
+
+#### Frontend
+- **템플릿**: web/backoffice/templates/
+- **Tailwind CSS**: 반응형 UI
+- **Vanilla JavaScript**: 비동기 API 호출
+
+### API 엔드포인트
+
+```
+GET  /                             # 대시보드
+GET  /blogs                        # 블로그 목록 페이지
+GET  /blogs/new                    # 블로그 생성 페이지
+GET  /blogs/:id                    # 블로그 상세 페이지
+
+GET  /api/blogs                    # 블로그 목록 (페이징)
+POST /api/blogs/generate           # 블로그 자동 생성
+GET  /api/blogs/:id                # 블로그 조회
+POST /api/blogs/:id/evaluate       # 수동 평가 저장
+POST /api/blogs/:id/gemini-evaluate # Gemini 자동 평가
+POST /api/blogs/:id/regenerate     # 블로그 재생성
+POST /api/blogs/:id/publish        # 발행 토글
+DELETE /api/blogs/:id              # 블로그 삭제
+GET  /api/stats                    # 통계
+```
+
+### 배포
+
+#### 로컬 실행
+```bash
+./start_backoffice.sh              # 포트 9090
+```
+
+#### 운영 배포
+```bash
+./deploy_backoffice.sh             # EC2 배포
+```
+
+**주의사항**:
+- .env 파일은 수동으로 서버에 생성 필요 (gitignore 처리)
+- GEMINI_API_KEY 환경변수 필수
+- 메인 서버와 독립적으로 실행
+
+### 데이터베이스
+
+#### blogs 테이블
+```sql
+CREATE TABLE blogs (
+    id SERIAL PRIMARY KEY,
+    keyword VARCHAR(50),              -- 생성 키워드
+    title TEXT,                       -- 제목
+    content TEXT,                     -- 마크다운 콘텐츠
+
+    -- 품질 평가 점수
+    theological_accuracy DECIMAL(3,1),  -- 신학적 정확성
+    content_structure DECIMAL(3,1),     -- 콘텐츠 구조
+    engagement DECIMAL(3,1),            -- 독자 참여도
+    technical_quality DECIMAL(3,1),     -- 기술적 품질
+    seo_optimization DECIMAL(3,1),      -- SEO 최적화
+    total_score DECIMAL(3,1),           -- 총점
+
+    quality_feedback JSONB,           -- 상세 피드백
+    evaluation_date TIMESTAMP,        -- 평가 시간
+    evaluator VARCHAR(100),           -- 평가자
+
+    is_published BOOLEAN DEFAULT FALSE, -- 발행 상태
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP
+);
+```
+
+### UI/UX 특징
+
+1. **반응형 디자인**: 데스크톱/모바일 최적화
+2. **하단 패딩**: 네비게이션이 컨텐츠를 가리지 않도록 5rem padding
+3. **실시간 피드백**: 평가 결과 즉시 표시
+4. **점수 시각화**: 색상 코딩 (빨강/노랑/초록)
+5. **재생성 UI**: 커스텀 피드백 입력 폼
+
+### 보안 고려사항
+
+1. **환경변수 관리**: .env 파일로 API 키 관리
+2. **gitignore 처리**: 민감 정보 Git 제외
+3. **접근 제어**: 향후 인증 시스템 필요 (현재 미구현)
+
+### 향후 개선 사항
+
+- [ ] 관리자 인증 시스템
+- [ ] 다중 사용자 지원
+- [ ] 블로그 버전 관리
+- [ ] 평가 이력 타임라인
+- [ ] AWS Secrets Manager 통합
+- [ ] 배포 시 .env 자동 관리
+
+### 관련 문서
+
+- [2025-10-18-backoffice-improvements.md](./2025-10-18-backoffice-improvements.md) - 백오피스 개선 작업 일지
+- [2025-10-16-gemini-blog-evaluation.md](./2025-10-16-gemini-blog-evaluation.md) - Gemini API 평가 시스템
+- [2025-10-17-blog-generation-youtube-embed-improvement.md](./2025-10-17-blog-generation-youtube-embed-improvement.md) - YouTube 임베딩 개선
+
 ## 🔮 다음 단계 구현 가이드
+
+### ✅ 5.8단계: 백오피스 시스템 구축 (2025년 10월 18일)
+- Gemini API 기반 블로그 자동 생성 시스템
+- 5가지 지표 품질 자동 평가 시스템
+- 평가 피드백 기반 재생성 기능
+- 사용자 커스텀 피드백 입력 시스템
+- YouTube 임베딩 자동화
+- 백오피스 배포 스크립트
+- UI/UX 개선 (하단 패딩, 재발행 버튼)
+- 보안 강화 (민감 정보 제거, gitignore)
 
 ### ✅ 5단계: 찬송가 시스템 완성 (2025년 1월 28일)
 - 찬송가 데이터베이스 완전 교체 (29개 실제 통합찬송가)

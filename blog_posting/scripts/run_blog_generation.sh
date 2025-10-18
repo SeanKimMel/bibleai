@@ -116,60 +116,65 @@ for attempt in $(seq 1 $MAX_RETRY_ATTEMPTS); do
         fi
     fi
 
-    # 3단계: 품질 평가
+    # 3단계: 데이터베이스 저장 (미발행 상태)
     echo ""
-    echo "📊 3단계: 품질 평가"
+    echo "💾 3단계: 데이터베이스 저장 (미발행)"
     echo "─────────────────────────────────────────────"
 
-    if python3 evaluate_quality.py "$CONTENT_FILE"; then
-        echo ""
-        echo "🎉 품질 평가 통과! 발행 준비 완료"
-        echo ""
-        echo "=================================================="
-        echo "✅ 블로그 생성 완료"
-        echo "=================================================="
-        echo "  최종 파일: $CONTENT_FILE"
-        echo "  시도 횟수: $attempt회"
-        echo ""
-        echo "💾 4단계: 데이터베이스 저장"
-        echo "─────────────────────────────────────────────"
+    # API를 통해 블로그 저장 (is_published=false 기본값)
+    RESPONSE=$(curl -s -X POST http://localhost:8080/api/admin/blog/posts \
+        -H "Content-Type: application/json" \
+        -d @"$CONTENT_FILE")
 
-        # API를 통해 블로그 저장
-        RESPONSE=$(curl -s -X POST http://localhost:8080/api/admin/blog/posts \
-            -H "Content-Type: application/json" \
-            -d @"$CONTENT_FILE")
-
-        if echo "$RESPONSE" | grep -q '"success":true'; then
-            BLOG_ID=$(echo "$RESPONSE" | jq -r '.id')
-            echo "✅ 데이터베이스 저장 완료! (ID: $BLOG_ID)"
-            echo ""
-            echo "=================================================="
-            echo "✅ 블로그 생성 및 발행 완료"
-            echo "=================================================="
-            echo "  블로그 ID: $BLOG_ID"
-            echo "  제목: $(jq -r '.title' "$CONTENT_FILE")"
-            echo "  슬러그: $(jq -r '.slug' "$CONTENT_FILE")"
-            echo "  시도 횟수: $attempt회"
-            echo ""
-            echo "확인하기:"
-            echo "  블로그 목록: http://localhost:8080/blog"
-            echo "  블로그 상세: http://localhost:8080/blog/$(jq -r '.slug' "$CONTENT_FILE")"
-            echo "=================================================="
-            exit 0
+    if echo "$RESPONSE" | grep -q '"success":true'; then
+        BLOG_ID=$(echo "$RESPONSE" | jq -r '.id')
+        echo "✅ 데이터베이스 저장 완료! (ID: $BLOG_ID, is_published=false)"
+    else
+        echo "❌ 데이터베이스 저장 실패"
+        echo "응답: $RESPONSE"
+        if [ $attempt -lt $MAX_RETRY_ATTEMPTS ]; then
+            echo "   다시 시도합니다..."
+            continue
         else
-            echo "❌ 데이터베이스 저장 실패"
-            echo "응답: $RESPONSE"
-            echo ""
-            echo "수동으로 저장하려면:"
-            echo "  curl -X POST http://localhost:8080/api/admin/blog/posts -H 'Content-Type: application/json' -d @$CONTENT_FILE"
             exit 1
         fi
+    fi
+
+    # 4단계: Gemini API로 품질 평가 및 자동 발행
+    echo ""
+    echo "📊 4단계: Gemini API 품질 평가 및 자동 발행"
+    echo "─────────────────────────────────────────────"
+
+    if python3 evaluate_quality.py --id "$BLOG_ID"; then
+        echo ""
+        echo "🎉 품질 평가 통과!"
+        echo ""
+        echo "=================================================="
+        echo "✅ 블로그 생성 및 발행 완료"
+        echo "=================================================="
+        echo "  블로그 ID: $BLOG_ID"
+        echo "  제목: $(jq -r '.title' "$CONTENT_FILE")"
+        echo "  슬러그: $(jq -r '.slug' "$CONTENT_FILE")"
+        echo "  시도 횟수: $attempt회"
+        echo ""
+        echo "확인하기:"
+        echo "  블로그 목록: http://localhost:8080/blog"
+        echo "  블로그 상세: http://localhost:8080/blog/$(jq -r '.slug' "$CONTENT_FILE")"
+        echo "  품질 점수: http://localhost:8080/api/admin/blog/posts/$BLOG_ID"
+        echo "=================================================="
+        exit 0
     else
         echo ""
         echo "⚠️  품질 평가 실패 (시도 #$attempt)"
+        echo "   블로그 ID: $BLOG_ID (미발행 상태 유지)"
 
         if [ $attempt -lt $MAX_RETRY_ATTEMPTS ]; then
             echo "   피드백을 반영하여 재생성합니다..."
+            echo "   기존 블로그(ID: $BLOG_ID)는 삭제합니다..."
+
+            # 기존 블로그 삭제 (소프트 삭제)
+            curl -s -X DELETE "http://localhost:8080/api/admin/blog/posts/$BLOG_ID" > /dev/null
+
             # 실패한 파일을 백업
             mv "$CONTENT_FILE" "${CONTENT_FILE}.failed-${attempt}"
             sleep 2
@@ -180,13 +185,19 @@ for attempt in $(seq 1 $MAX_RETRY_ATTEMPTS); do
             echo "❌ 최대 재시도 횟수 초과"
             echo "=================================================="
             echo "  시도 횟수: $MAX_RETRY_ATTEMPTS회"
-            echo "  생성된 파일들:"
+            echo "  마지막 블로그 ID: $BLOG_ID (미발행 상태)"
+            echo ""
+            echo "생성된 파일들:"
             for i in $(seq 1 $attempt); do
                 failed_file="${CONTENT_FILE}.failed-${i}"
                 if [ -f "$failed_file" ]; then
-                    echo "    - 시도 #$i: $failed_file"
+                    echo "  - 시도 #$i: $failed_file"
                 fi
             done
+            echo ""
+            echo "⚠️  미발행 블로그가 DB에 남아있습니다."
+            echo "   수동으로 확인 및 수정 후 평가하세요:"
+            echo "   python3 evaluate_quality.py --id $BLOG_ID"
             echo ""
             echo "권장사항:"
             echo "  1. 프롬프트 템플릿 수정 (prompts/blog_generation.txt)"

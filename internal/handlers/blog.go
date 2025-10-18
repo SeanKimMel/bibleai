@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"bibleai/internal/gemini"
+	"context"
 	"database/sql"
+	"encoding/json"
 	"math"
 	"math/rand"
 	"net/http"
@@ -443,6 +446,129 @@ func EvaluateBlogPost(c *gin.Context) {
 	} else if !autoPublishCondition {
 		response["auto_published"] = false
 		response["message"] = "품질 평가 저장 완료 (발행 기준 미달)"
+		response["publish_requirements"] = gin.H{
+			"total_score_required":          7.0,
+			"theological_accuracy_required": 6.0,
+			"technical_quality_required":    7.0,
+		}
+	}
+
+	c.JSON(http.StatusOK, response)
+}
+
+// AutoEvaluateBlogPost - Gemini API로 블로그 자동 품질 평가
+func AutoEvaluateBlogPost(c *gin.Context) {
+	id := c.Param("id")
+
+	// 블로그 조회
+	var blog struct {
+		ID       int
+		Title    string
+		Slug     string
+		Content  string
+		Excerpt  string
+		Keywords string
+	}
+
+	err := db.QueryRow(`
+		SELECT id, title, slug, content, excerpt, keywords
+		FROM blog_posts
+		WHERE id = $1
+	`, id).Scan(
+		&blog.ID,
+		&blog.Title,
+		&blog.Slug,
+		&blog.Content,
+		&blog.Excerpt,
+		&blog.Keywords,
+	)
+
+	if err == sql.ErrNoRows {
+		c.JSON(http.StatusNotFound, gin.H{"error": "블로그를 찾을 수 없습니다"})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "블로그 조회 실패", "details": err.Error()})
+		return
+	}
+
+	// Gemini API로 품질 평가
+	ctx := context.Background()
+	blogContent := gemini.BlogContent{
+		Title:    blog.Title,
+		Slug:     blog.Slug,
+		Content:  blog.Content,
+		Excerpt:  blog.Excerpt,
+		Keywords: blog.Keywords,
+	}
+
+	evaluation, err := gemini.EvaluateQuality(ctx, blogContent)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error":   "품질 평가 실패",
+			"details": err.Error(),
+		})
+		return
+	}
+
+	// 피드백 JSON 변환
+	feedbackJSON, _ := json.Marshal(evaluation.Feedback)
+
+	// DB에 평가 결과 저장
+	_, err = db.Exec(`
+		UPDATE blog_posts
+		SET theological_accuracy = $1,
+		    content_structure = $2,
+		    engagement = $3,
+		    technical_quality = $4,
+		    seo_optimization = $5,
+		    total_score = $6,
+		    quality_feedback = $7,
+		    evaluation_date = NOW(),
+		    evaluator = 'gemini-api',
+		    updated_at = NOW()
+		WHERE id = $8
+	`,
+		evaluation.Scores.TheologicalAccuracy,
+		evaluation.Scores.ContentStructure,
+		evaluation.Scores.Engagement,
+		evaluation.Scores.TechnicalQuality,
+		evaluation.Scores.SeoOptimization,
+		evaluation.TotalScore,
+		string(feedbackJSON),
+		id,
+	)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "평가 결과 저장 실패", "details": err.Error()})
+		return
+	}
+
+	// 자동 발행 여부 확인
+	var isPublished bool
+	db.QueryRow("SELECT is_published FROM blog_posts WHERE id = $1", id).Scan(&isPublished)
+
+	// 발행 가능 여부 판단
+	canPublish, reason := gemini.ShouldPublish(evaluation)
+
+	response := gin.H{
+		"success":    true,
+		"message":    "품질 평가가 완료되었습니다",
+		"evaluation": evaluation,
+		"is_published": isPublished,
+		"can_publish":  canPublish,
+		"publish_reason": reason,
+	}
+
+	if evaluation.TotalScore >= 7.0 && evaluation.Scores.TheologicalAccuracy >= 6.0 && evaluation.Scores.TechnicalQuality >= 7.0 {
+		if isPublished {
+			response["auto_published"] = true
+			response["message"] = "품질 기준을 충족하여 자동으로 발행되었습니다"
+		}
+	} else {
+		response["auto_published"] = false
+		response["message"] = "품질 평가 완료 (발행 기준 미달)"
 		response["publish_requirements"] = gin.H{
 			"total_score_required":          7.0,
 			"theological_accuracy_required": 6.0,

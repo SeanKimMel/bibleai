@@ -51,7 +51,7 @@
     .container {
         max-width: 1400px;
         margin: 2rem auto;
-        padding: 0 2rem;
+        padding: 0 2rem 5rem 2rem; /* 하단에 5rem padding 추가 (네비게이션이 컨텐츠를 가리지 않도록) */
     }
 
     @media (max-width: 768px) {
@@ -60,7 +60,7 @@
         }
 
         .container {
-            padding: 0 0.5rem;
+            padding: 0 0.5rem 5rem 0.5rem; /* 모바일에서도 하단 padding 유지 */
             margin: 0.5rem auto;
             max-width: 100vw;
         }

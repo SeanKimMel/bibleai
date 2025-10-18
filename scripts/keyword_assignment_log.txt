@@ -1,0 +1,138 @@
+================================================================================
+Bible Chapter Keyword Assignment
+================================================================================
+
+Connected to database
+Loaded 43 keywords
+
+Found 1188 chapters with interpretation data
+
+Processing batch 1/24: 1kgs 1 - zp 1 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 2/24: 고린도전서 1 - ml 2 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 3/24: mt 2 - jm 3 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 4/24: jn 3 - ex 4 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 5/24: ez 4 - et 5 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 6/24: ex 5 - gn 6 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 7/24: hb 6 - mk 7 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 8/24: mt 7 - 사도행전 8 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 9/24: 에스라 8 - et 10 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 10/24: ex 10 - nm 11 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 11/24: prv 11 - 2sm 13 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 12/24: dt 13 - rm 14 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 13/24: zc 14 - mt 16 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 14/24: nm 16 - mt 18 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 15/24: nm 18 - prv 20 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 16/24: ps 20 - 사도행전 22 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 17/24: 역대상 22 - is 25 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 18/24: jr 25 - mt 28 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 19/24: nm 28 - jr 32 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 20/24: nm 32 - ex 38 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 21/24: ez 38 - is 46 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 22/24: jr 46 - ps 64 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 23/24: is 65 - ps 112 (50 chapters)
+  ✓ Completed 50 chapters
+
+Processing batch 24/24: ps 113 - ps 150 (38 chapters)
+  ✓ Completed 38 chapters
+
+================================================================================
+FINAL REPORT
+================================================================================
+
+Total chapters analyzed: 1188
+
+Keyword Usage Statistics:
+----------------------------------------
+  성령              :  427 chapters
+  구원              :  421 chapters
+  믿음              :  383 chapters
+  지혜              :  185 chapters
+  순종              :  183 chapters
+  간구              :  168 chapters
+  겸손              :  158 chapters
+  회개              :  149 chapters
+  감사              :  147 chapters
+  은혜              :  145 chapters
+  사랑              :  141 chapters
+  거룩              :  135 chapters
+  찬양              :  129 chapters
+  소망              :  126 chapters
+  영광              :  100 chapters
+  평안              :   71 chapters
+  용서              :   56 chapters
+  기쁨              :   56 chapters
+  축복              :   53 chapters
+  위로              :   45 chapters
+  찬송              :   30 chapters
+  진리              :   28 chapters
+  응답              :   27 chapters
+  십자가             :   27 chapters
+  부활              :   23 chapters
+  가족              :   22 chapters
+  치유              :   21 chapters
+  경배              :   20 chapters
+  충성              :   19 chapters
+  영생              :   17 chapters
+  대속              :   17 chapters
+  평강              :   13 chapters
+  인내              :   12 chapters
+  구속              :   11 chapters
+  희망              :    7 chapters
+  할렐루야            :    6 chapters
+  용기              :    5 chapters
+  추수              :    5 chapters
+  보혈              :    2 chapters
+  성탄              :    1 chapters
+  건강              :    1 chapters
+
+Notable Chapter Assignments:
+----------------------------------------
+
+Detailed report saved to: /workspace/bibleai/scripts/chapter_keywords_report.json
+
+✓ All chapters processed successfully!
+

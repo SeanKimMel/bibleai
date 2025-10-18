@@ -259,22 +259,9 @@
             : '-';
         document.getElementById('evaluator').textContent = blog.evaluator || '-';
 
-        // 평가 결과가 있고, 치명적 문제가 있거나 점수가 낮으면 재생성 버튼 표시
+        // 재생성 버튼은 항상 표시 (통과한 컨텐츠도 재생성 가능)
         const btnRegenerate = document.getElementById('btn-regenerate');
-        if (blog.total_score !== null) {
-            const hasCriticalIssues = blog.quality_feedback &&
-                (typeof blog.quality_feedback === 'string'
-                    ? JSON.parse(blog.quality_feedback).critical_issues?.length > 0
-                    : blog.quality_feedback.critical_issues?.length > 0);
-
-            if (hasCriticalIssues || blog.total_score < 7.0) {
-                btnRegenerate.style.display = 'inline-block';
-            } else {
-                btnRegenerate.style.display = 'none';
-            }
-        } else {
-            btnRegenerate.style.display = 'none';
-        }
+        btnRegenerate.style.display = 'inline-block';
     }
 
     async function togglePublish() {
