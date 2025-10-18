@@ -823,17 +823,110 @@ INSERT INTO prayers (title, content, created_at) VALUES
 
 ## 🛡️ 보안 고려사항
 
+### 🚨 민감 정보 보호 규칙 (최우선)
+
+**절대 규칙**: 민감 정보는 절대 문서, 커밋 메시지, 코드에 포함하지 않습니다.
+
+#### 민감 정보 목록
+1. **API 키**:
+   - Gemini API Key (`GEMINI_API_KEY`)
+   - 기타 외부 서비스 API 키
+
+2. **인프라 정보**:
+   - EC2 IP 주소
+   - RDS 엔드포인트
+   - SSH 키 경로 (절대 경로)
+
+3. **데이터베이스 정보**:
+   - 비밀번호 (실제 값)
+   - 연결 문자열 (비밀번호 포함)
+
+4. **기타 비밀값**:
+   - JWT Secret
+   - 암호화 키
+   - OAuth Client Secret
+
+#### 안전한 관리 방법
+
+**✅ 올바른 방법**:
+```bash
+# 환경변수 사용 (문서에서)
+GEMINI_API_KEY=your_actual_api_key_here
+DB_PASSWORD=your_password_here
+SERVER_HOST=YOUR_EC2_IP
+
+# .env 파일 사용 (코드에서)
+source .env
+PGPASSWORD=${DB_PASSWORD} psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME}
+```
+
+**❌ 잘못된 방법**:
+```bash
+# 실제 값 노출 (절대 금지)
+GEMINI_API_KEY=AIzaSyArjMv8H_R-845keCeTAVEcmAK58vf-Dwc
+SERVER_HOST=13.209.47.72
+PGPASSWORD=bibleai psql -h localhost -U bibleai -d bibleai
+```
+
+#### Git 보호 설정
+
+**.gitignore 필수 항목**:
+```gitignore
+# 환경 변수
+.env
+.env.local
+.env.production
+
+# 설정 파일
+deploy.config
+
+# 빌드 산출물
+bibleai
+backoffice
+server
+*.pid
+
+# 로그
+*.log
+logs/
+```
+
+#### 문서 작성 가이드
+
+1. **예시 코드**: 실제 값 대신 플레이스홀더 사용
+   - `YOUR_API_KEY`, `YOUR_EC2_IP`, `your_password_here`
+
+2. **커밋 메시지**: 민감 정보 절대 포함 금지
+
+3. **작업 문서**: 환경변수 참조만 표시
+   - `${DB_PASSWORD}` ✅
+   - `bibleai` ❌ (실제 비밀번호인 경우)
+
+4. **스크린샷**: 민감 정보 마스킹 필수
+
+#### 노출 시 대응
+
+만약 실수로 민감 정보가 커밋된 경우:
+
+1. **즉시 교체**: API 키, 비밀번호 등을 새 값으로 변경
+2. **커밋 정리**: `git commit --amend` 또는 `git rebase`로 이력 제거
+3. **강제 푸시**: `git push --force` (신중하게)
+4. **문서화**: 사고 보고서 작성
+
 ### 현재 보안 조치
 - SQL 인젝션 방지: Prepared Statements
 - XSS 방지: Go 템플릿 자동 이스케이핑
 - 기본 CORS 설정
+- .env 파일 gitignore 처리
+- 민감 정보 플레이스홀더 사용
 
 ### 향후 보안 강화 필요사항
 - JWT 기반 관리자 인증
 - CSRF 토큰
-- Rate Limiting  
+- Rate Limiting
 - 입력 검증 강화
 - HTTPS 인증서
+- 정기적 보안 감사
 
 ## 🧪 테스트 전략 (향후)
 
