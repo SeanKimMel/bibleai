@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }} - 백오피스</title>
+    {{ template "styles" . }}
+</head>
+<body>
+    {{ template "header" . }}
+    {{ template "nav" . }}
+
+    <div class="container">
+<div class="stats-grid" id="stats-grid">
+    <div class="stat-card">
+        <div class="number" id="stat-total">-</div>
+        <div class="label">전체 블로그</div>
+    </div>
+    <div class="stat-card">
+        <div class="number" id="stat-published">-</div>
+        <div class="label">발행됨</div>
+    </div>
+    <div class="stat-card">
+        <div class="number" id="stat-draft">-</div>
+        <div class="label">미발행</div>
+    </div>
+    <div class="stat-card">
+        <div class="number" id="stat-evaluated">-</div>
+        <div class="label">평가 완료</div>
+    </div>
+    <div class="stat-card">
+        <div class="number" id="stat-avg-score">-</div>
+        <div class="label">평균 점수</div>
+    </div>
+</div>
+
+<div class="card">
+    <h2>빠른 링크</h2>
+    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+        <a href="/blogs?status=draft" class="btn btn-primary">미발행 블로그 보기</a>
+        <a href="/blogs?status=evaluated" class="btn btn-success">평가된 블로그 보기</a>
+        <a href="/blogs" class="btn btn-secondary">전체 블로그 보기</a>
+    </div>
+</div>
+
+<script>
+    // 통계 로드
+    async function loadStats() {
+        try {
+            const response = await fetch('/api/stats');
+            const stats = await response.json();
+
+            document.getElementById('stat-total').textContent = stats.total_blogs;
+            document.getElementById('stat-published').textContent = stats.published_blogs;
+            document.getElementById('stat-draft').textContent = stats.draft_blogs;
+            document.getElementById('stat-evaluated').textContent = stats.evaluated_blogs;
+            document.getElementById('stat-avg-score').textContent = stats.avg_score.toFixed(1);
+        } catch (error) {
+            console.error('통계 로드 실패:', error);
+        }
+    }
+
+    // 페이지 로드 시 통계 가져오기
+    loadStats();
+</script>
+    </div>
+</body>
+</html>

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }} - 백오피스</title>
+    {{ template "styles" . }}
+    <style>
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        .score-label { color: #7f8c8d; }
+        .score-value { font-weight: bold; color: #2c3e50; }
+        @media (max-width: 768px) {
+            .score-grid { display: block !important; }
+            .score-item { padding: 0.75rem 0.5rem; }
+        }
+    </style>
+</head>
+<body>
+    {{ template "header" . }}
+    {{ template "nav" . }}
+
+    <div class="container">
+<div id="loading" class="loading">로딩 중...</div>
+<div id="error" class="error" style="display: none;"></div>
+<div id="success" class="success" style="display: none;"></div>
+
+<div id="blog-detail" style="display: none;">
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem;">
+            <div style="flex: 1; min-width: 200px;">
+                <h2 id="blog-title" style="margin: 0;"></h2>
+                <p style="color: #7f8c8d; margin-top: 0.5rem; font-size: 0.9rem;">
+                    <span id="blog-slug"></span> · 조회수: <span id="blog-views"></span>
+                </p>
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button id="btn-publish" onclick="togglePublish()" class="btn btn-success">발행</button>
+                <button onclick="window.location.href='/blogs'" class="btn btn-secondary">목록</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+            <h2 style="margin: 0;">품질 평가</h2>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button onclick="evaluateBlog()" class="btn btn-primary btn-sm" id="btn-evaluate">재평가</button>
+                <button onclick="toggleRegenerateForm()" class="btn btn-warning btn-sm" id="btn-regenerate" style="display: none;">🔄 피드백 기반 재생성</button>
+                <button onclick="toggleHistory()" class="btn btn-secondary btn-sm" id="btn-toggle-history">평가 이력 보기</button>
+            </div>
+        </div>
+
+        <!-- 재생성 피드백 입력 폼 -->
+        <div id="regenerate-form" style="display: none; background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+            <h3 style="margin-top: 0; font-size: 1rem; color: #2c3e50;">📝 추가 피드백 입력 (선택사항)</h3>
+            <textarea id="custom-feedback"
+                      placeholder="AI에게 추가로 요청할 개선사항을 입력하세요. 예: '도입부를 더 짧게 해주세요', '청년층이 이해하기 쉽게 설명해주세요' 등"
+                      style="width: 100%; min-height: 100px; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: vertical;"></textarea>
+            <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                <button onclick="executeRegenerate()" class="btn btn-warning btn-sm">🔄 재생성 실행</button>
+                <button onclick="toggleRegenerateForm()" class="btn btn-secondary btn-sm">취소</button>
+            </div>
+            <p style="font-size: 0.85rem; color: #7f8c8d; margin: 0.5rem 0 0 0;">
+                💡 팁: 피드백을 비워두면 AI 평가 결과만을 기반으로 재생성합니다.
+            </p>
+        </div>
+
+        <div id="evaluation-section">
+            <div id="scores-container" style="margin: 1rem 0;">
+                <div class="score-item">
+                    <span class="score-label">신학적 정확성</span>
+                    <span class="score-value" id="score-theological">-</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">콘텐츠 구조</span>
+                    <span class="score-value" id="score-structure">-</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">독자 참여도</span>
+                    <span class="score-value" id="score-engagement">-</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">기술적 품질</span>
+                    <span class="score-value" id="score-technical">-</span>
+                </div>
+                <div class="score-item">
+                    <span class="score-label">SEO 최적화</span>
+                    <span class="score-value" id="score-seo">-</span>
+                </div>
+                <div class="score-item" style="background: #f8f9fa; font-weight: bold;">
+                    <span class="score-label">총점</span>
+                    <span class="score-value" style="font-size: 1.2rem; color: #e74c3c;" id="score-total">-</span>
+                </div>
+            </div>
+
+            <div id="feedback-section" style="margin-top: 1rem;">
+                <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 0.5rem;">평가 피드백</div>
+                <div id="quality-feedback" style="background: #f8f9fa; padding: 1rem; border-radius: 4px; white-space: pre-wrap;"></div>
+            </div>
+
+            <div style="margin-top: 1rem; color: #7f8c8d; font-size: 0.9rem;">
+                평가일: <span id="evaluation-date">-</span> · 평가자: <span id="evaluator">-</span>
+            </div>
+        </div>
+
+        <div id="history-section" style="display: none; margin-top: 2rem; border-top: 1px solid #ecf0f1; padding-top: 1rem;">
+            <h3 style="font-size: 1rem; margin-bottom: 1rem; color: #2c3e50;">평가 이력</h3>
+            <div id="history-list"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>콘텐츠</h2>
+        <div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin-top: 1rem;">
+            <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 0.5rem;">요약</div>
+            <div id="blog-excerpt" style="margin-bottom: 1rem;"></div>
+
+            <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 0.5rem;">키워드</div>
+            <div id="blog-keywords"></div>
+        </div>
+
+        <div style="margin-top: 1.5rem; border-top: 1px solid #ecf0f1; padding-top: 1.5rem;">
+            <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 0.5rem;">본문</div>
+            <div id="blog-content" style="line-height: 1.8; white-space: pre-wrap; word-wrap: break-word;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- 성경 장 모달 -->
+<div id="bibleModal" style="display: none; position: fixed; inset: 0; background-color: rgba(0,0,0,0.5); z-index: 50; overflow-y: auto; padding: 1rem;">
+    <div style="max-width: 56rem; margin: 2rem auto; background: white; border-radius: 0.5rem; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1);">
+        <!-- 모달 헤더 -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; border-bottom: 1px solid #e5e7eb;">
+            <h3 id="modalTitle" style="font-size: 1.5rem; font-weight: bold; color: #1f2937; margin: 0;"></h3>
+            <button onclick="closeBibleModal()" style="color: #6b7280; hover:color: #111827; font-size: 1.5rem; background: none; border: none; cursor: pointer; padding: 0.25rem;">&times;</button>
+        </div>
+
+        <!-- 모달 본문 -->
+        <div style="padding: 1.5rem; max-height: calc(90vh - 8rem); overflow-y: auto;">
+            <!-- 주제 태그 -->
+            <div id="modalThemes" style="margin-bottom: 1rem;"></div>
+
+            <!-- 해석 정보 -->
+            <div id="modalCommentary" style="margin-bottom: 1.5rem;"></div>
+
+            <!-- 구절 목록 -->
+            <div id="modalVerses"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const blogId = {{ .id }};
+    let currentBlog = null;
+
+    async function loadBlog() {
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('blog-detail').style.display = 'none';
+
+        try {
+            const response = await fetch('/api/blogs/' + blogId);
+            const blog = await response.json();
+
+            if (!response.ok) {
+                throw new Error(blog.error || '블로그 로드 실패');
+            }
+
+            currentBlog = blog;
+            renderBlog(blog);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('blog-detail').style.display = 'block';
+        } catch (error) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = error.message;
+            document.getElementById('error').style.display = 'block';
+        }
+    }
+
+    function renderBlog(blog) {
+        document.getElementById('blog-title').textContent = blog.title;
+        document.getElementById('blog-slug').textContent = blog.slug;
+        document.getElementById('blog-views').textContent = blog.view_count;
+        document.getElementById('blog-excerpt').textContent = blog.excerpt;
+        document.getElementById('blog-keywords').textContent = blog.keywords;
+
+        // 마크다운을 HTML로 변환하여 표시 (간단한 변환)
+        const contentEl = document.getElementById('blog-content');
+        contentEl.innerHTML = convertMarkdownToHTML(blog.content);
+
+        // 성경 링크에 클릭 이벤트 추가
+        addBibleLinkHandlers();
+
+        const btnPublish = document.getElementById('btn-publish');
+        if (blog.is_published) {
+            btnPublish.textContent = '발행 취소';
+            btnPublish.className = 'btn btn-danger';
+        } else {
+            btnPublish.textContent = '발행';
+            btnPublish.className = 'btn btn-success';
+        }
+
+        document.getElementById('score-theological').textContent = blog.theological_accuracy !== null ? blog.theological_accuracy.toFixed(1) : '-';
+        document.getElementById('score-structure').textContent = blog.content_structure !== null ? blog.content_structure.toFixed(1) : '-';
+        document.getElementById('score-engagement').textContent = blog.engagement !== null ? blog.engagement.toFixed(1) : '-';
+        document.getElementById('score-technical').textContent = blog.technical_quality !== null ? blog.technical_quality.toFixed(1) : '-';
+        document.getElementById('score-seo').textContent = blog.seo_optimization !== null ? blog.seo_optimization.toFixed(1) : '-';
+
+        if (blog.total_score !== null) {
+            const totalScore = blog.total_score.toFixed(1);
+            document.getElementById('score-total').textContent = totalScore;
+
+            const scoreEl = document.getElementById('score-total');
+            if (totalScore >= 8) scoreEl.style.color = '#27ae60';
+            else if (totalScore >= 6) scoreEl.style.color = '#f39c12';
+            else scoreEl.style.color = '#e74c3c';
+        } else {
+            document.getElementById('score-total').textContent = '-';
+        }
+
+        if (blog.quality_feedback) {
+            try {
+                const feedback = typeof blog.quality_feedback === 'string'
+                    ? JSON.parse(blog.quality_feedback)
+                    : blog.quality_feedback;
+
+                let feedbackHtml = '';
+                if (feedback.strengths && feedback.strengths.length > 0) {
+                    feedbackHtml += '✅ 장점:\n';
+                    feedback.strengths.forEach(s => feedbackHtml += '• ' + s + '\n');
+                    feedbackHtml += '\n';
+                }
+                if (feedback.improvements && feedback.improvements.length > 0) {
+                    feedbackHtml += '📝 개선사항:\n';
+                    feedback.improvements.forEach(i => feedbackHtml += '• ' + i + '\n');
+                    feedbackHtml += '\n';
+                }
+                if (feedback.critical_issues && feedback.critical_issues.length > 0) {
+                    feedbackHtml += '🚨 치명적 문제:\n';
+                    feedback.critical_issues.forEach(c => feedbackHtml += '• ' + c + '\n');
+                }
+
+                document.getElementById('quality-feedback').textContent = feedbackHtml || '평가 피드백이 없습니다';
+            } catch (e) {
+                document.getElementById('quality-feedback').textContent = blog.quality_feedback;
+            }
+        } else {
+            document.getElementById('quality-feedback').textContent = '평가되지 않았습니다';
+        }
+
+        document.getElementById('evaluation-date').textContent = blog.evaluation_date
+            ? new Date(blog.evaluation_date).toLocaleString('ko-KR')
+            : '-';
+        document.getElementById('evaluator').textContent = blog.evaluator || '-';
+
+        // 평가 결과가 있고, 치명적 문제가 있거나 점수가 낮으면 재생성 버튼 표시
+        const btnRegenerate = document.getElementById('btn-regenerate');
+        if (blog.total_score !== null) {
+            const hasCriticalIssues = blog.quality_feedback &&
+                (typeof blog.quality_feedback === 'string'
+                    ? JSON.parse(blog.quality_feedback).critical_issues?.length > 0
+                    : blog.quality_feedback.critical_issues?.length > 0);
+
+            if (hasCriticalIssues || blog.total_score < 7.0) {
+                btnRegenerate.style.display = 'inline-block';
+            } else {
+                btnRegenerate.style.display = 'none';
+            }
+        } else {
+            btnRegenerate.style.display = 'none';
+        }
+    }
+
+    async function togglePublish() {
+        if (!currentBlog) return;
+
+        const newStatus = !currentBlog.is_published;
+        const confirmMsg = newStatus ? '이 블로그를 발행하시겠습니까?' : '이 블로그의 발행을 취소하시겠습니까?';
+
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const response = await fetch('/api/blogs/' + blogId + '/publish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_published: newStatus })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || '발행 상태 변경 실패');
+            }
+
+            showSuccess(result.message);
+            loadBlog();
+        } catch (error) {
+            showError(error.message);
+        }
+    }
+
+    function showSuccess(message) {
+        const successEl = document.getElementById('success');
+        successEl.textContent = message;
+        successEl.style.display = 'block';
+        setTimeout(() => {
+            successEl.style.display = 'none';
+        }, 3000);
+    }
+
+    function showError(message) {
+        const errorEl = document.getElementById('error');
+        errorEl.textContent = message;
+        errorEl.style.display = 'block';
+        setTimeout(() => {
+            errorEl.style.display = 'none';
+        }, 5000);
+    }
+
+    let evaluationHistory = [];
+    let historyVisible = false;
+
+    async function evaluateBlog() {
+        if (!confirm('이 블로그를 Gemini API로 재평가하시겠습니까?\n평가에 5-10초 정도 소요됩니다.')) {
+            return;
+        }
+
+        const btn = document.getElementById('btn-evaluate');
+        const originalText = btn.textContent;
+        btn.textContent = '평가 중...';
+        btn.disabled = true;
+
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('success').style.display = 'none';
+
+        try {
+            const response = await fetch('/api/blogs/' + blogId + '/gemini-evaluate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || '평가 실패');
+            }
+
+            let message = '평가 완료!\n\n';
+            message += '총점: ' + result.evaluation.total_score.toFixed(1) + '/10\n';
+            message += '권장사항: ' + result.evaluation.recommendation + '\n';
+
+            if (result.auto_published) {
+                message += '\n✅ 품질 기준을 통과하여 자동 발행되었습니다!';
+            } else if (result.can_publish) {
+                message += '\n✅ 발행 가능합니다';
+            } else {
+                message += '\n⏳ 발행 불가: ' + result.reason;
+            }
+
+            document.getElementById('success').textContent = message;
+            document.getElementById('success').style.display = 'block';
+
+            // 평가 이력 새로고침
+            evaluationHistory = [];
+            if (historyVisible) {
+                loadEvaluationHistory();
+            }
+
+            // 블로그 정보 새로고침
+            loadBlog();
+        } catch (error) {
+            document.getElementById('error').textContent = '평가 중 오류 발생: ' + error.message;
+            document.getElementById('error').style.display = 'block';
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    function toggleRegenerateForm() {
+        const form = document.getElementById('regenerate-form');
+        if (form.style.display === 'none') {
+            form.style.display = 'block';
+            // 포커스 설정
+            document.getElementById('custom-feedback').focus();
+        } else {
+            form.style.display = 'none';
+            // 입력 내용 초기화
+            document.getElementById('custom-feedback').value = '';
+        }
+    }
+
+    async function executeRegenerate() {
+        if (!currentBlog) return;
+
+        const customFeedback = document.getElementById('custom-feedback').value.trim();
+
+        const confirmMsg = '평가 피드백을 기반으로 블로그를 재생성하시겠습니까?\n\n' +
+            '현재 점수: ' + (currentBlog.total_score ? currentBlog.total_score.toFixed(1) : '-') + '/10\n' +
+            (customFeedback ? '추가 피드백: ' + customFeedback.substring(0, 50) + (customFeedback.length > 50 ? '...' : '') + '\n' : '') +
+            '재생성에 15-30초 정도 소요되며, 기존 내용은 덮어써집니다.\n\n' +
+            '계속하시겠습니까?';
+
+        if (!confirm(confirmMsg)) return;
+
+        // 폼 숨기기
+        document.getElementById('regenerate-form').style.display = 'none';
+
+        const btn = document.getElementById('btn-regenerate');
+        const originalText = btn.textContent;
+        btn.textContent = '재생성 중...';
+        btn.disabled = true;
+
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('success').style.display = 'none';
+
+        try {
+            const response = await fetch('/api/blogs/' + blogId + '/regenerate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    custom_feedback: customFeedback
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || '재생성 실패');
+            }
+
+            let message = '🎉 블로그가 재생성되었습니다!\n\n';
+            if (customFeedback) {
+                message += '📝 사용자 피드백 반영됨\n\n';
+            }
+            message += '이전 점수: ' + result.old_score.toFixed(1) + '/10\n';
+            message += '새 점수: ' + result.new_score.toFixed(1) + '/10\n';
+
+            if (result.improved) {
+                message += '✅ 점수가 개선되었습니다! (+' + (result.new_score - result.old_score).toFixed(1) + ')\n';
+            } else {
+                message += '⚠️ 점수 변화: ' + (result.new_score - result.old_score).toFixed(1) + '\n';
+            }
+
+            if (result.can_publish) {
+                message += '\n✅ 발행 가능합니다';
+            } else {
+                message += '\n⏳ 발행 불가: ' + result.reason;
+            }
+
+            document.getElementById('success').textContent = message;
+            document.getElementById('success').style.display = 'block';
+
+            // 입력 필드 초기화
+            document.getElementById('custom-feedback').value = '';
+
+            // 평가 이력 새로고침
+            evaluationHistory = [];
+            if (historyVisible) {
+                loadEvaluationHistory();
+            }
+
+            // 블로그 정보 새로고침
+            loadBlog();
+        } catch (error) {
+            document.getElementById('error').textContent = '재생성 중 오류 발생: ' + error.message;
+            document.getElementById('error').style.display = 'block';
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function loadEvaluationHistory() {
+        try {
+            const response = await fetch('/api/blogs/' + blogId + '/evaluation-history');
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || '평가 이력 로드 실패');
+            }
+
+            evaluationHistory = data.history || [];
+            renderHistory();
+        } catch (error) {
+            console.error('평가 이력 로드 실패:', error);
+        }
+    }
+
+    function toggleHistory() {
+        historyVisible = !historyVisible;
+        const historySection = document.getElementById('history-section');
+        const btn = document.getElementById('btn-toggle-history');
+
+        if (historyVisible) {
+            historySection.style.display = 'block';
+            btn.textContent = '평가 이력 숨기기';
+            if (evaluationHistory.length === 0) {
+                loadEvaluationHistory();
+            }
+        } else {
+            historySection.style.display = 'none';
+            btn.textContent = '평가 이력 보기';
+        }
+    }
+
+    function renderHistory() {
+        const container = document.getElementById('history-list');
+
+        if (evaluationHistory.length === 0) {
+            container.innerHTML = '<div style="padding: 1rem; text-align: center; color: #7f8c8d;">평가 이력이 없습니다</div>';
+            return;
+        }
+
+        let html = '';
+        evaluationHistory.forEach((h, index) => {
+            const date = new Date(h.evaluated_at).toLocaleString('ko-KR');
+            const totalScore = h.total_score.toFixed(1);
+
+            let scoreColor = '#e74c3c';
+            if (totalScore >= 8) scoreColor = '#27ae60';
+            else if (totalScore >= 6) scoreColor = '#f39c12';
+
+            html += '<div style="background: #f8f9fa; padding: 1rem; border-radius: 4px; margin-bottom: 1rem;">';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">';
+            html += '<div style="font-weight: bold; color: #2c3e50;">#' + (index + 1) + ' - ' + date + '</div>';
+            html += '<div style="font-size: 1.1rem; font-weight: bold; color: ' + scoreColor + ';">' + totalScore + '/10</div>';
+            html += '</div>';
+
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 0.5rem; margin-top: 0.5rem;">';
+            html += '<div style="font-size: 0.85rem;"><span style="color: #7f8c8d;">신학적:</span> ' + h.theological_accuracy.toFixed(1) + '</div>';
+            html += '<div style="font-size: 0.85rem;"><span style="color: #7f8c8d;">구조:</span> ' + h.content_structure.toFixed(1) + '</div>';
+            html += '<div style="font-size: 0.85rem;"><span style="color: #7f8c8d;">참여도:</span> ' + h.engagement.toFixed(1) + '</div>';
+            html += '<div style="font-size: 0.85rem;"><span style="color: #7f8c8d;">기술:</span> ' + h.technical_quality.toFixed(1) + '</div>';
+            html += '<div style="font-size: 0.85rem;"><span style="color: #7f8c8d;">SEO:</span> ' + h.seo_optimization.toFixed(1) + '</div>';
+            html += '</div>';
+
+            if (h.quality_feedback) {
+                try {
+                    const feedback = typeof h.quality_feedback === 'string'
+                        ? JSON.parse(h.quality_feedback)
+                        : h.quality_feedback;
+
+                    if (feedback.strengths && feedback.strengths.length > 0) {
+                        html += '<div style="margin-top: 0.5rem; font-size: 0.85rem; color: #27ae60;">✅ ' + feedback.strengths[0] + '</div>';
+                    }
+                    if (feedback.critical_issues && feedback.critical_issues.length > 0) {
+                        html += '<div style="margin-top: 0.5rem; font-size: 0.85rem; color: #e74c3c;">🚨 ' + feedback.critical_issues[0] + '</div>';
+                    }
+                } catch (e) {
+                    // JSON 파싱 실패 시 무시
+                }
+            }
+
+            html += '<div style="margin-top: 0.5rem; font-size: 0.85rem; color: #7f8c8d;">평가자: ' + h.evaluator + '</div>';
+            html += '</div>';
+        });
+
+        container.innerHTML = html;
+    }
+
+    // 간단한 마크다운을 HTML로 변환
+    function convertMarkdownToHTML(markdown) {
+        let html = markdown;
+
+        // 성경 링크를 모달 트리거로 변환
+        html = html.replace(/\[([^\]]+)\]\((\/api\/bible\/chapters\/([^\/]+)\/(\d+))\)/g, function(match, text, url, bookId, chapter) {
+            return `<a href="#" data-book-id="${bookId}" data-chapter="${chapter}" class="bible-link" style="color: #3498db; text-decoration: underline; cursor: pointer;">${text}</a>`;
+        });
+
+        // 일반 링크 변환 (성경 링크가 아닌 경우)
+        html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #3498db; text-decoration: underline;" target="_blank">$1</a>');
+
+        // 굵은 글씨 **text**
+        html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
+        // 제목 변환 (# H1, ## H2, ### H3)
+        html = html.replace(/^### (.+)$/gm, '<h3 style="font-size: 1.25rem; font-weight: bold; margin: 1.5rem 0 0.75rem; color: #2c3e50;">$1</h3>');
+        html = html.replace(/^## (.+)$/gm, '<h2 style="font-size: 1.5rem; font-weight: bold; margin: 2rem 0 1rem; color: #2c3e50;">$1</h2>');
+        html = html.replace(/^# (.+)$/gm, '<h1 style="font-size: 1.75rem; font-weight: bold; margin: 2rem 0 1rem; color: #2c3e50;">$1</h1>');
+
+        // blockquote 변환 > text
+        html = html.replace(/^> (.+)$/gm, '<blockquote style="border-left: 4px solid #3498db; padding-left: 1rem; margin: 1rem 0; color: #555;">$1</blockquote>');
+
+        // 줄바꿈 변환
+        html = html.replace(/\n/g, '<br>');
+
+        return html;
+    }
+
+    // 성경 링크에 클릭 이벤트 추가
+    function addBibleLinkHandlers() {
+        const contentEl = document.getElementById('blog-content');
+        const links = contentEl.querySelectorAll('a.bible-link');
+
+        links.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const bookId = this.getAttribute('data-book-id');
+                const chapter = parseInt(this.getAttribute('data-chapter'));
+                if (bookId && chapter) {
+                    openBibleModal(bookId, chapter);
+                }
+            });
+        });
+    }
+
+    // 성경 모달 열기
+    async function openBibleModal(bookId, chapter) {
+        try {
+            const response = await fetch(`http://localhost:8080/api/bible/chapters/${bookId}/${chapter}`);
+            if (!response.ok) {
+                throw new Error('성경 장을 불러올 수 없습니다');
+            }
+
+            const data = await response.json();
+            showBibleModal(data);
+        } catch (error) {
+            console.error('성경 장 로딩 실패:', error);
+            alert('성경 장을 불러오는데 실패했습니다: ' + error.message);
+        }
+    }
+
+    // 성경 모달 표시
+    function showBibleModal(data) {
+        const modal = document.getElementById('bibleModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalThemes = document.getElementById('modalThemes');
+        const modalCommentary = document.getElementById('modalCommentary');
+        const modalVerses = document.getElementById('modalVerses');
+
+        // 제목 설정
+        modalTitle.textContent = `${data.book_name} ${data.chapter}장`;
+
+        // 주제 태그 표시
+        if (data.commentary && data.commentary.themes) {
+            try {
+                const themes = JSON.parse(data.commentary.themes);
+                modalThemes.innerHTML = themes.map(theme => `
+                    <span style="display: inline-block; padding: 0.25rem 0.75rem; margin: 0.25rem; background: #dbeafe; color: #1e40af; border-radius: 9999px; font-size: 0.875rem; font-weight: 500;">${theme}</span>
+                `).join('');
+            } catch (e) {
+                modalThemes.innerHTML = '';
+            }
+        } else {
+            modalThemes.innerHTML = '';
+        }
+
+        // 해석 정보 표시
+        if (data.commentary && (data.commentary.title || data.commentary.summary)) {
+            const commentary = data.commentary;
+            let commentaryHtml = '<div style="background: linear-gradient(to right, #fef3c7, #fef9c3); padding: 1.5rem; border-radius: 0.75rem; border-left: 4px solid #f59e0b; margin-bottom: 1.5rem;">';
+
+            if (commentary.title) {
+                commentaryHtml += `<h4 style="font-size: 1.25rem; font-weight: bold; color: #92400e; margin-bottom: 0.75rem;">📖 ${commentary.title}</h4>`;
+            }
+
+            if (commentary.summary) {
+                commentaryHtml += `<p style="color: #78350f; line-height: 1.6; margin-bottom: 0.75rem;">${commentary.summary}</p>`;
+            }
+
+            if (commentary.application) {
+                commentaryHtml += `<div style="background: rgba(255,255,255,0.7); padding: 0.75rem; border-radius: 0.5rem; margin-top: 0.75rem;">`;
+                commentaryHtml += `<div style="font-weight: 600; color: #92400e; margin-bottom: 0.5rem;">💡 적용</div>`;
+                commentaryHtml += `<p style="color: #78350f; line-height: 1.6;">${commentary.application}</p>`;
+                commentaryHtml += `</div>`;
+            }
+
+            commentaryHtml += '</div>';
+            modalCommentary.innerHTML = commentaryHtml;
+        } else {
+            modalCommentary.innerHTML = '';
+        }
+
+        // 구절 목록 표시
+        let versesHtml = '';
+        data.verses.forEach(verse => {
+            versesHtml += `
+                <div style="padding: 0.75rem; margin-bottom: 0.5rem; background: #f9fafb; border-radius: 0.5rem; display: flex; gap: 1rem;">
+                    <div style="font-weight: bold; color: #6b7280; min-width: 2rem; text-align: right;">${verse.verse}</div>
+                    <div style="flex: 1; color: #374151; line-height: 1.6;">${verse.content}</div>
+                    <button onclick="copyVerse(${verse.verse}, '${verse.content.replace(/'/g, "\\'")}', '${data.book_name}', ${data.chapter})" style="background: none; border: none; cursor: pointer; color: #6b7280; font-size: 1.25rem; padding: 0.25rem;" title="복사">📋</button>
+                </div>
+            `;
+        });
+        modalVerses.innerHTML = versesHtml;
+
+        // 모달 표시
+        modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    // 성경 모달 닫기
+    function closeBibleModal() {
+        const modal = document.getElementById('bibleModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    // ESC 키로 모달 닫기
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeBibleModal();
+        }
+    });
+
+    // 배경 클릭으로 모달 닫기
+    document.getElementById('bibleModal')?.addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeBibleModal();
+        }
+    });
+
+    // 구절 복사
+    function copyVerse(verseNum, content, bookName, chapter) {
+        const text = `${bookName} ${chapter}:${verseNum} - ${content}`;
+        navigator.clipboard.writeText(text).then(() => {
+            showSuccess(`${bookName} ${chapter}:${verseNum} 복사 완료!`);
+        }).catch(err => {
+            console.error('복사 실패:', err);
+        });
+    }
+
+    loadBlog();
+</script>
+    </div>
+</body>
+</html>

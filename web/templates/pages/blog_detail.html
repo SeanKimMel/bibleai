@@ -191,11 +191,200 @@
 }
 </style>
 
+<!-- 성경 장 모달 -->
+<div id="bibleModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto p-4">
+    <div class="max-w-4xl mx-auto my-8 bg-white rounded-2xl shadow-2xl">
+        <!-- 모달 헤더 -->
+        <div class="flex justify-between items-center p-6 border-b border-gray-200">
+            <h3 id="modalTitle" class="text-2xl font-bold text-gray-900"></h3>
+            <button onclick="closeBibleModal()" class="text-gray-400 hover:text-gray-600 text-3xl leading-none">&times;</button>
+        </div>
+
+        <!-- 모달 본문 -->
+        <div class="p-6 max-h-[calc(90vh-8rem)] overflow-y-auto">
+            <!-- 주제 태그 -->
+            <div id="modalThemes" class="mb-4"></div>
+
+            <!-- 해석 정보 -->
+            <div id="modalCommentary" class="mb-6"></div>
+
+            <!-- 구절 목록 -->
+            <div id="modalVerses"></div>
+        </div>
+    </div>
+</div>
+
 <!-- 공유 기능 스크립트 -->
 <script>
 // 페이지 정보
 const pageTitle = "{{.Post.Title}}";
 const pageUrl = window.location.href;
+
+// 성경 링크 처리
+document.addEventListener('DOMContentLoaded', function() {
+    // 모든 성경 링크를 찾아서 모달로 처리
+    const bibleLinks = document.querySelectorAll('.markdown-content a[href^="/api/bible/chapters/"]');
+
+    bibleLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const href = this.getAttribute('href');
+            // /api/bible/chapters/ph/4 -> ph, 4 추출
+            const match = href.match(/\/api\/bible\/chapters\/([^\/]+)\/(\d+)/);
+            if (match) {
+                const bookId = match[1];
+                const chapter = parseInt(match[2]);
+                openBibleModal(bookId, chapter);
+            }
+        });
+    });
+});
+
+// 성경 모달 열기
+async function openBibleModal(bookId, chapter) {
+    try {
+        const response = await fetch(`/api/bible/chapters/${bookId}/${chapter}`);
+        if (!response.ok) {
+            throw new Error('성경 장을 불러올 수 없습니다');
+        }
+
+        const data = await response.json();
+        showBibleModal(data);
+    } catch (error) {
+        console.error('성경 장 로딩 실패:', error);
+        alert('성경 장을 불러오는데 실패했습니다: ' + error.message);
+    }
+}
+
+// 성경 모달 표시
+function showBibleModal(data) {
+    const modal = document.getElementById('bibleModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalThemes = document.getElementById('modalThemes');
+    const modalCommentary = document.getElementById('modalCommentary');
+    const modalVerses = document.getElementById('modalVerses');
+
+    // 제목 설정
+    modalTitle.textContent = `${data.book_name} ${data.chapter}장`;
+
+    // 주제 태그 표시
+    if (data.commentary && data.commentary.themes) {
+        try {
+            const themes = JSON.parse(data.commentary.themes);
+            modalThemes.innerHTML = themes.map(theme => `
+                <span class="inline-block px-3 py-1 m-1 bg-teal-100 text-teal-800 rounded-full text-sm font-medium">${theme}</span>
+            `).join('');
+        } catch (e) {
+            modalThemes.innerHTML = '';
+        }
+    } else {
+        modalThemes.innerHTML = '';
+    }
+
+    // 해석 정보 표시
+    if (data.commentary && (data.commentary.title || data.commentary.summary)) {
+        const commentary = data.commentary;
+        let commentaryHtml = '<div class="bg-gradient-to-r from-amber-50 to-yellow-50 p-6 rounded-xl border-l-4 border-amber-400 mb-6">';
+
+        if (commentary.title) {
+            commentaryHtml += `<h4 class="text-xl font-bold text-amber-900 mb-3">📖 ${commentary.title}</h4>`;
+        }
+
+        if (commentary.summary) {
+            commentaryHtml += `<p class="text-amber-900 leading-relaxed mb-3">${commentary.summary}</p>`;
+        }
+
+        if (commentary.application) {
+            commentaryHtml += `<div class="bg-white bg-opacity-70 p-4 rounded-lg mt-3">`;
+            commentaryHtml += `<div class="font-semibold text-amber-900 mb-2">💡 적용</div>`;
+            commentaryHtml += `<p class="text-amber-900 leading-relaxed">${commentary.application}</p>`;
+            commentaryHtml += `</div>`;
+        }
+
+        commentaryHtml += '</div>';
+        modalCommentary.innerHTML = commentaryHtml;
+    } else {
+        modalCommentary.innerHTML = '';
+    }
+
+    // 구절 목록 표시
+    let versesHtml = '';
+    data.verses.forEach(verse => {
+        versesHtml += `
+            <div class="flex gap-4 p-3 mb-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="font-bold text-gray-500 min-w-[2rem] text-right">${verse.verse}</div>
+                <div class="flex-1 text-gray-700 leading-relaxed">${verse.content}</div>
+                <button onclick="copyVerse(${verse.verse}, '${verse.content.replace(/'/g, "\\'")}', '${data.book_name}', ${data.chapter})"
+                        class="text-gray-400 hover:text-teal-600 text-xl" title="복사">📋</button>
+            </div>
+        `;
+    });
+    modalVerses.innerHTML = versesHtml;
+
+    // 모달 표시
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+// 성경 모달 닫기
+function closeBibleModal() {
+    const modal = document.getElementById('bibleModal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// ESC 키로 모달 닫기
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeBibleModal();
+    }
+});
+
+// 배경 클릭으로 모달 닫기
+document.getElementById('bibleModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeBibleModal();
+    }
+});
+
+// 구절 복사
+function copyVerse(verseNum, content, bookName, chapter) {
+    const text = `${bookName} ${chapter}:${verseNum} - ${content}`;
+
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            showNotification(`${bookName} ${chapter}:${verseNum} 복사 완료!`);
+        });
+    } else {
+        // Fallback
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+            document.execCommand('copy');
+            showNotification(`${bookName} ${chapter}:${verseNum} 복사 완료!`);
+        } catch (err) {
+            console.error('복사 실패:', err);
+        }
+        document.body.removeChild(textArea);
+    }
+}
+
+// 알림 표시
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.textContent = message;
+    notification.className = 'fixed bottom-4 right-4 bg-teal-600 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        notification.remove();
+    }, 3000);
+}
 
 // 페이스북 공유
 function shareFacebook() {

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }} - 백오피스</title>
+    {{ template "styles" . }}
+</head>
+<body>
+    {{ template "header" . }}
+    {{ template "nav" . }}
+
+    <div class="container">
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+            <h2 style="margin: 0;">신규 블로그 작성</h2>
+            <p style="color: #7f8c8d; margin: 0.5rem 0 0 0;">Gemini API로 자동 생성하거나 수동으로 작성할 수 있습니다.</p>
+        </div>
+        <button onclick="showAutoGenerate()" class="btn btn-success" id="btn-show-auto">🤖 자동 생성</button>
+    </div>
+
+    <div id="auto-generate-section" style="display: none; margin-bottom: 2rem; padding: 1.5rem; background: #e8f5e9; border-radius: 8px;">
+        <h3 style="margin-top: 0;">Gemini API 자동 생성</h3>
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">키워드 *</label>
+            <input type="text" id="auto-keyword" placeholder="예: 사랑, 믿음, 소망"
+                   style="width: 100%; padding: 0.5rem; border: 1px solid #81c784; border-radius: 4px;">
+        </div>
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">날짜</label>
+            <input type="date" id="auto-date"
+                   style="width: 100%; padding: 0.5rem; border: 1px solid #81c784; border-radius: 4px;">
+        </div>
+        <div style="display: flex; gap: 0.5rem;">
+            <button onclick="generateBlog()" class="btn btn-success" id="btn-generate">생성 시작</button>
+            <button onclick="hideAutoGenerate()" class="btn btn-secondary">취소</button>
+        </div>
+    </div>
+
+    <div id="error" class="error" style="display: none;"></div>
+    <div id="success" class="success" style="display: none;"></div>
+
+    <form id="blog-form" onsubmit="return submitBlog(event)">
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">제목 *</label>
+            <input type="text" id="title" name="title" required
+                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">슬러그 (URL) *</label>
+            <input type="text" id="slug" name="slug" required
+                   placeholder="2025-01-01-example-slug"
+                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+            <small style="color: #7f8c8d;">예: 2025-10-17-사랑</small>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">요약 (Excerpt)</label>
+            <textarea id="excerpt" name="excerpt" rows="3"
+                      style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">키워드</label>
+            <input type="text" id="keywords" name="keywords"
+                   placeholder="키워드1,키워드2,키워드3"
+                   style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">본문 (Markdown) *</label>
+            <textarea id="content" name="content" rows="20" required
+                      style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button type="submit" class="btn btn-primary">저장 (미발행)</button>
+            <button type="button" onclick="window.location.href='/blogs'" class="btn btn-secondary">취소</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // 오늘 날짜를 기본값으로 설정
+    document.getElementById('auto-date').valueAsDate = new Date();
+
+    function showAutoGenerate() {
+        document.getElementById('auto-generate-section').style.display = 'block';
+        document.getElementById('btn-show-auto').style.display = 'none';
+    }
+
+    function hideAutoGenerate() {
+        document.getElementById('auto-generate-section').style.display = 'none';
+        document.getElementById('btn-show-auto').style.display = 'inline-block';
+    }
+
+    async function generateBlog() {
+        const keyword = document.getElementById('auto-keyword').value.trim();
+        const date = document.getElementById('auto-date').value;
+
+        if (!keyword) {
+            alert('키워드를 입력하세요');
+            return;
+        }
+
+        const btn = document.getElementById('btn-generate');
+        const originalText = btn.textContent;
+        btn.textContent = '생성 중... (30초 정도 소요)';
+        btn.disabled = true;
+
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('success').style.display = 'none';
+
+        try {
+            const response = await fetch('/api/blogs/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ keyword: keyword, date: date || null })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || '블로그 생성 실패');
+            }
+
+            let message = '블로그가 성공적으로 생성되었습니다!\n\n';
+            message += 'ID: ' + result.id + '\n';
+            message += '제목: ' + result.blog.title + '\n';
+
+            if (result.evaluation) {
+                message += '총점: ' + result.evaluation.total_score.toFixed(1) + '/10\n';
+                if (result.auto_published) {
+                    message += '\n✅ 품질 기준을 통과하여 자동 발행되었습니다!';
+                } else {
+                    message += '\n⏳ 미발행 상태입니다. ' + result.reason;
+                }
+            }
+
+            alert(message);
+            window.location.href = '/blogs/' + result.id;
+        } catch (error) {
+            document.getElementById('error').textContent = '오류: ' + error.message;
+            document.getElementById('error').style.display = 'block';
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    async function submitBlog(event) {
+        event.preventDefault();
+
+        const formData = {
+            title: document.getElementById('title').value,
+            slug: document.getElementById('slug').value,
+            content: document.getElementById('content').value,
+            excerpt: document.getElementById('excerpt').value,
+            keywords: document.getElementById('keywords').value
+        };
+
+        try {
+            const response = await fetch('/api/blogs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || '블로그 저장 실패');
+            }
+
+            document.getElementById('success').textContent = '블로그가 저장되었습니다!';
+            document.getElementById('success').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+
+            setTimeout(() => {
+                window.location.href = '/blogs/' + result.id;
+            }, 1500);
+        } catch (error) {
+            document.getElementById('error').textContent = '오류: ' + error.message;
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('success').style.display = 'none';
+        }
+
+        return false;
+    }
+</script>
+    </div>
+</body>
+</html>

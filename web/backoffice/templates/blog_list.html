@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }} - 백오피스</title>
+    {{ template "styles" . }}
+</head>
+<body>
+    {{ template "header" . }}
+    {{ template "nav" . }}
+
+    <div class="container">
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+        <h2 style="margin: 0;">블로그 목록</h2>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <button onclick="window.location.href='/blogs/new'" class="btn btn-success">신규 작성</button>
+            <select id="status-filter" class="btn btn-secondary" style="cursor: pointer;">
+                <option value="all">전체</option>
+                <option value="published">발행됨</option>
+                <option value="draft">미발행</option>
+                <option value="evaluated">평가됨</option>
+            </select>
+            <button onclick="loadBlogs()" class="btn btn-primary">새로고침</button>
+        </div>
+    </div>
+
+    <div id="loading" class="loading">로딩 중...</div>
+    <div id="error" class="error" style="display: none;"></div>
+
+    <div id="blog-list-container" style="display: none;">
+        <table id="blog-table">
+            <thead>
+                <tr>
+                    <th class="mobile-hide">ID</th>
+                    <th>블로그 정보</th>
+                    <th class="mobile-hide">상태</th>
+                    <th class="mobile-hide">총점</th>
+                    <th class="mobile-hide">생성일</th>
+                    <th>작업</th>
+                </tr>
+            </thead>
+            <tbody id="blog-tbody">
+            </tbody>
+        </table>
+
+        <div id="pagination" style="margin-top: 1rem; text-align: center;">
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentPage = 1;
+    const limit = 20;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialStatus = urlParams.get('status') || 'all';
+    document.getElementById('status-filter').value = initialStatus;
+
+    async function loadBlogs(page = 1) {
+        currentPage = page;
+        const status = document.getElementById('status-filter').value;
+
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('blog-list-container').style.display = 'none';
+
+        try {
+            const response = await fetch('/api/blogs?page=' + page + '&limit=' + limit + '&status=' + status);
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || '블로그 로드 실패');
+            }
+
+            renderBlogs(data.blogs);
+            renderPagination(data.pagination);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('blog-list-container').style.display = 'block';
+        } catch (error) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').textContent = error.message;
+            document.getElementById('error').style.display = 'block';
+        }
+    }
+
+    function renderBlogs(blogs) {
+        const tbody = document.getElementById('blog-tbody');
+        tbody.innerHTML = '';
+
+        if (blogs.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem; color: #7f8c8d;">블로그가 없습니다</td></tr>';
+            return;
+        }
+
+        blogs.forEach(blog => {
+            const row = document.createElement('tr');
+
+            let statusBadge = blog.is_published
+                ? '<span class="badge badge-success">발행됨</span>'
+                : '<span class="badge badge-warning">미발행</span>';
+
+            let scoreBadge = '-';
+            if (blog.total_score !== null) {
+                const score = blog.total_score.toFixed(1);
+                let scoreClass = 'badge-info';
+                if (score >= 8) scoreClass = 'badge-success';
+                else if (score >= 6) scoreClass = 'badge-info';
+                else scoreClass = 'badge-danger';
+
+                scoreBadge = '<span class="badge ' + scoreClass + '">' + score + '/10</span>';
+            }
+
+            const evaluator = blog.evaluator || '-';
+            const createdAt = new Date(blog.created_at).toLocaleDateString('ko-KR');
+
+            const publishBtn = blog.is_published
+                ? '<button onclick="togglePublish(' + blog.id + ', false)" class="btn btn-danger btn-sm" style="margin-right: 0.25rem;">발행취소</button>'
+                : '<button onclick="togglePublish(' + blog.id + ', true)" class="btn btn-success btn-sm" style="margin-right: 0.25rem;">발행</button>';
+
+            const evaluateBtn = '<button onclick="evaluateBlog(' + blog.id + ')" class="btn btn-secondary btn-sm" style="margin-right: 0.25rem;">재평가</button>';
+
+            row.innerHTML = '<td class="mobile-hide">' + blog.id + '</td>' +
+                '<td>' +
+                '<div style="margin-bottom: 0.5rem;">' +
+                '<a href="/blogs/' + blog.id + '" style="color: #3498db; text-decoration: none; font-weight: 500;">' + blog.title + '</a>' +
+                '</div>' +
+                '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">' +
+                statusBadge + ' ' + scoreBadge +
+                '<span class="mobile-hide" style="color: #7f8c8d; font-size: 0.85rem;">' + createdAt + '</span>' +
+                '</div>' +
+                '</td>' +
+                '<td class="mobile-hide">' + statusBadge + '</td>' +
+                '<td class="mobile-hide">' + scoreBadge + '</td>' +
+                '<td class="mobile-hide">' + createdAt + '</td>' +
+                '<td>' +
+                '<div style="display: flex; gap: 0.25rem; flex-wrap: wrap;">' +
+                publishBtn + evaluateBtn + '<a href="/blogs/' + blog.id + '" class="btn btn-primary btn-sm">상세</a>' +
+                '</div>' +
+                '</td>';
+
+            tbody.appendChild(row);
+        });
+    }
+
+    function renderPagination(pagination) {
+        const container = document.getElementById('pagination');
+        container.innerHTML = '';
+
+        const totalPages = pagination.pages;
+        const currentPage = pagination.page;
+
+        if (currentPage > 1) {
+            const prevBtn = document.createElement('button');
+            prevBtn.textContent = '이전';
+            prevBtn.className = 'btn btn-secondary btn-sm';
+            prevBtn.style.marginRight = '0.5rem';
+            prevBtn.onclick = () => loadBlogs(currentPage - 1);
+            container.appendChild(prevBtn);
+        }
+
+        const pageInfo = document.createElement('span');
+        pageInfo.textContent = currentPage + ' / ' + totalPages;
+        pageInfo.style.margin = '0 1rem';
+        container.appendChild(pageInfo);
+
+        if (currentPage < totalPages) {
+            const nextBtn = document.createElement('button');
+            nextBtn.textContent = '다음';
+            nextBtn.className = 'btn btn-secondary btn-sm';
+            nextBtn.style.marginLeft = '0.5rem';
+            nextBtn.onclick = () => loadBlogs(currentPage + 1);
+            container.appendChild(nextBtn);
+        }
+    }
+
+    document.getElementById('status-filter').addEventListener('change', () => {
+        loadBlogs(1);
+    });
+
+    // 발행 토글
+    async function togglePublish(blogId, shouldPublish) {
+        if (!confirm(shouldPublish ? '이 블로그를 발행하시겠습니까?' : '발행을 취소하시겠습니까?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch('/api/blogs/' + blogId + '/publish', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ is_published: shouldPublish })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || '발행 상태 변경 실패');
+            }
+
+            alert(result.message);
+            loadBlogs(currentPage);
+        } catch (error) {
+            alert('오류: ' + error.message);
+        }
+    }
+
+    // 재평가
+    async function evaluateBlog(blogId) {
+        if (!confirm('이 블로그를 Gemini API로 재평가하시겠습니까?\n평가에 시간이 소요될 수 있습니다.')) {
+            return;
+        }
+
+        const btn = event.target;
+        const originalText = btn.textContent;
+        btn.textContent = '평가 중...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/api/blogs/' + blogId + '/gemini-evaluate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || '평가 실패');
+            }
+
+            let message = '평가 완료!\n\n';
+            message += '총점: ' + result.evaluation.total_score.toFixed(1) + '/10\n';
+            message += '권장사항: ' + result.recommendation + '\n';
+
+            if (result.auto_published) {
+                message += '\n✅ 품질 기준을 통과하여 자동 발행되었습니다!';
+            } else if (result.can_publish) {
+                message += '\n✅ 발행 가능합니다';
+            } else {
+                message += '\n❌ 발행 불가: ' + result.reason;
+            }
+
+            alert(message);
+            loadBlogs(currentPage);
+        } catch (error) {
+            alert('평가 중 오류 발생: ' + error.message);
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+
+    loadBlogs(1);
+</script>
+    </div>
+</body>
+</html>
