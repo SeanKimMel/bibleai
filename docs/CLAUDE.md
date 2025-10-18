@@ -863,9 +863,9 @@ PGPASSWORD=${DB_PASSWORD} psql -h ${DB_HOST} -U ${DB_USER} -d ${DB_NAME}
 **❌ 잘못된 방법**:
 ```bash
 # 실제 값 노출 (절대 금지)
-GEMINI_API_KEY=AIzaSyArjMv8H_R-845keCeTAVEcmAK58vf-Dwc
-SERVER_HOST=13.209.47.72
-PGPASSWORD=bibleai psql -h localhost -U bibleai -d bibleai
+GEMINI_API_KEY=AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  # 실제 키 노출 금지!
+SERVER_HOST=13.209.47.72  # 실제 IP 노출 금지!
+PGPASSWORD=actual_password psql -h localhost -U bibleai -d bibleai  # 실제 비밀번호 노출 금지!
 ```
 
 #### Git 보호 설정
