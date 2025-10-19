@@ -4,6 +4,26 @@
 
 랜덤 키워드를 사용한 블로그 자동 생성 API(`/api/blogs/generate`)를 정기적으로 호출하여 자동 발행 시스템을 구축하는 방법입니다.
 
+## API 파라미터
+
+### `/api/blogs/generate` POST 요청
+
+```json
+{
+  "keyword": "",           // 비어있으면 랜덤 키워드 선택
+  "date": "2025-10-19",   // 블로그 작성 날짜
+  "auto_publish": true    // (선택) true이면 평가 무시하고 무조건 발행
+}
+```
+
+**발행 방식**:
+- `auto_publish` 미지정 또는 `false`: 품질 평가 점수 기반 자동 발행 (총점 ≥7.0)
+- `auto_publish: true`: 평가 점수 무시하고 **무조건 발행** (품질이 낮아도 발행됨)
+
+**권장 사용**:
+- 일반적인 경우: `auto_publish` 미지정 (품질 관리)
+- 테스트 또는 긴급 발행: `auto_publish: true`
+
 ## 방법 1: Linux Cron (권장)
 
 ### 설정 방법
@@ -14,16 +34,20 @@
 # /home/ec2-user/bibleai/scripts/auto_blog_generate.sh
 #!/bin/bash
 
-# 환경변수 로드
-source /home/ec2-user/bibleai/.env
-
-# 백오피스 API 호출
+# 백오피스 API 호출 (백오피스가 .env를 이미 읽고 있으므로 별도 로드 불필요)
 TODAY=$(date +%Y-%m-%d)
 
+# 방법 1: 품질 평가 기반 자동 발행 (권장)
 curl -X POST http://localhost:9090/api/blogs/generate \
   -H "Content-Type: application/json" \
   -d "{\"keyword\": \"\", \"date\": \"$TODAY\"}" \
   >> /home/ec2-user/bibleai/logs/auto_blog_$(date +%Y%m).log 2>&1
+
+# 방법 2: 강제 발행 (품질 무시, 테스트용)
+# curl -X POST http://localhost:9090/api/blogs/generate \
+#   -H "Content-Type: application/json" \
+#   -d "{\"keyword\": \"\", \"date\": \"$TODAY\", \"auto_publish\": true}" \
+#   >> /home/ec2-user/bibleai/logs/auto_blog_$(date +%Y%m).log 2>&1
 
 echo "$(date): 블로그 자동 생성 완료" >> /home/ec2-user/bibleai/logs/auto_blog_$(date +%Y%m).log
 ```
@@ -94,7 +118,6 @@ After=network.target
 Type=oneshot
 User=ec2-user
 WorkingDirectory=/home/ec2-user/bibleai
-EnvironmentFile=/home/ec2-user/bibleai/.env
 ExecStart=/home/ec2-user/bibleai/scripts/auto_blog_generate.sh
 StandardOutput=append:/home/ec2-user/bibleai/logs/auto_blog.log
 StandardError=append:/home/ec2-user/bibleai/logs/auto_blog_error.log
@@ -286,7 +309,8 @@ sudo systemctl status cron
 # Cron 재시작
 sudo systemctl restart cron
 
-# 환경변수 확인 (스크립트 내에서 source .env 필수!)
+# 스크립트 권한 확인
+chmod +x /home/ec2-user/bibleai/scripts/auto_blog_generate.sh
 ```
 
 ### API 호출 실패

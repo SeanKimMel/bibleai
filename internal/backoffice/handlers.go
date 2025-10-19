@@ -435,8 +435,9 @@ func (h *Handlers) GetEvaluationHistory(c *gin.Context) {
 // GenerateBlog Gemini API로 블로그 자동 생성 및 저장
 func (h *Handlers) GenerateBlog(c *gin.Context) {
 	var req struct {
-		Keyword string `json:"keyword"` // 선택적: 비어있으면 랜덤 선택
-		Date    string `json:"date"`
+		Keyword     string `json:"keyword"`      // 선택적: 비어있으면 랜덤 선택
+		Date        string `json:"date"`
+		AutoPublish *bool  `json:"auto_publish"` // 선택적: true이면 평가 무시하고 무조건 발행
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -546,10 +547,37 @@ func (h *Handlers) GenerateBlog(c *gin.Context) {
 		return
 	}
 
-	// 발행 여부 확인
-	canPublish, reason := gemini.ShouldPublish(evaluation)
+	// 발행 여부 결정
 	var isPublished bool
-	h.db.QueryRow("SELECT is_published FROM blog_posts WHERE id = $1", id).Scan(&isPublished)
+	var publishReason string
+
+	if req.AutoPublish != nil && *req.AutoPublish {
+		// auto_publish=true이면 평가 무시하고 무조건 발행
+		isPublished = true
+		publishReason = "사용자 요청에 의한 강제 발행"
+		log.Printf("🚀 강제 발행: 블로그 ID %d", id)
+
+		_, err = h.db.Exec(`UPDATE blog_posts SET is_published = true WHERE id = $1`, id)
+		if err != nil {
+			log.Printf("발행 상태 업데이트 실패: %v", err)
+		}
+	} else {
+		// 평가 점수 기반 자동 발행
+		canPublish, reason := gemini.ShouldPublish(evaluation)
+		publishReason = reason
+
+		if canPublish {
+			isPublished = true
+			log.Printf("✅ 자동 발행: 블로그 ID %d (총점: %.1f)", id, evaluation.TotalScore)
+
+			_, err = h.db.Exec(`UPDATE blog_posts SET is_published = true WHERE id = $1`, id)
+			if err != nil {
+				log.Printf("발행 상태 업데이트 실패: %v", err)
+			}
+		} else {
+			log.Printf("⏸️  미발행: 블로그 ID %d - %s", id, reason)
+		}
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success":        true,
@@ -557,10 +585,9 @@ func (h *Handlers) GenerateBlog(c *gin.Context) {
 		"id":             id,
 		"blog":           blog,
 		"evaluation":     evaluation,
-		"can_publish":    canPublish,
-		"reason":         reason,
 		"is_published":   isPublished,
-		"auto_published": isPublished && canPublish,
+		"reason":         publishReason,
+		"auto_published": isPublished,
 	})
 }
 

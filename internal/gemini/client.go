@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -593,9 +594,24 @@ func buildBlogGenerationPrompt(keyword, date, slug string) string {
 
 // ShouldPublish 발행 여부 판단
 func ShouldPublish(evaluation *QualityEvaluation) (bool, string) {
-	// 치명적 문제 체크
+	// 🔧 Critical Issues가 있으면 점수를 강제로 낮춤 (AI가 점수를 잘못 주는 경우 대비)
 	if len(evaluation.Feedback.CriticalIssues) > 0 {
-		return false, fmt.Sprintf("치명적 문제 발견: %d개", len(evaluation.Feedback.CriticalIssues))
+		// Critical Issues 있으면 기술적 품질 점수를 2점으로 강제
+		if evaluation.Scores.TechnicalQuality > 2.0 {
+			log.Printf("⚠️  Critical Issues 발견: 기술적 품질 점수를 %.1f → 2.0으로 강제 조정", evaluation.Scores.TechnicalQuality)
+			evaluation.Scores.TechnicalQuality = 2.0
+
+			// 총점도 재계산
+			evaluation.TotalScore = (evaluation.Scores.TheologicalAccuracy * 0.25) +
+				(evaluation.Scores.ContentStructure * 0.20) +
+				(evaluation.Scores.Engagement * 0.15) +
+				(evaluation.Scores.TechnicalQuality * 0.30) +
+				(evaluation.Scores.SeoOptimization * 0.10)
+
+			log.Printf("⚠️  총점 재계산: %.1f/10", evaluation.TotalScore)
+		}
+
+		return false, fmt.Sprintf("치명적 문제 발견: %d개 (기술 점수 강제 조정)", len(evaluation.Feedback.CriticalIssues))
 	}
 
 	// 필수 통과 기준 체크
