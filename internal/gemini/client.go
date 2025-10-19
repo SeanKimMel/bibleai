@@ -213,11 +213,19 @@ func buildEvaluationPrompt(blog BlogContent) string {
    - **❌ 없으면 critical_issues에 "성경 구절 내부 링크 없음" 추가**
    - **❌ 없으면 기술적 품질 점수 강제 2점 (발행 불가 수준)**
 
-5. **찬송가 제목 일치 여부** (유튜브가 있을 경우)
-   - 본문에 명시된 찬송가 번호와 YouTube 섹션의 찬송가 번호가 일치하는가?
-   - 예: 본문에 "찬송가 364장"이 있으면, YouTube 임베드 근처에도 "364장" 표시 필요
-   - **불일치하면 critical_issues에 "❌ 찬송가 제목 불일치" 추가**
-   - **불일치하면 기술적 품질 점수 최대 5점**
+5. **찬송가 제목 일치 여부** (⚠️ 최우선 검증 항목!)
+   - **본문 전체를 꼼꼼히 확인하여 찬송가 번호를 찾아내세요**
+   - 본문에 명시된 찬송가 번호와 YouTube 섹션(YOUTUBE_SEARCH 또는 iframe)의 찬송가 번호가 일치하는가?
+   - **검증 방법**:
+     1. 본문에서 "찬송가 XXX장" 패턴을 찾음 (예: "찬송가 305장", "364장")
+     2. YouTube 임베드 섹션에서 찬송가 번호 확인 (YOUTUBE_SEARCH: 찬송가 XXX장)
+     3. 두 번호가 정확히 일치하는지 확인
+   - **예시**:
+     * ✅ 정확한 경우: 본문 "찬송가 364장" → YOUTUBE_SEARCH: 찬송가 364장
+     * ❌ 불일치 사례: 본문 "찬송가 364장" → YOUTUBE_SEARCH: 찬송가 492장
+     * ❌ 불일치 사례: 본문 "찬송가 305장" → YouTube 임베드에 다른 번호
+   - **불일치하면 반드시 critical_issues에 "❌ 찬송가 제목 불일치 - 본문: XXX장, YouTube: YYY장" 형식으로 추가**
+   - **불일치하면 기술적 품질 점수 강제 3점 이하 (발행 불가 수준)**
 
 ### 5. SEO 최적화 (가중치 10%)
 **평가 항목:**
@@ -502,6 +510,7 @@ func buildBlogGenerationPrompt(keyword, date, slug string) string {
 1. **찬송가 YouTube 임베딩 (필수 형식!)**
    - 키워드와 관련된 찬송가를 선택 (예: "기도" → 찬송가 305장)
    - 임베드 위치: "오늘의 적용" 섹션 바로 위에 배치
+   - **⚠️ 중요: 찬송가 번호를 정확히 확인하고 본문과 YOUTUBE_SEARCH 태그가 일치해야 함!**
    - **반드시 아래 형식을 정확히 따를 것:**
 
    예시 HTML:
@@ -512,6 +521,9 @@ func buildBlogGenerationPrompt(keyword, date, slug string) string {
    </div>
 
    - YOUTUBE_SEARCH 태그는 자동으로 실제 YouTube 임베드로 교체됨
+   - **⚠️ 필수 확인사항: 찬송가 번호가 본문에 명시한 것과 정확히 일치해야 함**
+     * 예: 본문에 "찬송가 305장"이라고 했으면 YOUTUBE_SEARCH에도 반드시 "찬송가 305장"
+     * 잘못된 예: 본문 "364장"인데 YOUTUBE_SEARCH "492장" ❌
    - 찬송가 번호와 제목을 정확히 명시
 
 2. **찬송가 가사 포함 (필수!)**
@@ -782,6 +794,13 @@ func buildBlogRegenerationPrompt(original BlogContent, evaluation *QualityEvalua
 
 2. **찬송가 정보 (필수!)**
    - 찬송가 번호 명시: "찬송가 XXX장" 패턴 (YouTube 섹션에 포함)
+   - **⚠️ 최우선 확인: 본문에 명시한 찬송가 번호와 YOUTUBE_SEARCH의 찬송가 번호가 정확히 일치해야 함!**
+   - 예시 (정확한 일치):
+     * 본문: "찬송가 305장"
+     * YOUTUBE_SEARCH: 찬송가 305장 ✅
+   - **잘못된 예시 (불일치)**:
+     * 본문: "찬송가 364장"
+     * YOUTUBE_SEARCH: 찬송가 492장 ❌ (발행 불가!)
    - 전체 가사를 blockquote 형식(>)으로 포함
    - 예시:
      > **찬송가 305장 - 나 같은 죄인 살리신**

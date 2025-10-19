@@ -17,10 +17,13 @@
 
 ### 관리자 기능 (백오피스)
 - ✅ **AI 블로그 생성**: Gemini API 기반 자동 블로그 작성
+- ✅ **랜덤 키워드 지원**: 키워드 자동 선택으로 간편한 콘텐츠 생성
 - ✅ **품질 자동 평가**: 5가지 지표로 콘텐츠 품질 평가 (신학적 정확성, 구조, 참여도, 기술, SEO)
+- ✅ **찬송가 검증 강화**: 본문 찬송가 번호와 YouTube 임베딩 일치 자동 검증
 - ✅ **재생성 시스템**: 평가 피드백 기반 자동 개선
 - ✅ **YouTube 임베딩**: 찬송가 영상 자동 검색 및 임베딩
 - ✅ **발행 관리**: 자동/수동 발행 제어
+- ✅ **자동 스케줄링**: Cron/systemd를 통한 정기적 자동 발행
 
 ## 🛠️ 기술 스택
 
@@ -147,16 +150,19 @@ EC2 t4g.micro (ARM64)
 **접속**: http://localhost:9090 (로컬) 또는 http://SERVER:9090 (운영)
 
 **주요 기능**:
-- AI 블로그 자동 생성 (Gemini API)
+- AI 블로그 자동 생성 (Gemini API, 랜덤 키워드 지원)
 - 5가지 지표 품질 평가 (신학적 정확성, 구조, 참여도, 기술, SEO)
-- 평가 피드백 기반 재생성
+- 찬송가 제목 일치 검증 (본문 ↔ YouTube 임베딩)
+- 평가 피드백 기반 재생성 (항상 가능)
 - YouTube 찬송가 영상 자동 임베딩
 - 발행 관리 (자동/수동)
+- 자동 스케줄링 (Cron/systemd 지원)
 
 **기술 스택**:
 - Gemini API (google.golang.org/genai)
 - YouTube 스크레이퍼
 - Tailwind CSS 반응형 UI
+- Cron/systemd (자동 발행)
 
 ## 📊 데이터베이스
 
@@ -197,6 +203,12 @@ EC2 t4g.micro (ARM64)
 
 # 환경변수 설정 필수
 echo "GEMINI_API_KEY=your_key" >> .env
+
+# 자동 스케줄링 설정 (선택)
+# 매일 오전 6시 자동 블로그 생성
+crontab -e
+# 추가: 0 6 * * * /workspace/bibleai/scripts/auto_blog_generate.sh
+# 상세 가이드: docs/AUTO_SCHEDULING.md
 ```
 
 ### EC2 프로덕션
@@ -254,11 +266,20 @@ ENVIRONMENT=production
 
 ## 📚 문서
 
+### 사용자 가이드
 - [빠른 시작 가이드](docs/QUICK_START.md) - 5분 시작
 - [Cloudflare 설정](docs/CLOUDFLARE_SETUP.md) - 무료 HTTPS ⭐
 - [개발 가이드](docs/DEVELOPMENT.md) - 로컬 개발
 - [API 레퍼런스](docs/API.md) - API 상세
+
+### 백오피스 문서
+- [자동 스케줄링 가이드](docs/AUTO_SCHEDULING.md) - Cron/systemd 설정 ⭐ NEW
 - [Claude AI 참조](docs/CLAUDE.md) - AI 개발 컨텍스트
+
+### 작업 일지
+- [2025-10-19: 찬송가 검증 강화 & 자동 스케줄링](docs/2025-10-19-hymn-title-validation-and-scheduling.md)
+- [2025-10-18: 백오피스 개선](docs/2025-10-18-backoffice-improvements.md)
+- [2025-10-16: Gemini 평가 시스템](docs/2025-10-16-gemini-blog-evaluation.md)
 
 ## 🚨 문제 해결
 

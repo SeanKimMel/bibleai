@@ -23,9 +23,15 @@
     <div id="auto-generate-section" style="display: none; margin-bottom: 2rem; padding: 1.5rem; background: #e8f5e9; border-radius: 8px;">
         <h3 style="margin-top: 0;">Gemini API 자동 생성</h3>
         <div style="margin-bottom: 1rem;">
-            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">키워드 *</label>
-            <input type="text" id="auto-keyword" placeholder="예: 사랑, 믿음, 소망"
-                   style="width: 100%; padding: 0.5rem; border: 1px solid #81c784; border-radius: 4px;">
+            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">키워드 (선택사항)</label>
+            <div style="display: flex; gap: 0.5rem;">
+                <input type="text" id="auto-keyword" placeholder="비워두면 랜덤 선택됨 (예: 사랑, 믿음, 소망)"
+                       style="flex: 1; padding: 0.5rem; border: 1px solid #81c784; border-radius: 4px;">
+                <button onclick="clearKeyword()" class="btn btn-secondary" style="white-space: nowrap;">🎲 랜덤</button>
+            </div>
+            <small style="color: #666; display: block; margin-top: 0.25rem;">
+                키워드를 입력하거나, 비워두면 keywords 테이블에서 자동으로 랜덤 선택됩니다
+            </small>
         </div>
         <div style="margin-bottom: 1rem;">
             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">날짜</label>
@@ -33,7 +39,7 @@
                    style="width: 100%; padding: 0.5rem; border: 1px solid #81c784; border-radius: 4px;">
         </div>
         <div style="display: flex; gap: 0.5rem;">
-            <button onclick="generateBlog()" class="btn btn-success" id="btn-generate">생성 시작</button>
+            <button onclick="generateBlog()" class="btn btn-success" id="btn-generate">🤖 생성 시작</button>
             <button onclick="hideAutoGenerate()" class="btn btn-secondary">취소</button>
         </div>
     </div>
@@ -96,13 +102,20 @@
         document.getElementById('btn-show-auto').style.display = 'inline-block';
     }
 
+    function clearKeyword() {
+        document.getElementById('auto-keyword').value = '';
+        document.getElementById('auto-keyword').placeholder = '🎲 랜덤 키워드가 자동 선택됩니다';
+    }
+
     async function generateBlog() {
         const keyword = document.getElementById('auto-keyword').value.trim();
         const date = document.getElementById('auto-date').value;
 
+        // 키워드가 비어있으면 랜덤 선택 안내
         if (!keyword) {
-            alert('키워드를 입력하세요');
-            return;
+            if (!confirm('키워드가 비어있습니다.\nkeywords 테이블에서 랜덤으로 선택하여 블로그를 생성하시겠습니까?')) {
+                return;
+            }
         }
 
         const btn = document.getElementById('btn-generate');
@@ -117,7 +130,7 @@
             const response = await fetch('/api/blogs/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ keyword: keyword, date: date || null })
+                body: JSON.stringify({ keyword: keyword || '', date: date || null })
             });
 
             const result = await response.json();
@@ -128,6 +141,7 @@
 
             let message = '블로그가 성공적으로 생성되었습니다!\n\n';
             message += 'ID: ' + result.id + '\n';
+            message += '키워드: ' + result.blog.keywords + '\n';
             message += '제목: ' + result.blog.title + '\n';
 
             if (result.evaluation) {

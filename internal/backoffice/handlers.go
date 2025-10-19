@@ -435,13 +435,33 @@ func (h *Handlers) GetEvaluationHistory(c *gin.Context) {
 // GenerateBlog Gemini API로 블로그 자동 생성 및 저장
 func (h *Handlers) GenerateBlog(c *gin.Context) {
 	var req struct {
-		Keyword string `json:"keyword" binding:"required"`
+		Keyword string `json:"keyword"` // 선택적: 비어있으면 랜덤 선택
 		Date    string `json:"date"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "키워드는 필수입니다"})
-		return
+		// JSON 파싱 실패시에도 계속 진행 (빈 키워드로)
+		req.Keyword = ""
+	}
+
+	// 키워드가 없으면 keywords 테이블에서 랜덤 선택
+	if req.Keyword == "" {
+		var keyword string
+		err := h.db.QueryRow(`
+			SELECT name
+			FROM keywords
+			WHERE bible_count > 0 OR hymn_count > 0 OR prayer_count > 0
+			ORDER BY RANDOM()
+			LIMIT 1
+		`).Scan(&keyword)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "랜덤 키워드 선택 실패: " + err.Error()})
+			return
+		}
+
+		req.Keyword = keyword
+		log.Printf("🎲 랜덤 키워드 선택: %s", keyword)
 	}
 
 	// 날짜가 없으면 오늘 날짜 사용
