@@ -20,15 +20,15 @@ func SetDB(database *sql.DB) {
 	db = database
 }
 
-// 메인 페이지 (키워드 메인)
+// 메인 페이지 (블로그)
 func HomePage(c *gin.Context) {
-	c.HTML(http.StatusOK, "bible-analysis.html", gin.H{
-		"Title": "오늘의 키워드",
-		"Description": "성경, 찬송가, 기도문을 키워드로 통합 검색하세요. 매일 업데이트되는 추천 키워드로 오늘 필요한 말씀을 찾아보세요.",
+	c.HTML(http.StatusOK, "blog.html", gin.H{
+		"Title": "신앙 이야기",
+		"Description": "매일 업데이트되는 묵상과 신앙 이야기를 나눕니다.",
 		"CurrentPath": c.Request.URL.Path,
+		"ShowBackButton": false,
 		"ShowNavigation": true,
-		"PageType": "bible-analysis",
-		"CacheVersion": "4",
+		"PageType": "blog",
 	})
 }
 
@@ -218,9 +218,17 @@ func GenerateSitemap(c *gin.Context) {
 	// 정적 페이지들
 	sitemap := `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- 홈페이지 (최우선) -->
+  <!-- 홈페이지 (블로그) - 최우선 -->
   <url>
     <loc>` + baseURL + `/</loc>
+    <lastmod>` + now + `</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- 블로그 목록 -->
+  <url>
+    <loc>` + baseURL + `/blog</loc>
     <lastmod>` + now + `</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
@@ -239,7 +247,7 @@ func GenerateSitemap(c *gin.Context) {
     <loc>` + baseURL + `/bible/analysis</loc>
     <lastmod>` + now + `</lastmod>
     <changefreq>daily</changefreq>
-    <priority>0.8</priority>
+    <priority>0.7</priority>
   </url>
 
   <!-- 찬송가 -->
@@ -256,14 +264,6 @@ func GenerateSitemap(c *gin.Context) {
     <lastmod>` + now + `</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
-  </url>
-
-  <!-- 블로그 목록 -->
-  <url>
-    <loc>` + baseURL + `/blog</loc>
-    <lastmod>` + now + `</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.9</priority>
   </url>
 `
 
