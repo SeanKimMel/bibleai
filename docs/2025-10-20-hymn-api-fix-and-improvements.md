@@ -81,7 +81,7 @@ func (h *Handlers) GenerateBlog(c *gin.Context) {
    - **다시 한번 확인: YouTube 임베드의 찬송가 번호 = 가사 섹션의 찬송가 번호 (반드시 일치!)**
 ```
 
-### 2. 찬송가 API 응답 구조 파싱 오류 수정
+### 2. 찬송가 API 응답 구조 파싱 오류 수정 (추가 개선)
 
 #### 문제 발견
 ```bash
@@ -133,6 +133,40 @@ if !response.Success {
 
 return response.Hymn.Title, response.Hymn.Lyrics, nil
 ```
+
+**추가 개선 (2차):**
+
+YouTube 임베드 위의 제목 부분도 API에서 가져오도록 패턴 추가:
+
+```go
+// 1단계: YouTube 임베드 위의 제목도 교체
+// 패턴: <p><strong>찬송가 XXX장 - 제목</strong></p>
+titlePattern := regexp.MustCompile(`<p><strong>찬송가\s+(\d+)장\s*-\s*([^<]+)</strong></p>`)
+titleMatches := titlePattern.FindAllStringSubmatch(content, -1)
+
+for _, match := range titleMatches {
+    if len(match) > 2 {
+        hymnNumberStr := match[1]
+        var hymnNumber int
+        fmt.Sscanf(hymnNumberStr, "%d", &hymnNumber)
+
+        // API에서 찬송가 정보 가져오기
+        apiTitle, _, err := FetchHymnLyrics(hymnNumber)
+        if err != nil {
+            continue
+        }
+
+        // 정확한 제목으로 교체
+        correctTitle := fmt.Sprintf("<p><strong>찬송가 %d장 - %s</strong></p>", hymnNumber, apiTitle)
+        content = strings.ReplaceAll(content, match[0], correctTitle)
+    }
+}
+```
+
+이제 **세 부분 모두** API에서 정확한 찬송가 데이터를 가져옵니다:
+1. YouTube 임베드 위 제목: `<p><strong>찬송가 XXX장 - 제목</strong></p>`
+2. YOUTUBE_SEARCH 태그: `YOUTUBE_SEARCH: 찬송가 XXX장`
+3. 가사 섹션: `> **찬송가 XXX장 - 제목**` + 가사
 
 ### 3. 백오피스 systemd 서비스 관리
 
@@ -282,6 +316,8 @@ func HomePage(c *gin.Context) {
 ## 커밋 내역
 
 ```bash
+4fa33b6 fix: YouTube 임베드 위 찬송가 제목도 API에서 가져오도록 수정
+8232e23 docs: 2025-10-20 찬송가 API 수정 및 시스템 개선 문서화
 0bee029 fix: 찬송가 API 응답 구조 파싱 오류 수정
 b2a5590 feat: 찬송가 가사 자동 교체 시스템 및 백오피스 개선
 6774ebd feat: 블로그 목록 SSR 구현 (SEO 최적화)
