@@ -149,30 +149,36 @@ rsync -avz --progress \
   ${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/web/static/css/ 2>&1 | tee -a "$LOG_FILE"
 
 log ""
-log "🔄 6단계: 백오피스 서버 재시작 중..."
+log "📋 6단계: systemd 서비스 파일 전송 중..."
+rsync -avz --progress \
+  -e "ssh -i $SSH_KEY_EXPANDED -p $SSH_PORT -o StrictHostKeyChecking=no" \
+  bibleai-backoffice.service \
+  ${SERVER_USER}@${SERVER_HOST}:${SERVER_PATH}/ 2>&1 | tee -a "$LOG_FILE"
+
+log ""
+log "🔄 7단계: 백오피스 서버 재시작 중 (systemd 사용)..."
 ssh -i "$SSH_KEY_EXPANDED" -p $SSH_PORT -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} << EOF 2>&1 | tee -a "$LOG_FILE"
   cd ${SERVER_PATH}
-
-  # 기존 프로세스 종료
-  if pgrep backoffice > /dev/null; then
-    echo "기존 백오피스 프로세스 종료 중..."
-    pkill backoffice
-    sleep 2
-  fi
 
   # 바이너리 실행 권한 부여
   chmod +x ./backoffice
 
-  # 새 프로세스 시작
-  nohup ./backoffice > backoffice.log 2>&1 &
-  sleep 1
+  # systemd 서비스 파일 복사 및 활성화
+  sudo cp bibleai-backoffice.service /etc/systemd/system/
+  sudo systemctl daemon-reload
+  sudo systemctl enable bibleai-backoffice.service
 
-  # 프로세스 확인
-  if pgrep backoffice > /dev/null; then
-    echo "✅ 백오피스 서버 시작 성공 (PID: \$(pgrep backoffice))"
+  # 서비스 재시작
+  sudo systemctl restart bibleai-backoffice.service
+  sleep 2
+
+  # 서비스 상태 확인
+  if sudo systemctl is-active --quiet bibleai-backoffice.service; then
+    echo "✅ 백오피스 서비스 시작 성공"
+    sudo systemctl status bibleai-backoffice.service --no-pager
   else
-    echo "❌ 백오피스 서버 시작 실패"
-    tail -20 backoffice.log
+    echo "❌ 백오피스 서비스 시작 실패"
+    sudo journalctl -u bibleai-backoffice.service -n 50 --no-pager
     exit 1
   fi
 EOF
@@ -182,8 +188,10 @@ log "✅ 백오피스 배포 완료!"
 log "📄 로그 파일: $LOG_FILE"
 log ""
 log "📊 유용한 명령어:"
-log "   로그 확인: ssh -i $SSH_KEY_EXPANDED ${SERVER_USER}@${SERVER_HOST} 'tail -f ${SERVER_PATH}/backoffice.log'"
-log "   프로세스 확인: ssh -i $SSH_KEY_EXPANDED ${SERVER_USER}@${SERVER_HOST} 'ps aux | grep backoffice'"
+log "   서비스 상태: ssh -i $SSH_KEY_EXPANDED ${SERVER_USER}@${SERVER_HOST} 'sudo systemctl status bibleai-backoffice'"
+log "   서비스 재시작: ssh -i $SSH_KEY_EXPANDED ${SERVER_USER}@${SERVER_HOST} 'sudo systemctl restart bibleai-backoffice'"
+log "   로그 확인: ssh -i $SSH_KEY_EXPANDED ${SERVER_USER}@${SERVER_HOST} 'sudo journalctl -u bibleai-backoffice -f'"
+log "   로그 확인(파일): ssh -i $SSH_KEY_EXPANDED ${SERVER_USER}@${SERVER_HOST} 'tail -f ${SERVER_PATH}/backoffice.log'"
 log "   서버 접속: ssh -i $SSH_KEY_EXPANDED ${SERVER_USER}@${SERVER_HOST}"
 log "   백오피스 접속: http://${SERVER_HOST}:${BACKOFFICE_PORT}"
 log ""

@@ -58,8 +58,14 @@
 
 <!-- 페이지네이션 -->
 <div id="pagination" class="mt-8 flex justify-center items-center space-x-2">
-    {{if gt .TotalPages 1}}
+    {{if .Posts}}
+        <!-- 첫 페이지 (활성화) -->
+        <button onclick="loadBlogPosts(1)" class="px-4 py-2 bg-teal-600 text-white rounded-lg font-bold">
+            1
+        </button>
+
         {{if .HasNext}}
+        <!-- 다음 페이지 버튼 -->
         <button onclick="loadBlogPosts(2)" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
             다음
         </button>

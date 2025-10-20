@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"bibleai/internal/gemini"
+	"bibleai/internal/hymn"
 	"bibleai/internal/youtube"
 	"github.com/gin-gonic/gin"
 )
@@ -482,6 +483,11 @@ func (h *Handlers) GenerateBlog(c *gin.Context) {
 	log.Printf("🔍 YouTube 검색 태그 처리 중...")
 	blog.Content = youtube.ReplaceYouTubeSearchTags(blog.Content)
 	log.Printf("✅ YouTube 임베드 교체 완료")
+
+	// 찬송가 가사를 API에서 가져와서 교체
+	log.Printf("🎵 찬송가 가사 교체 중...")
+	blog.Content = hymn.ReplaceHymnLyrics(blog.Content)
+	log.Printf("✅ 찬송가 가사 교체 완료")
 
 	// DB에 저장
 	var id int

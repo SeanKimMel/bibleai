@@ -114,7 +114,13 @@
             }
 
             const evaluator = blog.evaluator || '-';
-            const createdAt = new Date(blog.created_at).toLocaleDateString('ko-KR');
+            const createdAt = new Date(blog.created_at).toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
 
             const publishBtn = blog.is_published
                 ? '<button onclick="togglePublish(' + blog.id + ', false)" class="btn btn-danger btn-sm" style="margin-right: 0.25rem;">발행취소</button>'
@@ -129,7 +135,7 @@
                 '</div>' +
                 '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">' +
                 statusBadge + ' ' + scoreBadge +
-                '<span class="mobile-hide" style="color: #7f8c8d; font-size: 0.85rem;">' + createdAt + '</span>' +
+                '<span style="color: #7f8c8d; font-size: 0.85rem;">' + createdAt + '</span>' +
                 '</div>' +
                 '</td>' +
                 '<td class="mobile-hide">' + statusBadge + '</td>' +

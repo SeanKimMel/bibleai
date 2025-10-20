@@ -255,7 +255,13 @@
         }
 
         document.getElementById('evaluation-date').textContent = blog.evaluation_date
-            ? new Date(blog.evaluation_date).toLocaleString('ko-KR')
+            ? new Date(blog.evaluation_date).toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
             : '-';
         document.getElementById('evaluator').textContent = blog.evaluator || '-';
 
@@ -507,7 +513,13 @@
 
         let html = '';
         evaluationHistory.forEach((h, index) => {
-            const date = new Date(h.evaluated_at).toLocaleString('ko-KR');
+            const date = new Date(h.evaluated_at).toLocaleString('ko-KR', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
             const totalScore = h.total_score.toFixed(1);
 
             let scoreColor = '#e74c3c';

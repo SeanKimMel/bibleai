@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"bibleai/internal/backoffice"
 	"bibleai/internal/database"
@@ -11,6 +12,12 @@ import (
 )
 
 func main() {
+	// 타임존을 한국 시간(KST)으로 설정
+	location, err := time.LoadLocation("Asia/Seoul")
+	if err != nil {
+		log.Fatalf("타임존 설정 실패: %v", err)
+	}
+	time.Local = location
 	// 데이터베이스 연결 (메인 API와 동일한 DB 사용)
 	db, err := database.NewConnection()
 	if err != nil {
