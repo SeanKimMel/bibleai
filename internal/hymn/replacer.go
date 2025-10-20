@@ -10,11 +10,17 @@ import (
 	"time"
 )
 
-// HymnResponse API 응답 구조
-type HymnResponse struct {
+// HymnData 찬송가 데이터 구조
+type HymnData struct {
 	Number int    `json:"number"`
 	Title  string `json:"title"`
 	Lyrics string `json:"lyrics"`
+}
+
+// HymnResponse API 응답 구조
+type HymnResponse struct {
+	Success bool     `json:"success"`
+	Hymn    HymnData `json:"hymn"`
 }
 
 // FetchHymnLyrics 찬송가 API에서 가사 가져오기
@@ -40,12 +46,16 @@ func FetchHymnLyrics(number int) (string, string, error) {
 		return "", "", fmt.Errorf("응답 읽기 실패: %w", err)
 	}
 
-	var hymn HymnResponse
-	if err := json.Unmarshal(body, &hymn); err != nil {
+	var response HymnResponse
+	if err := json.Unmarshal(body, &response); err != nil {
 		return "", "", fmt.Errorf("JSON 파싱 실패: %w", err)
 	}
 
-	return hymn.Title, hymn.Lyrics, nil
+	if !response.Success {
+		return "", "", fmt.Errorf("API 응답 실패")
+	}
+
+	return response.Hymn.Title, response.Hymn.Lyrics, nil
 }
 
 // ReplaceHymnLyrics 찬송가 가사 플레이스홀더를 실제 가사로 교체
