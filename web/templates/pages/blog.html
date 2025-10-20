@@ -20,12 +20,51 @@
 
 <!-- 블로그 목록 -->
 <div id="blog-list" class="space-y-4">
-    <!-- JavaScript로 동적 로딩 -->
+    {{if .Posts}}
+        {{range .Posts}}
+        <a href="/blog/{{.slug}}" class="block bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-lg transition-shadow">
+            <div class="flex justify-between items-start mb-3">
+                <h2 class="text-xl font-bold text-gray-900 flex-1 pr-4">{{.title}}</h2>
+                <div class="flex items-center text-gray-500 text-sm space-x-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                    <span>{{.view_count}}</span>
+                </div>
+            </div>
+
+            {{if .excerpt}}
+            <p class="text-gray-600 mb-4 line-clamp-2">{{.excerpt}}</p>
+            {{end}}
+
+            <div class="flex justify-between items-center text-sm">
+                <div class="flex flex-wrap gap-2">
+                    {{if .keywords}}
+                        {{$keywords := splitKeywords .keywords}}
+                        {{range $keywords}}
+                        <span class="px-2 py-1 bg-teal-50 text-teal-700 rounded-lg text-xs">#{{.}}</span>
+                        {{end}}
+                    {{end}}
+                </div>
+                <span class="text-gray-500">{{formatDate .published_at}}</span>
+            </div>
+        </a>
+        {{end}}
+    {{else}}
+        <div class="text-center py-12 text-gray-500">아직 작성된 글이 없습니다.</div>
+    {{end}}
 </div>
 
 <!-- 페이지네이션 -->
 <div id="pagination" class="mt-8 flex justify-center items-center space-x-2">
-    <!-- JavaScript로 동적 생성 -->
+    {{if gt .TotalPages 1}}
+        {{if .HasNext}}
+        <button onclick="loadBlogPosts(2)" class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+            다음
+        </button>
+        {{end}}
+    {{end}}
 </div>
 
 <!-- 로딩 상태 -->
@@ -164,7 +203,8 @@ function formatDate(dateString) {
 
 // 페이지 로드 시 실행
 document.addEventListener('DOMContentLoaded', () => {
-    loadBlogPosts(1);
+    // 첫 페이지는 이미 서버에서 렌더링됨, JavaScript는 2페이지부터 로딩
+    console.log('블로그 페이지 로드 완료 (첫 페이지는 SSR)');
 });
 </script>
 

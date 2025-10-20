@@ -339,21 +339,70 @@ logs/               # 로그 디렉토리
 
 ## 📊 SEO 체크리스트
 
+### 🔖 롤백 가능 커밋 (2025-10-20)
+**SEO 최적화 작업 전 스냅샷**: `b9f8854` (feat: 메인 페이지를 블로그로 변경 및 네비게이션 순서 조정)
+
+```bash
+# 롤백 명령어
+git reset --hard b9f8854
+```
+
+### 🎯 SEO 최적화 작업 체크리스트 (2025-10-20)
+
+#### Phase 1: 현재 상태 분석
+- [x] 메인 페이지 렌더링 방식 확인
+- [x] 블로그 목록 페이지 CSR 확인 (문제 발견!)
+- [x] 블로그 상세 페이지 SSR 확인 (정상)
+- [ ] 구글봇 크롤링 테스트
+
+#### Phase 2: 블로그 SSR 구현 (우선순위 1)
+- [ ] `BlogPage` 핸들러에서 첫 페이지 데이터 조회
+- [ ] `blog.html` 템플릿에 서버 데이터 렌더링
+- [ ] JavaScript로 2페이지부터 동적 로딩
+- [ ] 배포 및 테스트
+
+#### Phase 3: 메타 태그 최적화
+- [ ] 블로그 목록 페이지 description 개선
+- [ ] Open Graph 이미지 추가
+- [ ] 블로그 개별 글 메타 태그 검증
+
+#### Phase 4: 검색엔진 등록
+- [ ] Google Search Console 사이트 등록
+- [ ] 소유권 확인 메타 태그 추가
+- [ ] Sitemap 제출
+- [ ] 주요 페이지 색인 요청
+- [ ] Naver 웹마스터 등록
+- [ ] Naver Sitemap 제출
+
+#### Phase 5: 성능 최적화
+- [ ] 이미지 최적화
+- [ ] 페이지 로딩 속도 측정
+- [ ] Core Web Vitals 확인
+- [ ] 모바일 친화성 테스트
+
 ### 배포 후 확인 사항
 
 #### 필수 항목
-- [ ] robots.txt 접근 확인: https://bibleai.wiki/robots.txt
-- [ ] sitemap.xml 접근 확인: https://bibleai.wiki/sitemap.xml
+- [ ] robots.txt 접근 확인: https://haruinfo.net/robots.txt
+- [ ] sitemap.xml 접근 확인: https://haruinfo.net/sitemap.xml
 - [ ] 메타 태그 확인 (페이지 소스 보기)
+- [ ] 블로그 목록 HTML에 실제 콘텐츠 존재 확인 (구글봇 테스트)
 - [ ] Open Graph 미리보기 (소셜 공유 시)
 - [ ] 모바일 반응형 확인
 - [ ] 페이지 로딩 속도 (<3초)
+
+#### 구글봇 크롤링 테스트
+```bash
+# User-Agent를 구글봇으로 설정하여 페이지 확인
+curl -A "Googlebot" https://haruinfo.net/ | grep -i "blog-list"
+```
 
 #### Google Search Console
 - [ ] 사이트 등록
 - [ ] 소유권 확인 메타 태그 추가
 - [ ] Sitemap 제출
 - [ ] 주요 페이지 색인 요청
+- [ ] URL 검사 도구로 블로그 페이지 확인
 
 #### Naver 웹마스터
 - [ ] 사이트 등록

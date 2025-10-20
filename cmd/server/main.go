@@ -1,8 +1,11 @@
 package main
 
 import (
+	"html/template"
 	"log"
 	"net/http"
+	"strings"
+	"time"
 
 	"bibleai/internal/database"
 	"bibleai/internal/handlers"
@@ -22,6 +25,28 @@ func main() {
 	// 템플릿 캐시 방지를 위해 개발 모드 설정
 	gin.SetMode(gin.DebugMode)
 	r := gin.Default()
+
+	// 템플릿 헬퍼 함수 등록
+	r.SetFuncMap(template.FuncMap{
+		"splitKeywords": func(keywords string) []string {
+			parts := strings.Split(keywords, ",")
+			result := []string{}
+			for _, k := range parts {
+				trimmed := strings.TrimSpace(k)
+				if trimmed != "" {
+					result = append(result, trimmed)
+				}
+			}
+			return result
+		},
+		"formatDate": func(dateStr string) string {
+			t, err := time.Parse(time.RFC3339, dateStr)
+			if err != nil {
+				return dateStr
+			}
+			return t.Format("2006년 1월 2일")
+		},
+	})
 
 	// HTML 템플릿을 글로빙 패턴으로 효율적 로드
 	r.LoadHTMLGlob("web/templates/**/*.html")

@@ -94,13 +94,58 @@ func PrayersPage(c *gin.Context) {
 
 // 블로그 페이지
 func BlogPage(c *gin.Context) {
+	// 첫 페이지 블로그 목록 조회 (SEO를 위한 SSR)
+	limit := 10
+	offset := 0
+
+	// 전체 개수 조회
+	var total int
+	db.QueryRow("SELECT COUNT(*) FROM blog_posts WHERE is_published = true").Scan(&total)
+
+	// 블로그 목록 조회
+	rows, err := db.Query(`
+		SELECT id, title, slug, excerpt, keywords, published_at, view_count
+		FROM blog_posts
+		WHERE is_published = true
+		ORDER BY published_at DESC
+		LIMIT $1 OFFSET $2
+	`, limit, offset)
+
+	posts := []map[string]interface{}{}
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var id, viewCount int
+			var title, slug, excerpt, keywords, publishedAt string
+			if err := rows.Scan(&id, &title, &slug, &excerpt, &keywords, &publishedAt, &viewCount); err == nil {
+				posts = append(posts, map[string]interface{}{
+					"id":           id,
+					"title":        title,
+					"slug":         slug,
+					"excerpt":      excerpt,
+					"keywords":     keywords,
+					"published_at": publishedAt,
+					"view_count":   viewCount,
+				})
+			}
+		}
+	}
+
+	// 페이지 정보
+	totalPages := int((float64(total) + float64(limit) - 1) / float64(limit))
+
 	c.HTML(http.StatusOK, "blog.html", gin.H{
-		"Title": "신앙 이야기",
+		"Title":       "신앙 이야기",
 		"Description": "매일 업데이트되는 묵상과 신앙 이야기를 나눕니다.",
 		"CurrentPath": c.Request.URL.Path,
 		"ShowBackButton": false,
 		"ShowNavigation": true,
-		"PageType": "blog",
+		"PageType":      "blog",
+		// SSR을 위한 초기 데이터
+		"Posts":      posts,
+		"Total":      total,
+		"TotalPages": totalPages,
+		"HasNext":    1 < totalPages,
 	})
 }
 
