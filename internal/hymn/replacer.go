@@ -60,6 +60,31 @@ func FetchHymnLyrics(number int) (string, string, error) {
 
 // ReplaceHymnLyrics 찬송가 가사 플레이스홀더를 실제 가사로 교체
 func ReplaceHymnLyrics(content string) string {
+	// 1단계: YouTube 임베드 위의 제목도 교체
+	// 패턴: <p><strong>찬송가 XXX장 - 제목</strong></p>
+	titlePattern := regexp.MustCompile(`<p><strong>찬송가\s+(\d+)장\s*-\s*([^<]+)</strong></p>`)
+	titleMatches := titlePattern.FindAllStringSubmatch(content, -1)
+
+	for _, match := range titleMatches {
+		if len(match) > 2 {
+			hymnNumberStr := match[1]
+			var hymnNumber int
+			fmt.Sscanf(hymnNumberStr, "%d", &hymnNumber)
+
+			// API에서 찬송가 정보 가져오기
+			apiTitle, _, err := FetchHymnLyrics(hymnNumber)
+			if err != nil {
+				// API 실패 시 원본 유지
+				continue
+			}
+
+			// 정확한 제목으로 교체
+			correctTitle := fmt.Sprintf("<p><strong>찬송가 %d장 - %s</strong></p>", hymnNumber, apiTitle)
+			content = strings.ReplaceAll(content, match[0], correctTitle)
+		}
+	}
+
+	// 2단계: 가사 플레이스홀더 교체
 	// 패턴: > **찬송가 XXX장 - 제목**
 	// > (가사는 자동으로 추가됩니다)
 	pattern := regexp.MustCompile(`>\s*\*\*찬송가\s+(\d+)장\s*-\s*([^*]+)\*\*\s*>\s*\(가사는 자동으로 추가됩니다\)`)
