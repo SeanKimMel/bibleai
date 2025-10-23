@@ -106,6 +106,60 @@ func EvaluateQuality(ctx context.Context, blog BlogContent) (*QualityEvaluation,
 		return nil, fmt.Errorf("JSON 파싱 실패: %w\n응답: %s", err, responseText[:min(500, len(responseText))])
 	}
 
+	// ✨ 코드 기반 기술적 검증 수행
+	log.Printf("🔧 코드 기반 기술 검증 시작...")
+	techValidation := ValidateTechnicalQuality(blog.Content)
+
+	// Gemini의 critical_issues를 기술적 검증 결과로 대체
+	evaluation.Feedback.CriticalIssues = techValidation.CriticalIssues
+
+	// 기술적 품질 점수 강제 조정
+	originalTechnical := evaluation.Scores.TechnicalQuality
+	if len(techValidation.CriticalIssues) > 0 {
+		evaluation.Scores.TechnicalQuality = CalculateTechnicalScore(techValidation)
+		log.Printf("⚠️  기술적 검증: %d개 문제 발견, 점수 %.1f → %.1f 강제 조정",
+			len(techValidation.CriticalIssues),
+			originalTechnical,
+			evaluation.Scores.TechnicalQuality)
+	} else {
+		// 문제 없으면 원래 점수 유지 (최대 9점)
+		if evaluation.Scores.TechnicalQuality > 9.0 {
+			evaluation.Scores.TechnicalQuality = 9.0
+		}
+		log.Printf("✅ 기술적 검증: 문제 없음, 점수 %.1f 유지", evaluation.Scores.TechnicalQuality)
+	}
+
+	// Feedback의 strengths에 검증 성공 항목 추가
+	if len(techValidation.DetailedLog) > 0 {
+		// 기존 strengths 유지하면서 기술 검증 결과 추가
+		newStrengths := []string{}
+		for _, strength := range evaluation.Feedback.Strengths {
+			// 기존의 기술 관련 피드백은 제거 (중복 방지)
+			if !strings.Contains(strength, "YouTube") &&
+				!strings.Contains(strength, "찬송가") &&
+				!strings.Contains(strength, "성경 구절") {
+				newStrengths = append(newStrengths, strength)
+			}
+		}
+		// 기술 검증 로그 추가
+		for _, logItem := range techValidation.DetailedLog {
+			if strings.HasPrefix(logItem, "✅") {
+				newStrengths = append(newStrengths, logItem)
+			}
+		}
+		evaluation.Feedback.Strengths = newStrengths
+	}
+
+	// 총점 재계산 (가중치 반영)
+	evaluation.TotalScore =
+		(evaluation.Scores.TheologicalAccuracy * 0.25) +
+			(evaluation.Scores.ContentStructure * 0.20) +
+			(evaluation.Scores.Engagement * 0.15) +
+			(evaluation.Scores.TechnicalQuality * 0.30) +
+			(evaluation.Scores.SeoOptimization * 0.10)
+
+	log.Printf("📊 최종 총점: %.1f/10 (기술 검증 반영 후)", evaluation.TotalScore)
+
 	return &evaluation, nil
 }
 
@@ -116,16 +170,7 @@ func buildEvaluationPrompt(blog BlogContent) string {
 
 	prompt := `당신은 기독교 블로그 콘텐츠 품질 평가 전문가입니다.
 
-## 👤 당신의 역할
-
-당신은 **교회 운영자로서 발행 전에 콘텐츠를 평가할 의무가 있는 입장**입니다.
-교회 공식 블로그에 게시될 콘텐츠의 신학적 정확성, 목회적 적절성, 교육적 가치를 책임지고 검토해야 합니다.
-신앙 공동체에 해를 끼치거나 잘못된 가르침을 전파할 수 있는 내용은 반드시 걸러내야 하며,
-성도들의 신앙 성장에 도움이 되는 양질의 콘텐츠만 발행되도록 엄격하게 평가해야 합니다.
-
 ## 📋 평가 대상 콘텐츠
-
-다음 블로그 포스트를 평가해주세요:
 
 ` + string(contentJSON) + `
 
@@ -134,112 +179,44 @@ func buildEvaluationPrompt(blog BlogContent) string {
 ## 🎯 평가 기준 (각 항목 1-10점)
 
 ### 1. 신학적 정확성 (가중치 25%)
-**평가 항목:**
-- 성경 인용의 정확성
-- 신학적 오류 없음
+- 성경 해석의 정확성
 - 교리적 적합성
-- 성경 해석의 적절성
+- 복음의 핵심 메시지
 
 **점수 가이드:**
 - 9-10점: 신학적으로 완벽하고 깊이 있음
 - 7-8점: 정확하며 적절함
 - 5-6점: 대체로 괜찮으나 일부 개선 필요
-- 1-4점: 심각한 신학적 오류 또는 부정확함
+- 1-4점: 심각한 신학적 오류
 
 ### 2. 콘텐츠 구조 (가중치 20%)
-**평가 항목:**
-- 도입-본론-결론 구조
-- 문단 구성의 적절성
 - 논리적 흐름
+- 문단 구성의 적절성
 - 섹션 간 연결성
 
 ### 3. 독자 참여도 (가중치 15%)
-**평가 항목:**
 - 독자 공감 유도
 - 실생활 적용 가능성
-- 감정적 연결
 - 구체적 예시 사용
 
 ### 4. 기술적 품질 (가중치 30%)
+⚠️ **주의: YouTube 임베딩, 찬송가 번호, 성경 링크는 시스템이 자동으로 검증합니다.**
+**여기서는 맞춤법, 문법, 문장 구조, 가독성만 평가하세요.**
+
 **평가 항목:**
 - 맞춤법 및 문법
-- 적절한 어휘 사용
 - 문장 길이의 적절성
-- 가독성
-- **🎬 유튜브 임베딩 필수 검증**
-
-**⚠️ 필수 확인사항 (반드시 체크!):**
-
-1. **유튜브 임베딩 포함 여부 (필수! 초엄격 검증)**
-   - 다음 패턴 중 하나라도 있으면 ✅:
-     * <iframe src="https://www.youtube.com/embed/VIDEO_ID"
-     * <iframe src="https://youtube.com/embed/VIDEO_ID"
-     * https://www.youtube.com/embed/VIDEO_ID
-     * https://youtube.com/embed/VIDEO_ID
-   - 다음은 인정하지 않음 ❌:
-     * YOUTUBE_SEARCH 태그만 있는 경우 (교체 전)
-     * 일반 youtube.com/watch 링크
-     * youtu.be 단축 링크
-   - **❌ 없으면 critical_issues에 "YouTube 임베딩 없음" 추가**
-   - **❌ 없으면 기술적 품질 점수는 다른 요소와 무관하게 무조건 4점 이하로 채점**
-   - **⚠️ 중요: 맞춤법/문법이 완벽해도, 가독성이 뛰어나도 YouTube 임베딩이 없으면 절대 4점 초과 불가**
-
-2. **찬송가 번호 명시 여부** (필수!)
-   - 본문에 "찬송가 XXX장" 또는 "XXX장 찬송가" 패턴이 있는가?
-   - 예: "찬송가 305장", "305장", "찬송가 364장 - 내 주를 가까이"
-   - **없으면 critical_issues에 "❌ 찬송가 번호 누락" 추가**
-   - **없으면 기술적 품질 점수 최대 5점**
-
-3. **찬송가 가사 포함 여부** (필수!)
-   - 본문에 찬송가 전체 가사가 blockquote 형식으로 포함되어 있는가?
-   - blockquote(>) 안에 "절:" 또는 "1절", "2절" 등의 패턴이 있어야 함
-   - **없으면 critical_issues에 "❌ 찬송가 가사 없음" 추가**
-   - **없으면 기술적 품질 점수 최대 4점**
-
-4. **성경 구절 내부 링크 포함 여부** (필수! 매우 엄격히 검증)
-   - 본문의 모든 성경 인용에 내부 API 링크가 포함되어 있는가?
-   - **반드시 다음 형식이어야 함**: [성경구절](/api/bible/chapters/{book_id}/{chapter})
-   - 예시:
-     * [요한복음 3:16](/api/bible/chapters/jo/3) ✅
-     * [빌립보서 4:6-7](/api/bible/chapters/ph/4) ✅
-     * [로마서 8:28](/api/bible/chapters/rm/8) ✅
-   - **검증 방법**:
-     1. 모든 성경 책명 뒤에 장:절 패턴이 있는지 확인
-     2. 해당 구절에 [텍스트](/api/bible/chapters/xx/n) 형식의 링크가 있는지 확인
-     3. book_id가 올바른 약어인지 확인 (jo, ph, rm, gn, ps 등)
-   - **다음은 불인정** ❌:
-     * 외부 링크 (https://bible.com/...)
-     * 잘못된 형식 (/bible/... 또는 /chapters/... 등)
-     * 링크 없는 평문 성경 구절
-   - **❌ 없으면 critical_issues에 "성경 구절 내부 링크 없음" 추가**
-   - **❌ 없으면 기술적 품질 점수 강제 2점 (발행 불가 수준)**
-
-5. **찬송가 제목 일치 여부** (⚠️ 최우선 검증 항목!)
-   - **본문 전체를 꼼꼼히 확인하여 찬송가 번호를 찾아내세요**
-   - 본문에 명시된 찬송가 번호와 YouTube 섹션(YOUTUBE_SEARCH 또는 iframe)의 찬송가 번호가 일치하는가?
-   - **검증 방법**:
-     1. 본문에서 "찬송가 XXX장" 패턴을 찾음 (예: "찬송가 305장", "364장")
-     2. YouTube 임베드 섹션에서 찬송가 번호 확인 (YOUTUBE_SEARCH: 찬송가 XXX장)
-     3. 두 번호가 정확히 일치하는지 확인
-   - **예시**:
-     * ✅ 정확한 경우: 본문 "찬송가 364장" → YOUTUBE_SEARCH: 찬송가 364장
-     * ❌ 불일치 사례: 본문 "찬송가 364장" → YOUTUBE_SEARCH: 찬송가 492장
-     * ❌ 불일치 사례: 본문 "찬송가 305장" → YouTube 임베드에 다른 번호
-   - **불일치하면 반드시 critical_issues에 "❌ 찬송가 제목 불일치 - 본문: XXX장, YouTube: YYY장" 형식으로 추가**
-   - **불일치하면 기술적 품질 점수 강제 3점 이하 (발행 불가 수준)**
+- 어휘 사용의 적절성
+- 전반적인 가독성
 
 ### 5. SEO 최적화 (가중치 10%)
-**평가 항목:**
 - 키워드 자연스러운 포함
-- 메타 설명 최적화
 - 제목의 매력도
-- 구조적 마크업 (H1, H2, H3)
+- 메타 설명 적절성
 
 ---
 
-## 📊 출력 형식
-
-반드시 다음 JSON 형식으로 출력하세요:
+## 📊 출력 형식 (JSON)
 
 {
   "scores": {
@@ -249,94 +226,73 @@ func buildEvaluationPrompt(blog BlogContent) string {
     "technical_quality": 8,
     "seo_optimization": 7
   },
-  "total_score": 7.85,
-  "weighted_breakdown": {
-    "theological_accuracy": 2.0,
-    "content_structure": 1.4,
-    "engagement": 1.35,
-    "technical_quality": 2.4,
-    "seo_optimization": 0.7
-  },
+  "total_score": 0,
   "feedback": {
     "strengths": [
       "신학적 정확성이 뛰어나며 복음의 핵심이 잘 드러남",
-      "독자와의 공감대 형성이 탁월함",
-      "✅ YouTube iframe 임베딩 포함 (embed URL 확인)",
-      "✅ 찬송가 가사 전체 포함됨 (blockquote 형식)",
-      "✅ 모든 성경 구절에 내부 API 링크 포함 (/api/bible/chapters/{book}/{chapter} 형식)",
-      "✅ 찬송가 번호 명시됨 (찬송가 305장)"
+      "독자와의 공감대 형성이 탁월함"
     ],
     "improvements": [
       "일부 문장이 너무 길어 가독성 저하"
     ],
-    "critical_issues": [
-      "❌ YouTube iframe 임베딩 없음 (YOUTUBE_SEARCH 태그만 있음)",
-      "❌ 찬송가 번호 누락 (찬송가 XXX장 패턴 없음)",
-      "❌ 찬송가 가사 없음 (blockquote 내 가사 누락)",
-      "❌ 성경 구절 내부 링크 없음 (/api/bible/chapters/... 형식 누락)",
-      "❌ 찬송가 제목 불일치 - 본문: 364장, YouTube: 492장",
-      "❌ 잘못된 성경 링크 형식 (외부 링크 사용 또는 형식 오류)"
-    ]
+    "critical_issues": []
   },
   "recommendation": "publish",
   "confidence": "high"
 }
 
----
-
-## 📌 평가 지침
-
-### 종합 점수 계산
-total_score = (theological_accuracy × 0.25) + (content_structure × 0.20) + (engagement × 0.15) + (technical_quality × 0.30) + (seo_optimization × 0.10)
-
-### 발행 권장사항 (recommendation)
-- **"publish"**: total_score >= 7.0 이고 치명적 문제 없음
-- **"revise"**: 5.0 <= total_score < 7.0 또는 일부 개선 필요
-- **"reject"**: total_score < 5.0 또는 심각한 신학적 오류 또는 YouTube/성경링크 누락
-
-### 신뢰도 (confidence)
-- **"high"**: 모든 평가 항목이 명확함
-- **"medium"**: 일부 애매한 부분 존재
-- **"low"**: 평가가 어려운 요소 다수
-
-### 치명적 문제 (critical_issues)
-다음 사항이 발견되면 반드시 critical_issues에 기록:
-- 심각한 신학적 오류
-- 이단적 교리
-- 성경 왜곡
-- 부적절한 표현
-- **❌ YouTube 임베딩 없음** (필수! iframe 또는 embed URL이 없을 경우)
-- **❌ 찬송가 번호 누락** (필수! "찬송가 XXX장" 패턴이 없을 경우)
-- **❌ 찬송가 가사 없음** (필수! blockquote 내 가사가 없을 경우)
-- **❌ 성경 구절 내부 링크 없음** (필수! 내부 API 링크가 없을 경우)
-- **❌ 찬송가 제목 불일치** (본문과 YouTube 섹션의 찬송가 번호가 다를 경우)
-
----
-
-## ⚠️ 주의사항
-
-1. **공정한 평가**: 개인적 신학 성향보다 일반적 기독교 교리 기준으로 평가
-2. **구체적 피드백**: 추상적 표현보다 구체적 개선 방향 제시
-3. **균형잡힌 평가**: 장점과 단점을 모두 언급
-4. **JSON 형식 준수**: 유효한 JSON으로 출력
-5. **필수 통과 기준 (매우 엄격!)**:
-   - theological_accuracy >= 6.0
-   - technical_quality >= 6.0
-   - critical_issues가 비어있어야 함 (특히 YouTube, 성경링크 필수!)
-   - **YouTube iframe 또는 embed URL 반드시 포함** (없으면 무조건 technical_quality ≤ 4점)
-   - **성경 구절 내부 API 링크 반드시 포함** (없으면 무조건 technical_quality ≤ 2점)
-   - **찬송가 번호 반드시 명시** ("찬송가 XXX장" 패턴 필수)
-   - **찬송가 가사 반드시 포함** (blockquote 형식, 없으면 technical_quality 최대 4점)
-   - **찬송가 제목 일치 확인 필수** (본문과 YouTube 섹션 일치)
-
-⚠️ **점수 제한 규칙 엄수**:
-- YouTube 임베딩 없음 → technical_quality는 4점 이하로만 채점 (맞춤법/가독성 완벽해도 4점 초과 불가)
-- 성경 구절 링크 없음 → technical_quality는 2점 이하로만 채점
-- 위 두 가지 모두 없으면 → technical_quality는 1점
+**중요 지침:**
+- **critical_issues는 비워두세요** (시스템이 자동으로 YouTube, 찬송가, 성경 링크 검증)
+- **total_score는 0으로 두세요** (시스템이 가중치 적용하여 자동 계산)
+- **기술적 품질은 맞춤법/문법/가독성만 평가** (기술 요소는 코드로 검증)
 
 이제 위의 콘텐츠를 평가하고 JSON 형식으로 결과를 출력해주세요.`
 
 	return prompt
+}
+
+// ShouldPublish 발행 여부 판단
+func ShouldPublish(evaluation *QualityEvaluation) (bool, string) {
+	// 🔧 Critical Issues가 있으면 점수를 강제로 낮춤 (AI가 점수를 잘못 주는 경우 대비)
+	if len(evaluation.Feedback.CriticalIssues) > 0 {
+		// Critical Issues 있으면 기술적 품질 점수를 2점으로 강제
+		if evaluation.Scores.TechnicalQuality > 2.0 {
+			log.Printf("⚠️  Critical Issues 발견: 기술적 품질 점수를 %.1f → 2.0으로 강제 조정", evaluation.Scores.TechnicalQuality)
+			evaluation.Scores.TechnicalQuality = 2.0
+
+			// 총점도 재계산
+			evaluation.TotalScore = (evaluation.Scores.TheologicalAccuracy * 0.25) +
+				(evaluation.Scores.ContentStructure * 0.20) +
+				(evaluation.Scores.Engagement * 0.15) +
+				(evaluation.Scores.TechnicalQuality * 0.30) +
+				(evaluation.Scores.SeoOptimization * 0.10)
+
+			log.Printf("⚠️  총점 재계산: %.1f/10", evaluation.TotalScore)
+		}
+
+		return false, fmt.Sprintf("치명적 문제 발견: %d개 (기술 점수 강제 조정)", len(evaluation.Feedback.CriticalIssues))
+	}
+
+	// 필수 통과 기준 체크
+	if evaluation.Scores.TheologicalAccuracy < 6.0 {
+		return false, fmt.Sprintf("신학적 정확성 미달: %.1f/10 (최소 6.0 필요)", evaluation.Scores.TheologicalAccuracy)
+	}
+
+	if evaluation.Scores.TechnicalQuality < 7.0 {
+		return false, fmt.Sprintf("기술적 품질 미달: %.1f/10 (최소 7.0 필요)", evaluation.Scores.TechnicalQuality)
+	}
+
+	// 총점 체크
+	if evaluation.TotalScore < 7.0 {
+		return false, fmt.Sprintf("총점 미달: %.1f/10 (최소 7.0 필요)", evaluation.TotalScore)
+	}
+
+	// 권장사항 체크
+	if strings.ToLower(evaluation.Recommendation) != "publish" {
+		return false, fmt.Sprintf("권장사항: %s", evaluation.Recommendation)
+	}
+
+	return true, "모든 기준 통과"
 }
 
 func min(a, b int) int {
@@ -593,50 +549,6 @@ func buildBlogGenerationPrompt(keyword, date, slug string) string {
 
 **주의**: content 필드의 모든 개행은 \n으로 이스케이프하고, 따옴표는 \", 역슬래시는 \\\\로 이스케이프하세요.
 `, date, dayOfWeek, keyword, currentMonth, slug, keyword)
-}
-
-// ShouldPublish 발행 여부 판단
-func ShouldPublish(evaluation *QualityEvaluation) (bool, string) {
-	// 🔧 Critical Issues가 있으면 점수를 강제로 낮춤 (AI가 점수를 잘못 주는 경우 대비)
-	if len(evaluation.Feedback.CriticalIssues) > 0 {
-		// Critical Issues 있으면 기술적 품질 점수를 2점으로 강제
-		if evaluation.Scores.TechnicalQuality > 2.0 {
-			log.Printf("⚠️  Critical Issues 발견: 기술적 품질 점수를 %.1f → 2.0으로 강제 조정", evaluation.Scores.TechnicalQuality)
-			evaluation.Scores.TechnicalQuality = 2.0
-
-			// 총점도 재계산
-			evaluation.TotalScore = (evaluation.Scores.TheologicalAccuracy * 0.25) +
-				(evaluation.Scores.ContentStructure * 0.20) +
-				(evaluation.Scores.Engagement * 0.15) +
-				(evaluation.Scores.TechnicalQuality * 0.30) +
-				(evaluation.Scores.SeoOptimization * 0.10)
-
-			log.Printf("⚠️  총점 재계산: %.1f/10", evaluation.TotalScore)
-		}
-
-		return false, fmt.Sprintf("치명적 문제 발견: %d개 (기술 점수 강제 조정)", len(evaluation.Feedback.CriticalIssues))
-	}
-
-	// 필수 통과 기준 체크
-	if evaluation.Scores.TheologicalAccuracy < 6.0 {
-		return false, fmt.Sprintf("신학적 정확성 미달: %.1f/10 (최소 6.0 필요)", evaluation.Scores.TheologicalAccuracy)
-	}
-
-	if evaluation.Scores.TechnicalQuality < 7.0 {
-		return false, fmt.Sprintf("기술적 품질 미달: %.1f/10 (최소 7.0 필요)", evaluation.Scores.TechnicalQuality)
-	}
-
-	// 총점 체크
-	if evaluation.TotalScore < 7.0 {
-		return false, fmt.Sprintf("총점 미달: %.1f/10 (최소 7.0 필요)", evaluation.TotalScore)
-	}
-
-	// 권장사항 체크
-	if strings.ToLower(evaluation.Recommendation) != "publish" {
-		return false, fmt.Sprintf("권장사항: %s", evaluation.Recommendation)
-	}
-
-	return true, "모든 기준 통과"
 }
 
 // RegenerateBlog 평가 피드백을 기반으로 블로그 재생성
