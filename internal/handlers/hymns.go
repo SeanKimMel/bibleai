@@ -13,7 +13,6 @@ import (
 
 // Hymn 구조체
 type Hymn struct {
-	ID             int    `json:"id" db:"id"`
 	Number         int    `json:"number" db:"number"`
 	Title          string `json:"title" db:"title"`
 	Lyrics         string `json:"lyrics" db:"lyrics"`
@@ -67,7 +66,7 @@ func (h *HymnHandlers) SearchHymns(c *gin.Context) {
 
 			// 키워드 배열 기반 조회 (정확한 매칭)
 			rows, err = h.DB.Query(`
-				SELECT id, number, title,
+				SELECT number, title,
 					   COALESCE(lyrics, '') as lyrics,
 					   COALESCE(theme, '') as theme,
 					   COALESCE(composer, '') as composer,
@@ -94,7 +93,7 @@ func (h *HymnHandlers) SearchHymns(c *gin.Context) {
 		argIndex := 1
 
 		queryBuilder.WriteString(`
-			SELECT id, number, title,
+			SELECT number, title,
 				   COALESCE(lyrics, '') as lyrics,
 				   COALESCE(theme, '') as theme,
 				   COALESCE(composer, '') as composer,
@@ -159,7 +158,7 @@ processResults:
 	for rows.Next() {
 		var hymn Hymn
 		err := rows.Scan(
-			&hymn.ID, &hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
+			&hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
 			&hymn.Composer, &hymn.Author, &hymn.Tempo, &hymn.KeySignature, &hymn.BibleReference, &hymn.ExternalLink,
 		)
 		if err != nil {
@@ -191,7 +190,7 @@ func (h *HymnHandlers) GetHymnByNumber(c *gin.Context) {
 
 	var hymn Hymn
 	query := `
-		SELECT id, number, title,
+		SELECT number, title,
 			   COALESCE(lyrics, '') as lyrics,
 			   COALESCE(theme, '') as theme,
 			   COALESCE(composer, '') as composer,
@@ -204,7 +203,7 @@ func (h *HymnHandlers) GetHymnByNumber(c *gin.Context) {
 
 	row := h.DB.QueryRow(query, number)
 	err = row.Scan(
-		&hymn.ID, &hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
+		&hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
 		&hymn.Composer, &hymn.Author, &hymn.Tempo, &hymn.KeySignature, &hymn.BibleReference, &hymn.ExternalLink,
 	)
 	if err != nil {
@@ -245,7 +244,7 @@ func (h *HymnHandlers) GetHymnsByTheme(c *gin.Context) {
 
 	var hymns []Hymn
 	query := `
-		SELECT id, number, title,
+		SELECT number, title,
 			   COALESCE(lyrics, '') as lyrics,
 			   COALESCE(theme, '') as theme,
 			   COALESCE(composer, '') as composer,
@@ -271,7 +270,7 @@ func (h *HymnHandlers) GetHymnsByTheme(c *gin.Context) {
 	for rows.Next() {
 		var hymn Hymn
 		err := rows.Scan(
-			&hymn.ID, &hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
+			&hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
 			&hymn.Composer, &hymn.Author, &hymn.Tempo, &hymn.KeySignature, &hymn.BibleReference, &hymn.ExternalLink,
 		)
 		if err != nil {
@@ -424,7 +423,7 @@ func (h *HymnHandlers) GetRandomHymns(c *gin.Context) {
 
 	var hymns []Hymn
 	query := `
-		SELECT id, number, title,
+		SELECT number, title,
 			   COALESCE(lyrics, '') as lyrics,
 			   COALESCE(theme, '') as theme,
 			   COALESCE(composer, '') as composer,
@@ -449,7 +448,7 @@ func (h *HymnHandlers) GetRandomHymns(c *gin.Context) {
 	for rows.Next() {
 		var hymn Hymn
 		err := rows.Scan(
-			&hymn.ID, &hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
+			&hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
 			&hymn.Composer, &hymn.Author, &hymn.Tempo, &hymn.KeySignature, &hymn.BibleReference, &hymn.ExternalLink,
 		)
 		if err != nil {

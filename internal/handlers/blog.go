@@ -17,25 +17,28 @@ import (
 
 // BlogPost 구조체
 type BlogPost struct {
-	ID          int    `json:"id"`
-	Title       string `json:"title"`
-	Slug        string `json:"slug"`
-	Content     string `json:"content"`
-	ContentHTML string `json:"content_html,omitempty"`
-	Excerpt     string `json:"excerpt"`
-	Keywords    string `json:"keywords"`
-	PublishedAt string `json:"published_at"`
-	ViewCount   int    `json:"view_count"`
+	ID          int     `json:"id"`
+	Title       string  `json:"title"`
+	Slug        string  `json:"slug"`
+	Content     string  `json:"content"`
+	ContentHTML string  `json:"content_html,omitempty"`
+	Excerpt     string  `json:"excerpt"`
+	Keywords    string  `json:"keywords"`
+	PublishedAt string  `json:"published_at"`
+	ViewCount   int     `json:"view_count"`
+	HymnNumber  *int    `json:"hymn_number,omitempty"`
+	Hymn        *Hymn   `json:"hymn,omitempty"`
 }
 
 // CreateBlogPost - 블로그 생성 (관리자용)
 func CreateBlogPost(c *gin.Context) {
 	var post struct {
-		Title    string `json:"title" binding:"required"`
-		Slug     string `json:"slug" binding:"required"`
-		Content  string `json:"content" binding:"required"`
-		Excerpt  string `json:"excerpt"`
-		Keywords string `json:"keywords"`
+		Title      string `json:"title" binding:"required"`
+		Slug       string `json:"slug" binding:"required"`
+		Content    string `json:"content" binding:"required"`
+		Excerpt    string `json:"excerpt"`
+		Keywords   string `json:"keywords"`
+		HymnNumber *int   `json:"hymn_number"`
 	}
 
 	if err := c.ShouldBindJSON(&post); err != nil {
@@ -46,10 +49,10 @@ func CreateBlogPost(c *gin.Context) {
 	// DB에 삽입
 	var id int
 	err := db.QueryRow(`
-		INSERT INTO blog_posts (title, slug, content, excerpt, keywords, published_at)
-		VALUES ($1, $2, $3, $4, $5, NOW())
+		INSERT INTO blog_posts (title, slug, content, excerpt, keywords, hymn_number, published_at)
+		VALUES ($1, $2, $3, $4, $5, $6, NOW())
 		RETURNING id
-	`, post.Title, post.Slug, post.Content, post.Excerpt, post.Keywords).Scan(&id)
+	`, post.Title, post.Slug, post.Content, post.Excerpt, post.Keywords, post.HymnNumber).Scan(&id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "블로그 생성 실패", "details": err.Error()})
@@ -138,7 +141,7 @@ func GetBlogPost(c *gin.Context) {
 
 	var post BlogPost
 	err := db.QueryRow(`
-		SELECT id, title, slug, content, excerpt, keywords, published_at, view_count
+		SELECT id, title, slug, content, excerpt, keywords, published_at, view_count, hymn_number
 		FROM blog_posts
 		WHERE slug = $1 AND is_published = true
 	`, slug).Scan(
@@ -150,6 +153,7 @@ func GetBlogPost(c *gin.Context) {
 		&post.Keywords,
 		&post.PublishedAt,
 		&post.ViewCount,
+		&post.HymnNumber,
 	)
 
 	if err == sql.ErrNoRows {
@@ -160,6 +164,30 @@ func GetBlogPost(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "블로그 조회 실패"})
 		return
+	}
+
+	// 찬송가 정보 조회 (hymn_number가 있는 경우)
+	if post.HymnNumber != nil {
+		var hymn Hymn
+		err := db.QueryRow(`
+			SELECT number, title,
+				   COALESCE(lyrics, '') as lyrics,
+				   COALESCE(theme, '') as theme,
+				   COALESCE(composer, '') as composer,
+				   COALESCE(author, '') as author,
+				   COALESCE(tempo, '') as tempo,
+				   COALESCE(key_signature, '') as key_signature,
+				   COALESCE(bible_reference, '') as bible_reference,
+				   COALESCE(external_link, '') as external_link
+			FROM hymns WHERE number = $1
+		`, *post.HymnNumber).Scan(
+			&hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
+			&hymn.Composer, &hymn.Author, &hymn.Tempo, &hymn.KeySignature,
+			&hymn.BibleReference, &hymn.ExternalLink,
+		)
+		if err == nil {
+			post.Hymn = &hymn
+		}
 	}
 
 	// 마크다운 → HTML 변환 (raw HTML 허용)
@@ -182,11 +210,12 @@ func UpdateBlogPost(c *gin.Context) {
 	id := c.Param("id")
 
 	var post struct {
-		Title    *string `json:"title"`
-		Slug     *string `json:"slug"`
-		Content  *string `json:"content"`
-		Excerpt  *string `json:"excerpt"`
-		Keywords *string `json:"keywords"`
+		Title      *string `json:"title"`
+		Slug       *string `json:"slug"`
+		Content    *string `json:"content"`
+		Excerpt    *string `json:"excerpt"`
+		Keywords   *string `json:"keywords"`
+		HymnNumber *int    `json:"hymn_number"`
 	}
 
 	if err := c.ShouldBindJSON(&post); err != nil {
@@ -222,6 +251,11 @@ func UpdateBlogPost(c *gin.Context) {
 	if post.Keywords != nil {
 		updates = append(updates, "keywords = $"+strconv.Itoa(argCount))
 		args = append(args, *post.Keywords)
+		argCount++
+	}
+	if post.HymnNumber != nil {
+		updates = append(updates, "hymn_number = $"+strconv.Itoa(argCount))
+		args = append(args, *post.HymnNumber)
 		argCount++
 	}
 
