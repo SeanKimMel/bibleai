@@ -1,4 +1,4 @@
-# 주님말씀AI - Robots.txt
+# 나홀로예배 - Robots.txt
 # Google, Naver 검색엔진 최적화
 
 # 모든 검색엔진 허용

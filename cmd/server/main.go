@@ -44,7 +44,9 @@ func main() {
 			if err != nil {
 				return dateStr
 			}
-			return t.Format("2006년 1월 2일")
+			// 한국 시간대로 변환하여 날짜와 시간 표시
+			loc, _ := time.LoadLocation("Asia/Seoul")
+			return t.In(loc).Format("2006년 1월 2일 15:04")
 		},
 	})
 

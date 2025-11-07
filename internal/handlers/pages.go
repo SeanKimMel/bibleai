@@ -270,8 +270,10 @@ func BlogDetailPage(c *gin.Context) {
 		}
 	}
 
-	// 날짜 포맷팅
-	formattedDate := post.PublishedAt.Format("2006년 1월 2일")
+	// 한국 시간대로 변환하여 날짜와 시간 포맷팅
+	loc, _ := time.LoadLocation("Asia/Seoul")
+	publishedKST := post.PublishedAt.In(loc)
+	formattedDate := publishedKST.Format("2006년 1월 2일 15:04")
 
 	c.HTML(http.StatusOK, "blog_detail.html", gin.H{
 		"Title":         post.Title,

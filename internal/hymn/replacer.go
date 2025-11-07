@@ -113,6 +113,9 @@ func ReplaceHymnLyrics(content string) string {
 			for _, line := range lyricsLines {
 				if strings.TrimSpace(line) != "" {
 					formattedLyrics += "> " + line + "\n"
+				} else {
+					// 빈 줄도 포함 (절 구분을 위해)
+					formattedLyrics += ">\n"
 				}
 			}
 
@@ -166,6 +169,9 @@ func ReplaceHymnLyrics(content string) string {
 			for _, line := range lyricsLines {
 				if strings.TrimSpace(line) != "" {
 					formattedLyrics += "> " + line + "\n"
+				} else {
+					// 빈 줄도 포함 (절 구분을 위해)
+					formattedLyrics += ">\n"
 				}
 			}
 

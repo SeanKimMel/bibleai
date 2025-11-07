@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Pray AI - AI 기도문 생성</title>
+<meta charset="UTF-8">
+<style>
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+.container {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+h1 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 10px;
+}
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 14px;
+}
+.info-box {
+    background: #e8f4f8;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #2196f3;
+}
+.info-box strong {
+    color: #1976d2;
+}
+textarea {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: inherit;
+    resize: vertical;
+    transition: border-color 0.3s;
+    box-sizing: border-box;
+}
+textarea:focus {
+    outline: none;
+    border-color: #667eea;
+}
+button {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: transform 0.2s;
+}
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+button:active {
+    transform: translateY(0);
+}
+.example {
+    font-size: 13px;
+    color: #888;
+    margin-top: 10px;
+    font-style: italic;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>🙏 Pray AI</h1>
+    <div class="subtitle">AI 기반 의미 캐싱으로 빠르고 정확한 기도문을 생성합니다</div>
+
+    <div class="info-box">
+        <strong>✨ Semantic Caching 적용</strong><br>
+        유사한 기도 요청은 자동으로 캐시에서 가져옵니다 (유사도 임계값: 85%)
+    </div>
+
+    <form action="/pray" method="post">
+        <textarea
+            name="userInput"
+            rows="8"
+            placeholder="기도하고 싶은 내용을 자유롭게 입력해주세요...&#10;&#10;예시:&#10;- 가족의 건강과 행복을 위해&#10;- 중요한 시험에 합격하기를 원합니다&#10;- 새로운 직장에서 잘 적응할 수 있도록"
+            required
+        ></textarea>
+        <button type="submit">🙏 기도문 생성하기</button>
+    </form>
+</div>
+</body>
+</html>

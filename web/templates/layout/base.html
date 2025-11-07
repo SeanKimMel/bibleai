@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{.Title}} - 하루말씀</title>
+    <title>{{.Title}} - 나홀로예배</title>
 
     <!-- SEO 메타 태그 -->
-    <meta name="description" content="{{if .Description}}{{.Description}}{{else}}성경, 찬송가, 기도문을 한 곳에서 쉽게 찾아보세요. 키워드 검색으로 원하는 성경 구절과 찬송가를 빠르게 찾을 수 있습니다.{{end}}">
-    <meta name="keywords" content="성경, 찬송가, 기도문, 성경검색, 새찬송가, 키워드검색, 성경구절, 기독교, 크리스천, 하루말씀">
-    <meta name="author" content="하루말씀">
+    <meta name="description" content="{{if .Description}}{{.Description}}{{else}}혼자서도 충만한 예배를. 성경, 찬송가, 기도문을 한 곳에서 쉽게 찾아보세요. 나홀로예배와 함께 개인 묵상과 기도 시간을 가져보세요.{{end}}">
+    <meta name="keywords" content="나홀로예배, 개인예배, 혼자예배, 성경, 찬송가, 기도문, 성경검색, 새찬송가, 키워드검색, 성경구절, 기독교, 크리스천, 묵상, 큐티">
+    <meta name="author" content="나홀로예배">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="https://haruinfo.net{{.CurrentPath}}">
 
@@ -20,9 +20,9 @@
 
     <!-- Open Graph (소셜 미디어 공유) -->
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="하루말씀">
-    <meta property="og:title" content="{{.Title}} - 하루말씀">
-    <meta property="og:description" content="{{if .Description}}{{.Description}}{{else}}성경, 찬송가, 기도문을 한 곳에서 쉽게 찾아보세요{{end}}">
+    <meta property="og:site_name" content="나홀로예배">
+    <meta property="og:title" content="{{.Title}} - 나홀로예배">
+    <meta property="og:description" content="{{if .Description}}{{.Description}}{{else}}혼자서도 충만한 예배를. 개인 묵상과 기도를 위한 모든 것{{end}}">
     <meta property="og:url" content="https://haruinfo.net{{.CurrentPath}}">
     <meta property="og:locale" content="ko_KR">
     <meta property="og:image" content="https://haruinfo.net/static/og-image.png">
@@ -31,8 +31,8 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{.Title}} - 하루말씀">
-    <meta name="twitter:description" content="{{if .Description}}{{.Description}}{{else}}성경, 찬송가, 기도문을 한 곳에서 쉽게 찾아보세요{{end}}">
+    <meta name="twitter:title" content="{{.Title}} - 나홀로예배">
+    <meta name="twitter:description" content="{{if .Description}}{{.Description}}{{else}}혼자서도 충만한 예배를. 개인 묵상과 기도를 위한 모든 것{{end}}">
     <meta name="twitter:image" content="https://haruinfo.net/static/og-image.png">
 
     <!-- Naver 메타 태그 -->
@@ -46,10 +46,10 @@
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "name": "하루말씀",
-      "alternateName": "HaruInfo",
+      "name": "나홀로예배",
+      "alternateName": "Solo Worship",
       "url": "https://haruinfo.net",
-      "description": "성경, 찬송가, 기도문을 한 곳에서 쉽게 찾아보세요",
+      "description": "혼자서도 충만한 예배를. 개인 묵상과 기도를 위한 성경, 찬송가, 기도문",
       "potentialAction": {
         "@type": "SearchAction",
         "target": "https://haruinfo.net/bible/search?q={search_term_string}",
@@ -240,13 +240,13 @@
                 <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
                     <span class="text-white font-bold text-lg">🙏</span>
                 </div>
-                <h1 class="text-2xl font-bold text-primary">하루말씀</h1>
+                <h1 class="text-2xl font-bold text-primary">나홀로예배</h1>
             </a>
         </div>
     </header>
 
     <!-- 메인 컨텐츠 -->
-    <main id="main-content" class="max-w-2xl mx-auto px-6 py-8 pb-20"> <!-- 하단 네비게이션을 위한 여백 -->
+    <main id="main-content" class="max-w-2xl mx-auto px-6 py-8 pb-32"> <!-- 하단 네비게이션을 위한 여백 증가 -->
         {{if eq .PageType "home"}}
             {{template "home-content" .}}
         {{else if eq .PageType "bible-search"}}

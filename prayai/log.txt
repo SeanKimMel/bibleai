@@ -1,0 +1,33 @@
+2025-10-27 15:09:48,287 - INFO - User input: I want to pray for my promotion at work.
+2025-10-27 15:10:09,750 - INFO - Keywords: Prayer, work, promotion, career, success.
+2025-10-27 15:10:09,750 - INFO - Prayer not found in database. Generating a new prayer.
+2025-10-27 15:10:34,350 - INFO - New prayer saved to database.
+2025-10-27 15:11:46,806 - INFO - User input: 가족의 건강과 시험 합격을 위해 기도하고 싶습니다.
+2025-10-27 15:15:00,890 - INFO - Keywords: *   가족
+*   건강
+*   시험
+*   합격
+*   기도
+*   소원
+*   기원
+2025-10-27 15:15:00,891 - INFO - Prayer not found in database. Generating a new prayer.
+2025-10-27 15:15:25,247 - INFO - New prayer saved to database.
+2025-10-27 15:17:59,403 - INFO - User input: 가족의 건강과 시험 합격을 위해 기도하고 싶습니다.
+2025-10-27 15:18:13,161 - INFO - Keywords: 다음은 7개의 키워드입니다.
+
+1.  가족
+2.  건강
+3.  시험
+4.  합격
+5.  기도
+6.  소망
+7.  기원
+2025-10-27 15:18:13,162 - INFO - Prayer not found in database. Generating a new prayer.
+2025-10-27 15:18:43,235 - INFO - New prayer saved to database.
+2025-10-27 15:19:07,980 - INFO - User input: 가족의 건강과 시험 합격을 위해 기도하고 싶습니다.
+2025-10-27 15:19:28,208 - INFO - Keywords: 가족, 건강, 시험, 합격, 기도, 소망, 기원
+2025-10-27 15:19:28,208 - INFO - Prayer not found in database. Generating a new prayer.
+2025-10-27 15:19:52,416 - INFO - New prayer saved to database.
+2025-10-27 15:20:02,152 - INFO - User input: 가족의 건강과 시험 합격을 위해 기도하고 싶습니다.
+2025-10-27 15:20:13,251 - INFO - Keywords: 가족, 건강, 시험, 합격, 기도, 소망, 기원
+2025-10-27 15:20:13,252 - INFO - Prayer found in database.

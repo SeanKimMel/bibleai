@@ -1,7 +1,7 @@
 {
-  "name": "bibleai",
+  "name": "solo-worship",
   "version": "1.0.0",
-  "description": "Bible AI Web Application",
+  "description": "나홀로예배 - Solo Worship Web Application",
   "scripts": {
     "build:css": "tailwindcss -i ./web/static/css/input.css -o ./web/static/css/output.css --minify",
     "watch:css": "tailwindcss -i ./web/static/css/input.css -o ./web/static/css/output.css --watch"

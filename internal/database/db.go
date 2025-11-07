@@ -90,7 +90,7 @@ func buildConnStrFromEnv() string {
 	dbname := getEnv("DB_NAME", "bibleai")
 	sslmode := getEnv("DB_SSLMODE", "disable")
 
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s timezone=Asia/Seoul",
 		host, port, user, password, dbname, sslmode)
 }
 

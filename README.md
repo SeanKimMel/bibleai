@@ -1,6 +1,7 @@
-# 주님말씀AI 웹앱
+# 나홀로예배 (Solo Worship)
 
-**Go + PostgreSQL + Cloudflare**로 구현된 모바일 우선 성경 웹앱입니다.
+**Go + PostgreSQL + Cloudflare**로 구현된 개인 예배를 위한 모바일 우선 웹앱입니다.
+혼자서도 충만한 예배를 드릴 수 있도록 성경, 찬송가, 기도문을 제공합니다.
 
 **라이브**: https://haruinfo.net ⭐
 

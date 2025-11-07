@@ -1,0 +1,26 @@
+{
+  "name": "나홀로예배",
+  "short_name": "나홀로예배",
+  "description": "혼자서도 충만한 예배를. 개인 묵상과 기도를 위한 성경, 찬송가, 기도문",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["lifestyle", "education"],
+  "lang": "ko-KR"
+}

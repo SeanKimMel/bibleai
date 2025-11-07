@@ -70,10 +70,15 @@ CREATE TABLE prayers (
     id SERIAL PRIMARY KEY,
     title VARCHAR(200) NOT NULL,
     content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
+
+**타임존 정책 (2025-10-23 적용):**
+- 모든 timestamp 컬럼은 `TIMESTAMPTZ` 타입 사용 (timezone aware)
+- DB 연결 시 `timezone=Asia/Seoul` 설정
+- 전 세계 어디서든 한국 시간 기준으로 일관된 표시
 
 #### tags 테이블
 ```sql
@@ -81,7 +86,7 @@ CREATE TABLE tags (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
     description TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
 

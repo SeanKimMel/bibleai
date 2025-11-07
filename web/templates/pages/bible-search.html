@@ -469,16 +469,22 @@ function showChapterModal(chapterData, themesData) {
     // 모달 표시
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+
+    // 스크롤을 최상단으로 초기화
+    const scrollContainer = modal.querySelector('.overflow-y-auto');
+    if (scrollContainer) {
+        scrollContainer.scrollTop = 0;
+    }
 }
 
 // 챕터 모달 생성 (키워드 페이지와 완전히 동일한 스타일)
 function createChapterModal() {
     const modal = document.createElement('div');
     modal.id = 'chapterModal';
-    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden flex items-center justify-center p-4';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-[9998] hidden flex items-center justify-center p-4 pb-28';
     modal.innerHTML = `
-        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
-            <div class="sticky top-0 bg-white border-b-2 border-gray-200 p-6 flex items-center justify-between">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[80vh] flex flex-col shadow-2xl">
+            <div class="bg-white border-b-2 border-gray-200 p-6 flex items-center justify-between rounded-t-2xl flex-shrink-0">
                 <div class="flex items-center space-x-3">
                     <button id="prevChapterBtn" onclick="navigateChapter('prev')" class="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" title="이전 장">
                         <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -498,20 +504,22 @@ function createChapterModal() {
                     </svg>
                 </button>
             </div>
-            <div class="p-6 overflow-y-auto max-h-[80vh]">
-                <div class="mb-6">
-                    <h4 class="text-lg font-semibold text-gray-700 mb-3">주요 주제</h4>
-                    <div id="modalThemes" class="flex flex-wrap gap-2">
-                        <!-- 주제 태그들이 여기에 들어갑니다 -->
+            <div class="overflow-y-auto flex-1">
+                <div class="p-6 pb-8">
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-3">주요 주제</h4>
+                        <div id="modalThemes" class="flex flex-wrap gap-2">
+                            <!-- 주제 태그들이 여기에 들어갑니다 -->
+                        </div>
                     </div>
-                </div>
-                <div id="modalCommentary" class="mb-6 hidden">
-                    <!-- 해석 정보가 여기에 들어갑니다 -->
-                </div>
-                <div class="mb-6">
-                    <h4 class="text-lg font-semibold text-gray-700 mb-4">📖 본문</h4>
-                    <div id="modalContent" class="space-y-4">
-                        <!-- 성경 구절들이 여기에 들어갑니다 -->
+                    <div id="modalCommentary" class="mb-6 hidden">
+                        <!-- 해석 정보가 여기에 들어갑니다 -->
+                    </div>
+                    <div class="mb-6">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-4">📖 본문</h4>
+                        <div id="modalContent" class="space-y-4">
+                            <!-- 성경 구절들이 여기에 들어갑니다 -->
+                        </div>
                     </div>
                 </div>
             </div>

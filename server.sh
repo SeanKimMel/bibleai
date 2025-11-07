@@ -6,7 +6,7 @@ APP_NAME="bibleai-server"
 
 case "$1" in
     start)
-        echo "🚀 주님말씀AI 서버를 시작합니다..."
+        echo "🚀 나홀로예배 서버를 시작합니다..."
         # 기존 프로세스 확인 및 종료
         if lsof -ti:$PORT >/dev/null 2>&1; then
             echo "⚠️ 포트 $PORT가 이미 사용 중입니다. 기존 프로세스를 종료합니다."

@@ -324,7 +324,7 @@ func GetBlogPostByID(c *gin.Context) {
 	var evaluator sql.NullString
 
 	err := db.QueryRow(`
-		SELECT id, title, slug, content, excerpt, keywords, published_at, view_count,
+		SELECT id, title, slug, content, excerpt, keywords, hymn_number, published_at, view_count,
 		       theological_accuracy, content_structure, engagement,
 		       technical_quality, seo_optimization, total_score,
 		       quality_feedback, evaluation_date, evaluator
@@ -337,6 +337,7 @@ func GetBlogPostByID(c *gin.Context) {
 		&post.Content,
 		&post.Excerpt,
 		&post.Keywords,
+		&post.HymnNumber,
 		&post.PublishedAt,
 		&post.ViewCount,
 		&theologicalAccuracy,
@@ -360,6 +361,31 @@ func GetBlogPostByID(c *gin.Context) {
 		return
 	}
 
+	// 찬송가 정보 조회 (hymn_number가 있는 경우)
+	if post.HymnNumber != nil {
+		var hymn Hymn
+		err := db.QueryRow(`
+			SELECT number, title,
+			       COALESCE(lyrics, '') as lyrics,
+			       COALESCE(theme, '') as theme,
+			       COALESCE(composer, '') as composer,
+			       COALESCE(author, '') as author,
+			       COALESCE(tempo, '') as tempo,
+			       COALESCE(key_signature, '') as key_signature,
+			       COALESCE(bible_reference, '') as bible_reference,
+			       COALESCE(external_link, '') as external_link
+			FROM hymns
+			WHERE number = $1
+		`, *post.HymnNumber).Scan(
+			&hymn.Number, &hymn.Title, &hymn.Lyrics, &hymn.Theme,
+			&hymn.Composer, &hymn.Author, &hymn.Tempo, &hymn.KeySignature,
+			&hymn.BibleReference, &hymn.ExternalLink,
+		)
+		if err == nil {
+			post.Hymn = &hymn
+		}
+	}
+
 	// 품질 점수 포함 응답
 	response := gin.H{
 		"id":           post.ID,
@@ -368,6 +394,8 @@ func GetBlogPostByID(c *gin.Context) {
 		"content":      post.Content,
 		"excerpt":      post.Excerpt,
 		"keywords":     post.Keywords,
+		"hymn_number":  post.HymnNumber,
+		"hymn":         post.Hymn,
 		"published_at": post.PublishedAt,
 		"view_count":   post.ViewCount,
 	}
@@ -830,7 +858,7 @@ func GenerateBlogData(c *gin.Context) {
 	if randomMode {
 		// 랜덤 모드: 더 많은 후보 중에서 랜덤 선택
 		hymnsQuery = `
-			SELECT id, number, new_hymn_number, title, lyrics, theme,
+			SELECT number, title, lyrics, theme,
 				   COALESCE(composer, '') as composer,
 				   COALESCE(author, '') as author,
 				   COALESCE(external_link, '') as external_link
@@ -842,7 +870,7 @@ func GenerateBlogData(c *gin.Context) {
 	} else {
 		// 일반 모드: 번호 순
 		hymnsQuery = `
-			SELECT id, number, new_hymn_number, title, lyrics, theme,
+			SELECT number, title, lyrics, theme,
 				   COALESCE(composer, '') as composer,
 				   COALESCE(author, '') as author,
 				   COALESCE(external_link, '') as external_link
@@ -855,12 +883,10 @@ func GenerateBlogData(c *gin.Context) {
 	rows, err = db.Query(hymnsQuery, "%"+keyword+"%")
 	if err == nil {
 		for rows.Next() {
-			var id, number int
-			var newHymnNumber *int
+			var number int
 			var title, lyrics, theme, composer, author, externalLink string
-			if err := rows.Scan(&id, &number, &newHymnNumber, &title, &lyrics, &theme, &composer, &author, &externalLink); err == nil {
+			if err := rows.Scan(&number, &title, &lyrics, &theme, &composer, &author, &externalLink); err == nil {
 				hymn := gin.H{
-					"id":            id,
 					"number":        number,
 					"title":         title,
 					"lyrics":        lyrics,
@@ -868,9 +894,6 @@ func GenerateBlogData(c *gin.Context) {
 					"composer":      composer,
 					"author":        author,
 					"external_link": externalLink,
-				}
-				if newHymnNumber != nil {
-					hymn["new_hymn_number"] = *newHymnNumber
 				}
 				hymns = append(hymns, hymn)
 			}

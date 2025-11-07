@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -489,13 +490,19 @@ func (h *Handlers) GenerateBlog(c *gin.Context) {
 	blog.Content = hymn.ReplaceHymnLyrics(blog.Content)
 	log.Printf("✅ 찬송가 가사 교체 완료")
 
+	// 찬송가 번호 추출
+	hymnNumber := extractHymnNumber(blog.Content)
+	if hymnNumber > 0 {
+		log.Printf("🎵 찬송가 %d장 추출됨", hymnNumber)
+	}
+
 	// DB에 저장
 	var id int
 	err = h.db.QueryRow(`
-		INSERT INTO blog_posts (title, slug, content, excerpt, keywords, is_published, created_at)
-		VALUES ($1, $2, $3, $4, $5, false, NOW())
+		INSERT INTO blog_posts (title, slug, content, excerpt, keywords, hymn_number, is_published, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, false, NOW())
 		RETURNING id
-	`, blog.Title, blog.Slug, blog.Content, blog.Excerpt, blog.Keywords).Scan(&id)
+	`, blog.Title, blog.Slug, blog.Content, blog.Excerpt, blog.Keywords, hymnNumber).Scan(&id)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "블로그 저장 실패: " + err.Error()})
@@ -842,4 +849,26 @@ func (h *Handlers) RegenerateBlog(c *gin.Context) {
 		"new_score":     newEvaluation.TotalScore,
 		"improved":      newEvaluation.TotalScore > *blog.TotalScore,
 	})
+}
+
+// extractHymnNumber 블로그 콘텐츠에서 찬송가 번호 추출
+func extractHymnNumber(content string) int {
+	// 패턴: "찬송가 123장", "### 찬송가 123장", "**찬송가 123장"
+	patterns := []string{
+		`찬송가\s*(\d+)장`,
+		`찬송가\s*(\d+)\s*장`,
+	}
+
+	for _, pattern := range patterns {
+		re := regexp.MustCompile(pattern)
+		matches := re.FindStringSubmatch(content)
+		if len(matches) > 1 {
+			num, err := strconv.Atoi(matches[1])
+			if err == nil && num > 0 && num <= 645 {
+				return num
+			}
+		}
+	}
+
+	return 0
 }

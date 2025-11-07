@@ -422,6 +422,10 @@ func buildBlogGenerationPrompt(keyword, date, slug string) string {
 	dayOfWeek := weekdays[dateObj.Weekday()]
 	currentMonth := dateObj.Month()
 
+	// 제목 최적화 도구 사용
+	titleOptimizer := NewTitleOptimizer()
+	suggestedTitle := titleOptimizer.GenerateTitle(keyword, dateObj)
+
 	return fmt.Sprintf(`당신은 기독교 신앙 블로그 전문 작가입니다.
 
 ## 📅 작성 정보
@@ -435,8 +439,8 @@ func buildBlogGenerationPrompt(keyword, date, slug string) string {
 ### 1. 구조 (⚠️ 반드시 이 순서와 형식으로!)
 
 #### (1) 제목 (H1)
-- 키워드를 중심으로 한 흥미롭고 공감되는 제목
-- 예: "진정한 평안을 찾아서"
+- 다음 제목을 사용하세요: "%s"
+- (이 제목은 사용자 리텐션을 위해 최적화되었습니다)
 
 #### (2) 성경 본문 소개 (H2)
 - 키워드와 관련된 대표 성경 구절 1-2개를 인용 (블록쿼트 사용)
@@ -548,7 +552,7 @@ func buildBlogGenerationPrompt(keyword, date, slug string) string {
 }
 
 **주의**: content 필드의 모든 개행은 \n으로 이스케이프하고, 따옴표는 \", 역슬래시는 \\\\로 이스케이프하세요.
-`, date, dayOfWeek, keyword, currentMonth, slug, keyword)
+`, date, dayOfWeek, keyword, currentMonth, suggestedTitle, slug, keyword)
 }
 
 // RegenerateBlog 평가 피드백을 기반으로 블로그 재생성
