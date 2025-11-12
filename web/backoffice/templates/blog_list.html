@@ -113,6 +113,11 @@
                 scoreBadge = '<span class="badge ' + scoreClass + '">' + score + '/10</span>';
             }
 
+            let hymnBadge = '';
+            if (blog.hymn_number !== null && blog.hymn_number !== undefined) {
+                hymnBadge = '<span class="badge badge-secondary">찬송가 ' + blog.hymn_number + '장</span>';
+            }
+
             const evaluator = blog.evaluator || '-';
             const createdAt = new Date(blog.created_at).toLocaleString('ko-KR', {
                 year: 'numeric',
@@ -134,7 +139,7 @@
                 '<a href="/blogs/' + blog.id + '" style="color: #3498db; text-decoration: none; font-weight: 500;">' + blog.title + '</a>' +
                 '</div>' +
                 '<div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">' +
-                statusBadge + ' ' + scoreBadge +
+                statusBadge + ' ' + scoreBadge + ' ' + hymnBadge +
                 '<span style="color: #7f8c8d; font-size: 0.85rem;">' + createdAt + '</span>' +
                 '</div>' +
                 '</td>' +

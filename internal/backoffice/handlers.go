@@ -34,6 +34,7 @@ type BlogPost struct {
 	Content              string          `json:"content"`
 	Excerpt              string          `json:"excerpt"`
 	Keywords             string          `json:"keywords"`
+	HymnNumber           *int            `json:"hymn_number"`
 	IsPublished          bool            `json:"is_published"`
 	PublishedAt          *time.Time      `json:"published_at"`
 	CreatedAt            time.Time       `json:"created_at"`
@@ -126,7 +127,7 @@ func (h *Handlers) GetBlogs(c *gin.Context) {
 	// 블로그 목록 조회
 	rows, err := h.db.Query(`
 		SELECT
-			id, title, slug, excerpt, keywords, is_published, published_at,
+			id, title, slug, excerpt, keywords, hymn_number, is_published, published_at,
 			created_at, view_count, theological_accuracy, content_structure,
 			engagement, technical_quality, seo_optimization, total_score,
 			evaluation_date, evaluator
@@ -147,7 +148,7 @@ func (h *Handlers) GetBlogs(c *gin.Context) {
 		var blog BlogPost
 		err := rows.Scan(
 			&blog.ID, &blog.Title, &blog.Slug, &blog.Excerpt, &blog.Keywords,
-			&blog.IsPublished, &blog.PublishedAt, &blog.CreatedAt, &blog.ViewCount,
+			&blog.HymnNumber, &blog.IsPublished, &blog.PublishedAt, &blog.CreatedAt, &blog.ViewCount,
 			&blog.TheologicalAccuracy, &blog.ContentStructure, &blog.Engagement,
 			&blog.TechnicalQuality, &blog.SeoOptimization, &blog.TotalScore,
 			&blog.EvaluationDate, &blog.Evaluator,
@@ -176,7 +177,7 @@ func (h *Handlers) GetBlog(c *gin.Context) {
 	var blog BlogPost
 	err := h.db.QueryRow(`
 		SELECT
-			id, title, slug, content, excerpt, keywords, is_published,
+			id, title, slug, content, excerpt, keywords, hymn_number, is_published,
 			published_at, created_at, view_count, theological_accuracy,
 			content_structure, engagement, technical_quality, seo_optimization,
 			total_score, quality_feedback, evaluation_date, evaluator
@@ -184,7 +185,7 @@ func (h *Handlers) GetBlog(c *gin.Context) {
 		WHERE id = $1
 	`, id).Scan(
 		&blog.ID, &blog.Title, &blog.Slug, &blog.Content, &blog.Excerpt,
-		&blog.Keywords, &blog.IsPublished, &blog.PublishedAt, &blog.CreatedAt,
+		&blog.Keywords, &blog.HymnNumber, &blog.IsPublished, &blog.PublishedAt, &blog.CreatedAt,
 		&blog.ViewCount, &blog.TheologicalAccuracy, &blog.ContentStructure,
 		&blog.Engagement, &blog.TechnicalQuality, &blog.SeoOptimization,
 		&blog.TotalScore, &blog.QualityFeedback, &blog.EvaluationDate, &blog.Evaluator,

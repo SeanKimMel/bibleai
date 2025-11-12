@@ -121,7 +121,10 @@
             <div id="blog-excerpt" style="margin-bottom: 1rem;"></div>
 
             <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 0.5rem;">키워드</div>
-            <div id="blog-keywords"></div>
+            <div id="blog-keywords" style="margin-bottom: 1rem;"></div>
+
+            <div style="font-size: 0.9rem; color: #7f8c8d; margin-bottom: 0.5rem;">찬송가</div>
+            <div id="blog-hymn">-</div>
         </div>
 
         <div style="margin-top: 1.5rem; border-top: 1px solid #ecf0f1; padding-top: 1.5rem;">
@@ -189,6 +192,13 @@
         document.getElementById('blog-views').textContent = blog.view_count;
         document.getElementById('blog-excerpt').textContent = blog.excerpt;
         document.getElementById('blog-keywords').textContent = blog.keywords;
+
+        // 찬송가 정보 표시
+        if (blog.hymn_number !== null && blog.hymn_number !== undefined) {
+            document.getElementById('blog-hymn').innerHTML = '<span class="badge badge-secondary">찬송가 ' + blog.hymn_number + '장</span>';
+        } else {
+            document.getElementById('blog-hymn').textContent = '-';
+        }
 
         // 마크다운을 HTML로 변환하여 표시 (간단한 변환)
         const contentEl = document.getElementById('blog-content');
