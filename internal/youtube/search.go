@@ -3,6 +3,7 @@ package youtube
 import (
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -10,10 +11,17 @@ import (
 	"time"
 )
 
-// SearchVideoID YouTube에서 비디오 ID 검색
+// SearchVideoID YouTube에서 비디오 ID 검색 (다양성 개선)
 func SearchVideoID(query string) (string, error) {
+	// 검색어 변형 생성
+	searchQueries := generateSearchVariations(query)
+
+	// 랜덤하게 검색어 선택
+	rand.Seed(time.Now().UnixNano())
+	selectedQuery := searchQueries[rand.Intn(len(searchQueries))]
+
 	// URL 인코딩
-	encodedQuery := url.QueryEscape(query)
+	encodedQuery := url.QueryEscape(selectedQuery)
 	searchURL := fmt.Sprintf("https://www.youtube.com/results?search_query=%s", encodedQuery)
 
 	// HTTP 클라이언트 설정
@@ -45,23 +53,73 @@ func SearchVideoID(query string) (string, error) {
 
 	html := string(body)
 
-	// 여러 패턴으로 비디오 ID 추출 시도
+	// 여러 패턴으로 비디오 ID 추출 시도 (상위 5개 수집)
 	patterns := []string{
 		`"videoId":"([a-zA-Z0-9_-]{11})"`,
 		`/watch\?v=([a-zA-Z0-9_-]{11})`,
 		`watch\?v=([a-zA-Z0-9_-]{11})`,
 	}
 
+	var videoIDs []string
+	seenIDs := make(map[string]bool)
+
 	for _, pattern := range patterns {
 		re := regexp.MustCompile(pattern)
-		matches := re.FindStringSubmatch(html)
-		if len(matches) > 1 {
-			videoID := matches[1]
-			return videoID, nil
+		matches := re.FindAllStringSubmatch(html, -1)
+		for _, match := range matches {
+			if len(match) > 1 {
+				videoID := match[1]
+				if !seenIDs[videoID] {
+					videoIDs = append(videoIDs, videoID)
+					seenIDs[videoID] = true
+					if len(videoIDs) >= 5 {
+						break
+					}
+				}
+			}
+		}
+		if len(videoIDs) >= 5 {
+			break
 		}
 	}
 
-	return "", fmt.Errorf("비디오 ID를 찾을 수 없습니다")
+	if len(videoIDs) == 0 {
+		return "", fmt.Errorf("비디오 ID를 찾을 수 없습니다")
+	}
+
+	// 상위 5개 중에서 랜덤 선택 (첫 번째는 제외하고 2-5번째 우선)
+	if len(videoIDs) > 1 {
+		// 80% 확률로 2-5번째 선택, 20% 확률로 첫 번째 선택
+		if rand.Float32() < 0.8 {
+			return videoIDs[1+rand.Intn(len(videoIDs)-1)], nil
+		}
+	}
+
+	return videoIDs[0], nil
+}
+
+// generateSearchVariations 검색어 변형 생성
+func generateSearchVariations(query string) []string {
+	variations := []string{query}
+
+	// 찬송가 번호 추출
+	hymnPattern := regexp.MustCompile(`찬송가\s*(\d+)장`)
+	if matches := hymnPattern.FindStringSubmatch(query); len(matches) > 1 {
+		hymnNumber := matches[1]
+
+		// 다양한 검색어 변형 추가
+		variations = append(variations,
+			fmt.Sprintf("새찬송가 %s장", hymnNumber),
+			fmt.Sprintf("찬송가 %s장 CCM", hymnNumber),
+			fmt.Sprintf("찬송가 %s장 연주", hymnNumber),
+			fmt.Sprintf("찬송가 %s장 피아노", hymnNumber),
+			fmt.Sprintf("hymn %s korean", hymnNumber),
+			fmt.Sprintf("찬송가 %s장 은혜로운", hymnNumber),
+			fmt.Sprintf("찬송가 %s장 새벽기도", hymnNumber),
+		)
+	}
+
+	return variations
 }
 
 // GetEmbedCode YouTube 임베드 코드 생성
